@@ -1,0 +1,24 @@
+import type { PageServerLoad } from './$types';
+import { redirect, error } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { controls, evidence } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
+
+export const load: PageServerLoad = async ({ locals, params }) => {
+	if (!locals.session || !locals.organizationId) redirect(302, '/login');
+	const orgId = locals.organizationId;
+
+	const [control] = await db
+		.select()
+		.from(controls)
+		.where(eq(controls.id, params.controlId))
+		.limit(1);
+	if (!control) throw error(404, 'Control not found');
+
+	const evidenceList = await db
+		.select()
+		.from(evidence)
+		.where(and(eq(evidence.organizationId, orgId), eq(evidence.controlId, control.id)));
+
+	return { control, evidenceList };
+};

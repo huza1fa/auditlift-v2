@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* ─── Light mode tokens ───────────────────────────────────────────────────── */
+:root {
+	/* Brand — sage green */
+	--brand: #4e7a4e;
+	--brand-hover: #3e6a3e;
+	--brand-light: #eaf0ea;
+	--brand-foreground: #ffffff;
+
+	/* Backgrounds */
+	--background: #f7f6f3;
+	--background-elevated: #ffffff;
+	--background-subtle: #edecea;
+
+	/* Foregrounds */
+	--foreground: #1c1e1c;
+	--foreground-muted: #5a6858;
+	--foreground-subtle: #8a978a;
+
+	/* Borders */
+	--border: #d8d5ce;
+	--border-strong: #b8b5ae;
+	--border-focus: #4e7a4e;
+
+	/* Semantic */
+	--success: #3d7a4a;
+	--success-light: #eaf5ed;
+	--warning: #a06b20;
+	--warning-light: #fef5e7;
+	--danger: #b84040;
+	--danger-light: #fef0f0;
+	--info: #3a6490;
+	--info-light: #eff5fc;
+
+	/* Shadows */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+	--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+
+	/* Radii */
+	--radius-sm: 3px;
+	--radius: 6px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+	--radius-xl: 14px;
+	--radius-full: 9999px;
+}
+
+/* ─── Dark mode tokens ────────────────────────────────────────────────────── */
+[data-theme='dark'] {
+	--brand: #6e9a6e;
+	--brand-hover: #7eaa7e;
+	--brand-light: #1a2a1a;
+	--brand-foreground: #0e180e;
+
+	--background: #141714;
+	--background-elevated: #1c201c;
+	--background-subtle: #222622;
+
+	--foreground: #e4e9e4;
+	--foreground-muted: #8a978a;
+	--foreground-subtle: #5a6858;
+
+	--border: #2a2e2a;
+	--border-strong: #3a3e3a;
+	--border-focus: #6e9a6e;
+
+	--success: #5a9a68;
+	--success-light: #162019;
+	--warning: #c4853a;
+	--warning-light: #231a0e;
+	--danger: #d46060;
+	--danger-light: #220e0e;
+	--info: #5a84b0;
+	--info-light: #0e1620;
+
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+	--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+}
+
+/* ─── System dark preference (no manual override set) ─────────────────────── */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']):not([data-theme='dark']) {
+		--brand: #6e9a6e;
+		--brand-hover: #7eaa7e;
+		--brand-light: #1a2a1a;
+		--brand-foreground: #0e180e;
+
+		--background: #141714;
+		--background-elevated: #1c201c;
+		--background-subtle: #222622;
+
+		--foreground: #e4e9e4;
+		--foreground-muted: #8a978a;
+		--foreground-subtle: #5a6858;
+
+		--border: #2a2e2a;
+		--border-strong: #3a3e3a;
+		--border-focus: #6e9a6e;
+
+		--success: #5a9a68;
+		--success-light: #162019;
+		--warning: #c4853a;
+		--warning-light: #231a0e;
+		--danger: #d46060;
+		--danger-light: #220e0e;
+		--info: #5a84b0;
+		--info-light: #0e1620;
+
+		--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+		--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+		--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+		--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+	}
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	font-family:
+		'Inter',
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		sans-serif;
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 14px;
+	line-height: 1.5;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
