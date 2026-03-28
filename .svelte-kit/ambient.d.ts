@@ -44,6 +44,7 @@ declare module '$env/static/private' {
 	export const BETTER_AUTH_API_KEY: string;
 	export const GITHUB_CLIENT_ID: string;
 	export const GITHUB_CLIENT_SECRET: string;
+	export const OPEN_ROUTER_API_KEY: string;
 	export const VSCODE_GIT_IPC_AUTH_TOKEN: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
@@ -187,6 +188,7 @@ declare module '$env/dynamic/private' {
 		BETTER_AUTH_API_KEY: string;
 		GITHUB_CLIENT_ID: string;
 		GITHUB_CLIENT_SECRET: string;
+		OPEN_ROUTER_API_KEY: string;
 		VSCODE_GIT_IPC_AUTH_TOKEN: string;
 		TERM_PROGRAM: string;
 		NODE: string;

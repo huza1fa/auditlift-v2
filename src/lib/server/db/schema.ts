@@ -1,4 +1,13 @@
-import { pgTable, text, integer, boolean, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	text,
+	integer,
+	boolean,
+	timestamp,
+	uuid,
+	jsonb,
+	uniqueIndex
+} from 'drizzle-orm/pg-core';
 
 // ─── Organizations ────────────────────────────────────────────────────────────
 
@@ -45,20 +54,24 @@ export const frameworks = pgTable('frameworks', {
 
 // ─── Controls (seed table) ────────────────────────────────────────────────────
 
-export const controls = pgTable('controls', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	frameworkId: uuid('framework_id')
-		.notNull()
-		.references(() => frameworks.id),
-	code: text('code').notNull(),
-	title: text('title').notNull(),
-	description: text('description').notNull(),
-	whyItMatters: text('why_it_matters').notNull(),
-	whatAuditorExpects: text('what_auditor_expects').notNull(),
-	category: text('category').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
+export const controls = pgTable(
+	'controls',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		frameworkId: uuid('framework_id')
+			.notNull()
+			.references(() => frameworks.id),
+		code: text('code').notNull(),
+		title: text('title').notNull(),
+		description: text('description').notNull(),
+		whyItMatters: text('why_it_matters').notNull(),
+		whatAuditorExpects: text('what_auditor_expects').notNull(),
+		category: text('category').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [uniqueIndex('controls_framework_code_idx').on(table.frameworkId, table.code)]
+);
 
 // ─── Organization Frameworks ──────────────────────────────────────────────────
 
@@ -103,9 +116,12 @@ export const policies = pgTable('policies', {
 		.notNull()
 		.references(() => organizations.id),
 	controlId: uuid('control_id').references(() => controls.id),
+	frameworkId: uuid('framework_id').references(() => frameworks.id),
 	type: text('type').notNull(),
 	title: text('title').notNull(),
 	content: text('content').notNull(),
+	isCustom: boolean('is_custom').default(false).notNull(),
+	customPrompt: text('custom_prompt'),
 	generatedAt: timestamp('generated_at'),
 	editedAt: timestamp('edited_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),

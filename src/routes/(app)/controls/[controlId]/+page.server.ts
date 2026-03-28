@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { controls, evidence } from '$lib/server/db/schema';
+import { controls, evidence, policies } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -20,5 +20,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.from(evidence)
 		.where(and(eq(evidence.organizationId, orgId), eq(evidence.controlId, control.id)));
 
-	return { control, evidenceList };
+	const linkedPolicies = await db
+		.select()
+		.from(policies)
+		.where(and(eq(policies.organizationId, orgId), eq(policies.controlId, control.id)));
+
+	return { control, evidenceList, linkedPolicies };
 };
