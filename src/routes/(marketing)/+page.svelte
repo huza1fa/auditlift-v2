@@ -33,7 +33,9 @@
 	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
 		<a href="/" class="flex items-center gap-2 no-underline">
 			<LogoMark size={20} />
-			<span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">AuditLift</span>
+			<span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
+				>AuditLift</span
+			>
 		</a>
 		<div class="flex items-center gap-3">
 			<ThemeToggle />
@@ -64,9 +66,7 @@
 		</div>
 
 		<!-- Headline -->
-		<h1
-			class="mb-4 max-w-2xl text-4xl font-bold tracking-tight text-[var(--foreground)]"
-		>
+		<h1 class="mb-4 max-w-2xl text-4xl font-bold tracking-tight text-[var(--foreground)]">
 			Get audit-ready without the $20K consultant
 		</h1>
 
@@ -97,7 +97,9 @@
 		>
 			<div class="mb-4 flex items-center justify-between">
 				<div class="text-left">
-					<p class="text-[11px] font-medium uppercase tracking-widest text-[var(--foreground-subtle)]">
+					<p
+						class="text-[11px] font-medium tracking-widest text-[var(--foreground-subtle)] uppercase"
+					>
 						SOC 2 Readiness
 					</p>
 					<p class="mt-1 text-[22px] font-bold text-[var(--foreground)]">73%</p>
@@ -137,7 +139,7 @@
 	>
 		<div class="mx-auto max-w-6xl px-6">
 			<p
-				class="mb-12 text-center text-[11px] font-medium uppercase tracking-widest text-[var(--foreground-subtle)]"
+				class="mb-12 text-center text-[11px] font-medium tracking-widest text-[var(--foreground-subtle)] uppercase"
 			>
 				How it works
 			</p>

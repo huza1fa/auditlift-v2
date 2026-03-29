@@ -7,14 +7,23 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
-	"/api/evidence/upload": [
-		"src/routes/api/evidence/upload/+server.ts"
+	"/api/evidence/presign": [
+		"src/routes/api/evidence/presign/+server.ts"
 	],
 	"/api/evidence/[id]": [
 		"src/routes/api/evidence/[id]/+server.ts"
 	],
+	"/api/evidence/[id]/confirm": [
+		"src/routes/api/evidence/[id]/confirm/+server.ts"
+	],
 	"/api/export": [
 		"src/routes/api/export/+server.ts"
+	],
+	"/api/invites/[token]": [
+		"src/routes/api/invites/[token]/+server.ts"
+	],
+	"/api/onboarding/check-domain": [
+		"src/routes/api/onboarding/check-domain/+server.ts"
 	],
 	"/api/onboarding/complete": [
 		"src/routes/api/onboarding/complete/+server.ts"
@@ -33,6 +42,15 @@
 	],
 	"/api/policies/generate": [
 		"src/routes/api/policies/generate/+server.ts"
+	],
+	"/api/settings/organization": [
+		"src/routes/api/settings/organization/+server.ts"
+	],
+	"/api/settings/team": [
+		"src/routes/api/settings/team/+server.ts"
+	],
+	"/api/settings/team/[userId]": [
+		"src/routes/api/settings/team/[userId]/+server.ts"
 	],
 	"/(app)/controls": [
 		"src/routes/(app)/controls/+page.server.ts",
@@ -58,6 +76,9 @@
 		"src/routes/(app)/frameworks/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
+	"/invite/[token]": [
+		"src/routes/invite/[token]/+page.server.ts"
+	],
 	"/(marketing)/login": [],
 	"/onboarding": [],
 	"/(app)/policies": [
@@ -68,6 +89,10 @@
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/billing": [
+		"src/routes/(app)/+layout.server.ts"
+	],
+	"/(app)/settings/team": [
+		"src/routes/(app)/settings/team/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	]
 }

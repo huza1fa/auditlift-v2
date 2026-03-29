@@ -99,7 +99,7 @@
 					{initials}
 				</div>
 				<div class="min-w-0 flex-1">
-					<p class="truncate text-[12px] font-medium leading-tight text-[var(--foreground)]">
+					<p class="truncate text-[12px] leading-tight font-medium text-[var(--foreground)]">
 						{data.organization.name}
 					</p>
 					<p class="truncate text-[11px] leading-tight text-[var(--foreground-subtle)]">

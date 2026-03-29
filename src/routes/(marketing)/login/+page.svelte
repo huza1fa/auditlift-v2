@@ -14,7 +14,9 @@
 	}
 </script>
 
-<div class="relative flex min-h-screen flex-col items-center justify-center bg-[var(--background)] p-6">
+<div
+	class="relative flex min-h-screen flex-col items-center justify-center bg-[var(--background)] p-6"
+>
 	<!-- Top-right theme toggle -->
 	<div class="absolute top-4 right-4">
 		<ThemeToggle />

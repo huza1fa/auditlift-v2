@@ -15,6 +15,7 @@ export const organizations = pgTable('organizations', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	name: text('name').notNull(),
 	slug: text('slug').notNull().unique(),
+	domain: text('domain'), // e.g., 'company.com' - extracted from first user's email
 	website: text('website'),
 	industry: text('industry'),
 	teamSize: text('team_size'),
@@ -102,6 +103,7 @@ export const evidence = pgTable('evidence', {
 	storageKey: text('storage_key').notNull(),
 	mimeType: text('mime_type').notNull(),
 	sizeBytes: integer('size_bytes').notNull(),
+	status: text('status').notNull().default('active'), // 'pending' | 'active'
 	notes: text('notes'),
 	uploadedBy: text('uploaded_by').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -147,14 +149,33 @@ export const readinessScores = pgTable('readiness_scores', {
 
 // ─── User Organizations ───────────────────────────────────────────────────────
 
+export type UserRole = 'owner' | 'admin' | 'member' | 'viewer';
+
 export const userOrganizations = pgTable('user_organizations', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	userId: text('user_id').notNull(), // Better Auth user.id is text
 	organizationId: uuid('organization_id')
 		.notNull()
 		.references(() => organizations.id),
+	role: text('role').notNull().default('member'), // 'owner' | 'admin' | 'member' | 'viewer'
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ─── Organization Invitations ───────────────────────────────────────────────
+
+export const organizationInvitations = pgTable('organization_invitations', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id),
+	email: text('email').notNull(),
+	role: text('role').notNull().default('member'), // 'admin' | 'member' | 'viewer'
+	token: text('token').notNull().unique(),
+	invitedBy: text('invited_by').notNull(), // userId
+	status: text('status').notNull().default('pending'), // 'pending' | 'accepted' | 'declined'
+	expiresAt: timestamp('expires_at').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 // ─── Re-export auth schema ────────────────────────────────────────────────────

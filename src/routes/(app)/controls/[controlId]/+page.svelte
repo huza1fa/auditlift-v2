@@ -2,7 +2,6 @@
 	import {
 		ArrowLeft,
 		FileText,
-		Upload,
 		Trash,
 		File,
 		Spinner,
@@ -13,18 +12,24 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import FileUploader from '$lib/components/evidence/FileUploader.svelte';
 	import * as m from '$lib/paraglide/messages';
 
 	// ── Types ────────────────────────────────────────────────────────────────
 	type LinkedPolicy = (typeof data.linkedPolicies)[0];
+	type EvidenceItem = {
+		id: string;
+		filename: string;
+		mimeType: string;
+		sizeBytes: number;
+		createdAt: Date;
+	};
 
 	// ── Props ────────────────────────────────────────────────────────────────
 	let { data } = $props();
 
 	// ── Local state ──────────────────────────────────────────────────────────
-	let uploading = $state(false);
-	let fileInput: HTMLInputElement;
-	let evidenceList = $state([...data.evidenceList]);
+	let evidenceList = $state<EvidenceItem[]>([...data.evidenceList]);
 
 	// Policy generation state
 	let showPolicyPanel = $state(false);
@@ -55,27 +60,20 @@
 	];
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
-	async function uploadFile(file: globalThis.File) {
-		uploading = true;
-		const formData = new FormData();
-		formData.append('file', file);
-		formData.append('controlId', data.control.id);
-		const res = await fetch('/api/evidence/upload', { method: 'POST', body: formData });
-		if (res.ok) {
-			const newEvidence = await res.json();
-			evidenceList = [newEvidence, ...evidenceList];
-		}
-		uploading = false;
-	}
-
-	function onFileChange(e: Event) {
-		const f = (e.target as HTMLInputElement).files?.[0];
-		if (f) uploadFile(f);
-	}
-
 	async function deleteEvidence(id: string) {
 		await fetch(`/api/evidence/${id}`, { method: 'DELETE' });
 		evidenceList = evidenceList.filter((ev) => ev.id !== id);
+	}
+
+	function handleUploadSuccess(newEvidence: { id: string; filename: string; sizeBytes: number }) {
+		const evidenceItem: EvidenceItem = {
+			id: newEvidence.id,
+			filename: newEvidence.filename,
+			mimeType: '',
+			sizeBytes: newEvidence.sizeBytes,
+			createdAt: new Date()
+		};
+		evidenceList = [evidenceItem, ...evidenceList];
 	}
 
 	function downloadPolicy(policy: LinkedPolicy) {
@@ -273,30 +271,7 @@
 					{m.control_evidence_title()} ({evidenceList.length})
 				</h2>
 
-				<!-- Upload zone -->
-				<div
-					class="mb-4 cursor-pointer rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)] p-8 text-center transition-colors hover:border-[var(--brand)]"
-					onclick={() => fileInput?.click()}
-					onkeydown={(e) => e.key === 'Enter' && fileInput?.click()}
-					role="button"
-					tabindex="0"
-				>
-					<div class="mx-auto mb-2 flex justify-center">
-						<Upload size={32} color="var(--foreground-subtle)" />
-					</div>
-					<p class="text-sm font-medium text-[var(--foreground)]">{m.control_upload_click()}</p>
-					<p class="text-xs text-[var(--foreground-muted)]">{m.control_upload_hint()}</p>
-					{#if uploading}
-						<p class="mt-2 text-xs text-[var(--brand)]">{m.control_uploading()}</p>
-					{/if}
-				</div>
-				<input
-					bind:this={fileInput}
-					type="file"
-					class="hidden"
-					onchange={onFileChange}
-					accept=".pdf,.png,.jpg,.jpeg,.csv,.docx"
-				/>
+				<FileUploader controlId={data.control.id} onUploadSuccess={handleUploadSuccess} />
 
 				<!-- Evidence list -->
 				{#if evidenceList.length === 0}

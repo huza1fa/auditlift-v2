@@ -44,6 +44,8 @@
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "^3.0.48",
+		"@aws-sdk/client-s3": "^3.1019.0",
+		"@aws-sdk/s3-request-presigner": "^3.1019.0",
 		"ai": "^6.0.141",
 		"archiver": "^7.0.1",
 		"bits-ui": "^2.16.4",

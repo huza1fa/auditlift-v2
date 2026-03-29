@@ -17,9 +17,21 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
 	if (!control) throw error(404, 'Control not found');
 
 	const evidenceList = await db
-		.select()
+		.select({
+			id: evidence.id,
+			filename: evidence.filename,
+			mimeType: evidence.mimeType,
+			sizeBytes: evidence.sizeBytes,
+			createdAt: evidence.createdAt
+		})
 		.from(evidence)
-		.where(and(eq(evidence.organizationId, orgId), eq(evidence.controlId, control.id)));
+		.where(
+			and(
+				eq(evidence.organizationId, orgId),
+				eq(evidence.controlId, control.id),
+				eq(evidence.status, 'active')
+			)
+		);
 
 	const linkedPolicies = await db
 		.select()

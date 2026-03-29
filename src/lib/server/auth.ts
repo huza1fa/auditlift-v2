@@ -31,8 +31,11 @@ export const auth = betterAuth({
 
 				const user = await userRes.json();
 				const emailsData = await emailsRes.json();
-				const emails: Array<{ email: string; primary: boolean; verified: boolean }> =
-					Array.isArray(emailsData) ? emailsData : [];
+				const emails: Array<{ email: string; primary: boolean; verified: boolean }> = Array.isArray(
+					emailsData
+				)
+					? emailsData
+					: [];
 
 				// GitHub noreply address — unique per user, used when email is private
 				const noreplyEmail = `${user.id}+${user.login}@users.noreply.github.com`;

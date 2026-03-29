@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { organizations, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { extractDomainFromEmail } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
@@ -26,6 +27,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ organizationId: existingUserOrg.organizationId });
 	}
 
+	// Extract domain from email
+	const email = locals.session.user.email || '';
+	const domain = extractDomainFromEmail(email);
+
 	// Create slug from name
 	const slug =
 		name
@@ -43,6 +48,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		.values({
 			name: name.trim(),
 			slug,
+			domain, // Store domain if available (personal emails return null)
 			website: website?.trim() || null,
 			industry: industry || null,
 			trialEndsAt,
@@ -50,9 +56,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		})
 		.returning();
 
+	// First user is always the owner
 	await db.insert(userOrganizations).values({
 		userId: locals.session.user.id,
-		organizationId: org.id
+		organizationId: org.id,
+		role: 'owner'
 	});
 
 	// Create trial subscription record

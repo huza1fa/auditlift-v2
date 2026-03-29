@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { FolderOpen, File, ArrowRight } from 'phosphor-svelte';
+	import { FolderOpen, File, ArrowRight, Download } from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let { data } = $props();
 
@@ -9,6 +10,23 @@
 		if (bytes < 1024) return `${bytes}B`;
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
 		return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+	}
+
+	async function downloadEvidence(id: string, filename: string) {
+		try {
+			const res = await fetch(`/api/evidence/${id}`);
+			if (!res.ok) {
+				console.error('Failed to get download URL');
+				return;
+			}
+			const { downloadUrl } = await res.json();
+			const a = document.createElement('a');
+			a.href = downloadUrl;
+			a.download = filename;
+			a.click();
+		} catch (err) {
+			console.error('Download failed:', err);
+		}
 	}
 </script>
 
@@ -54,6 +72,13 @@
 							</div>
 						</div>
 						<div class="flex items-center gap-3">
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={() => downloadEvidence(ev.id, ev.filename)}
+							>
+								<Download size={14} />
+							</Button>
 							{#if ev.controlCode}
 								<a
 									href="/controls/{ev.controlId}"

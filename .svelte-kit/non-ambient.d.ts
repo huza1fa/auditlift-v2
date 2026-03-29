@@ -29,24 +29,32 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/evidence" | "/api/evidence/upload" | "/api/evidence/[id]" | "/api/export" | "/api/onboarding" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(app)/frameworks" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(app)/settings" | "/(app)/settings/billing";
+		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/evidence" | "/api/evidence/presign" | "/api/evidence/[id]" | "/api/evidence/[id]/confirm" | "/api/export" | "/api/invites" | "/api/invites/[token]" | "/api/onboarding" | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/api/settings" | "/api/settings/organization" | "/api/settings/team" | "/api/settings/team/[userId]" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(app)/frameworks" | "/invite" | "/invite/[token]" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(app)/settings" | "/(app)/settings/billing" | "/(app)/settings/team";
 		RouteParams(): {
 			"/api/auth/[...all]": { all: string };
 			"/api/evidence/[id]": { id: string };
-			"/(app)/controls/[controlId]": { controlId: string }
+			"/api/evidence/[id]/confirm": { id: string };
+			"/api/invites/[token]": { token: string };
+			"/api/settings/team/[userId]": { userId: string };
+			"/(app)/controls/[controlId]": { controlId: string };
+			"/invite/[token]": { token: string }
 		};
 		LayoutParams(): {
 			"/(marketing)": Record<string, never>;
 			"/(app)": { controlId?: string };
-			"/": { all?: string; id?: string; controlId?: string };
-			"/api": { all?: string; id?: string };
+			"/": { all?: string; id?: string; token?: string; userId?: string; controlId?: string };
+			"/api": { all?: string; id?: string; token?: string; userId?: string };
 			"/api/auth": { all?: string };
 			"/api/auth/[...all]": { all: string };
 			"/api/evidence": { id?: string };
-			"/api/evidence/upload": Record<string, never>;
+			"/api/evidence/presign": Record<string, never>;
 			"/api/evidence/[id]": { id: string };
+			"/api/evidence/[id]/confirm": { id: string };
 			"/api/export": Record<string, never>;
+			"/api/invites": { token?: string };
+			"/api/invites/[token]": { token: string };
 			"/api/onboarding": Record<string, never>;
+			"/api/onboarding/check-domain": Record<string, never>;
 			"/api/onboarding/complete": Record<string, never>;
 			"/api/onboarding/framework": Record<string, never>;
 			"/api/onboarding/organization": Record<string, never>;
@@ -54,19 +62,26 @@ declare module "$app/types" {
 			"/api/onboarding/team": Record<string, never>;
 			"/api/policies": Record<string, never>;
 			"/api/policies/generate": Record<string, never>;
+			"/api/settings": { userId?: string };
+			"/api/settings/organization": Record<string, never>;
+			"/api/settings/team": { userId?: string };
+			"/api/settings/team/[userId]": { userId: string };
 			"/(app)/controls": { controlId?: string };
 			"/(app)/controls/[controlId]": { controlId: string };
 			"/(app)/dashboard": Record<string, never>;
 			"/(app)/evidence": Record<string, never>;
 			"/(app)/export": Record<string, never>;
 			"/(app)/frameworks": Record<string, never>;
+			"/invite": { token?: string };
+			"/invite/[token]": { token: string };
 			"/(marketing)/login": Record<string, never>;
 			"/onboarding": Record<string, never>;
 			"/(app)/policies": Record<string, never>;
 			"/(app)/settings": Record<string, never>;
-			"/(app)/settings/billing": Record<string, never>
+			"/(app)/settings/billing": Record<string, never>;
+			"/(app)/settings/team": Record<string, never>
 		};
-		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/evidence/upload" | `/api/evidence/${string}` & {} | "/api/export" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/frameworks" | "/login" | "/onboarding" | "/policies" | "/settings" | "/settings/billing";
+		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/evidence/presign" | `/api/evidence/${string}` & {} | `/api/evidence/${string}/confirm` & {} | "/api/export" | `/api/invites/${string}` & {} | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | "/api/settings/organization" | "/api/settings/team" | `/api/settings/team/${string}` & {} | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/frameworks" | `/invite/${string}` & {} | "/login" | "/onboarding" | "/policies" | "/settings" | "/settings/billing" | "/settings/team";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/robots.txt" | string & {};
 	}
