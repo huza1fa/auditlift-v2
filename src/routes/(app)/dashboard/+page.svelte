@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { ArrowRight, Upload, FileText, DownloadSimple } from 'phosphor-svelte';
+	import { ArrowRight, Upload, FileText, DownloadSimple, Check, X } from 'phosphor-svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	let { data } = $props();
+
+	let showBanner = $state(data.justSubscribed);
 
 	const today = new Date().toLocaleDateString('en-US', {
 		weekday: 'long',
@@ -21,6 +23,30 @@
 </script>
 
 <div class="space-y-8">
+	<!-- Subscription success banner -->
+	{#if showBanner}
+		<div
+			class="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--success)] bg-[var(--success-light)] p-4"
+		>
+			<div class="flex items-center gap-3">
+				<div class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--success)]">
+					<Check size={16} color="white" weight="bold" />
+				</div>
+				<div>
+					<p class="font-semibold text-[var(--success)]">Welcome to AuditLift Pro!</p>
+					<p class="text-sm text-[var(--foreground-muted)]">
+						Your subscription is active. You have full access to all features.
+					</p>
+				</div>
+			</div>
+			<button
+				onclick={() => (showBanner = false)}
+				class="cursor-pointer text-[var(--success)] hover:opacity-70"
+			>
+				<X size={20} />
+			</button>
+		</div>
+	{/if}
 	<!-- Header -->
 	<div>
 		<p class="text-sm text-[var(--foreground-muted)]">{today}</p>

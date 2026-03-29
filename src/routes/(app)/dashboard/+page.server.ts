@@ -5,10 +5,11 @@ import { organizationFrameworks, frameworks } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
 
 	const orgId = locals.organizationId;
+	const justSubscribed = url.searchParams.get('subscribed') === 'true';
 
 	// Get org's active framework
 	const [orgFramework] = await db
@@ -37,6 +38,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
-		trialDaysRemaining
+		trialDaysRemaining,
+		justSubscribed
 	};
 };

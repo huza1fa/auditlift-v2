@@ -50,6 +50,11 @@ declare module '$env/static/private' {
 	export const BUCKET_NAME: string;
 	export const BUCKET_ACCESS_KEY: string;
 	export const BUCKET_SECRET_KEY: string;
+	export const STRIPE_PUBLISHABLE_KEY: string;
+	export const STRIPE_SECRET_KEY: string;
+	export const STRIPE_WEBHOOK_SECRET: string;
+	export const STRIPE_PRICE_MONTHLY: string;
+	export const STRIPE_PRICE_YEARLY: string;
 	export const ALLUSERSPROFILE: string;
 	export const APPDATA: string;
 	export const CommonProgramFiles: string;
@@ -200,6 +205,11 @@ declare module '$env/dynamic/private' {
 		BUCKET_NAME: string;
 		BUCKET_ACCESS_KEY: string;
 		BUCKET_SECRET_KEY: string;
+		STRIPE_PUBLISHABLE_KEY: string;
+		STRIPE_SECRET_KEY: string;
+		STRIPE_WEBHOOK_SECRET: string;
+		STRIPE_PRICE_MONTHLY: string;
+		STRIPE_PRICE_YEARLY: string;
 		ALLUSERSPROFILE: string;
 		APPDATA: string;
 		CommonProgramFiles: string;

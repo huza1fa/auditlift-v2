@@ -20,7 +20,8 @@ export const nodes = [
 	() => import('./nodes/14'),
 	() => import('./nodes/15'),
 	() => import('./nodes/16'),
-	() => import('./nodes/17')
+	() => import('./nodes/17'),
+	() => import('./nodes/18')
 ];
 
 export const server_loads = [2];
@@ -33,12 +34,13 @@ export const dictionary = {
 		"/(app)/evidence": [~7,[2]],
 		"/(app)/export": [~8,[2]],
 		"/(app)/frameworks": [~9,[2]],
-		"/invite/[token]": [~16],
+		"/invite/[token]": [~17],
 		"/(marketing)/login": [15,[3]],
-		"/onboarding": [17],
+		"/onboarding": [18],
 		"/(app)/policies": [~10,[2]],
+		"/(marketing)/pricing": [16,[3]],
 		"/(app)/settings": [11,[2]],
-		"/(app)/settings/billing": [12,[2]],
+		"/(app)/settings/billing": [~12,[2]],
 		"/(app)/settings/team": [~13,[2]]
 	};
 

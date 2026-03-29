@@ -7,6 +7,15 @@
 	"/api/auth/[...all]": [
 		"src/routes/api/auth/[...all]/+server.ts"
 	],
+	"/api/billing/checkout": [
+		"src/routes/api/billing/checkout/+server.ts"
+	],
+	"/api/billing/portal": [
+		"src/routes/api/billing/portal/+server.ts"
+	],
+	"/api/billing/status": [
+		"src/routes/api/billing/status/+server.ts"
+	],
 	"/api/evidence/presign": [
 		"src/routes/api/evidence/presign/+server.ts"
 	],
@@ -52,6 +61,9 @@
 	"/api/settings/team/[userId]": [
 		"src/routes/api/settings/team/[userId]/+server.ts"
 	],
+	"/api/webhooks/stripe": [
+		"src/routes/api/webhooks/stripe/+server.ts"
+	],
 	"/(app)/controls": [
 		"src/routes/(app)/controls/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
@@ -85,10 +97,12 @@
 		"src/routes/(app)/policies/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
+	"/(marketing)/pricing": [],
 	"/(app)/settings": [
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/billing": [
+		"src/routes/(app)/settings/billing/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/team": [
