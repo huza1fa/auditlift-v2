@@ -16,6 +16,9 @@
 	"/api/billing/status": [
 		"src/routes/api/billing/status/+server.ts"
 	],
+	"/api/billing/sync": [
+		"src/routes/api/billing/sync/+server.ts"
+	],
 	"/api/evidence/presign": [
 		"src/routes/api/evidence/presign/+server.ts"
 	],

@@ -55,7 +55,7 @@ export async function createCheckoutSession(
 		mode: 'subscription',
 		line_items: [{ price: priceId, quantity: 1 }],
 		customer_email: customerEmail,
-		success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+		success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: cancelUrl,
 		metadata: {
 			organizationId

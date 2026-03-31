@@ -29,7 +29,7 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/billing" | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/evidence" | "/api/evidence/presign" | "/api/evidence/[id]" | "/api/evidence/[id]/confirm" | "/api/export" | "/api/invites" | "/api/invites/[token]" | "/api/onboarding" | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/api/settings" | "/api/settings/organization" | "/api/settings/team" | "/api/settings/team/[userId]" | "/api/webhooks" | "/api/webhooks/stripe" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(app)/frameworks" | "/invite" | "/invite/[token]" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(marketing)/pricing" | "/(app)/settings" | "/(app)/settings/billing" | "/(app)/settings/team";
+		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/billing" | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence" | "/api/evidence/presign" | "/api/evidence/[id]" | "/api/evidence/[id]/confirm" | "/api/export" | "/api/invites" | "/api/invites/[token]" | "/api/onboarding" | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/api/settings" | "/api/settings/organization" | "/api/settings/team" | "/api/settings/team/[userId]" | "/api/webhooks" | "/api/webhooks/stripe" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(app)/frameworks" | "/invite" | "/invite/[token]" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(marketing)/pricing" | "/(app)/settings" | "/(app)/settings/billing" | "/(app)/settings/team";
 		RouteParams(): {
 			"/api/auth/[...all]": { all: string };
 			"/api/evidence/[id]": { id: string };
@@ -50,6 +50,7 @@ declare module "$app/types" {
 			"/api/billing/checkout": Record<string, never>;
 			"/api/billing/portal": Record<string, never>;
 			"/api/billing/status": Record<string, never>;
+			"/api/billing/sync": Record<string, never>;
 			"/api/evidence": { id?: string };
 			"/api/evidence/presign": Record<string, never>;
 			"/api/evidence/[id]": { id: string };
@@ -88,7 +89,7 @@ declare module "$app/types" {
 			"/(app)/settings/billing": Record<string, never>;
 			"/(app)/settings/team": Record<string, never>
 		};
-		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/evidence/presign" | `/api/evidence/${string}` & {} | `/api/evidence/${string}/confirm` & {} | "/api/export" | `/api/invites/${string}` & {} | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | "/api/settings/organization" | "/api/settings/team" | `/api/settings/team/${string}` & {} | "/api/webhooks/stripe" | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/frameworks" | `/invite/${string}` & {} | "/login" | "/onboarding" | "/policies" | "/pricing" | "/settings" | "/settings/billing" | "/settings/team";
+		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence/presign" | `/api/evidence/${string}` & {} | `/api/evidence/${string}/confirm` & {} | "/api/export" | `/api/invites/${string}` & {} | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | "/api/settings/organization" | "/api/settings/team" | `/api/settings/team/${string}` & {} | "/api/webhooks/stripe" | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/frameworks" | `/invite/${string}` & {} | "/login" | "/onboarding" | "/policies" | "/pricing" | "/settings" | "/settings/billing" | "/settings/team";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/robots.txt" | string & {};
 	}

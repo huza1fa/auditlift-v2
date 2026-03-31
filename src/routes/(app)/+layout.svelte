@@ -16,6 +16,8 @@
 	];
 
 	const trialDays = $derived.by(() => {
+		// Hide trial indicator if user has an active subscription
+		if (data.subscription?.status === 'active') return null;
 		const org = data.organization;
 		if (!org?.trialEndsAt) return null;
 		const days = Math.ceil((new Date(org.trialEndsAt).getTime() - Date.now()) / 86400000);
@@ -35,18 +37,23 @@
 <div class="flex min-h-screen">
 	<!-- Sidebar -->
 	<aside
-		class="fixed inset-y-0 left-0 flex w-52 flex-col border-r border-[var(--border)] bg-[var(--background-elevated)]"
+		class="fixed inset-y-0 left-0 flex w-56 flex-col border-r border-[var(--border)] bg-[var(--background-elevated)]"
 	>
 		<!-- Logo -->
-		<div class="flex items-center gap-2 border-b border-[var(--border)] px-3 py-3">
-			<LogoMark size={18} />
-			<span class="text-[13px] font-semibold tracking-tight text-[var(--foreground)]">
-				AuditLift
-			</span>
+		<div class="flex items-center gap-2.5 border-b border-[var(--border)] px-4 py-3.5">
+			<div class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]">
+				<LogoMark size={14} color="white" />
+			</div>
+			<div class="flex items-center gap-1.5">
+				<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">AuditLift</span>
+				{#if data.subscription?.status === 'active'}
+					<span class="rounded-full bg-[var(--success-light)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--success)]">Pro</span>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Nav -->
-		<nav class="flex-1 overflow-y-auto px-1.5 py-2">
+		<nav class="flex-1 overflow-y-auto px-2 py-3">
 			<div class="space-y-0.5">
 				{#each navLinks as link (link.href)}
 					{@const isActive =
@@ -55,12 +62,12 @@
 							: page.url.pathname.startsWith(link.href)}
 					<a
 						href={link.href}
-						class="flex items-center gap-2.5 rounded-[var(--radius)] px-2 py-1.5 text-[13px] transition-colors
+						class="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[13px] font-medium transition-all
 							{isActive
-							? 'bg-[var(--brand-light)] font-medium text-[var(--brand)]'
+							? 'bg-[var(--brand)] text-white shadow-sm'
 							: 'text-[var(--foreground-muted)] hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]'}"
 					>
-						<link.icon size={14} weight={isActive ? 'fill' : 'regular'} />
+						<link.icon size={15} weight={isActive ? 'fill' : 'regular'} />
 						{link.label}
 					</a>
 				{/each}
@@ -68,41 +75,39 @@
 		</nav>
 
 		<!-- Bottom -->
-		<div class="space-y-1 border-t border-[var(--border)] px-1.5 py-2">
+		<div class="border-t border-[var(--border)] px-2 py-2">
 			<!-- Trial progress -->
 			{#if trialDays !== null}
-				<div class="px-2 py-1">
-					<div class="mb-1 flex items-center justify-between">
-						<span class="text-[11px] text-[var(--foreground-subtle)]">Free trial</span>
-						<span
-							class="text-[11px] font-medium {trialDays <= 3
-								? 'text-[var(--warning)]'
-								: 'text-[var(--foreground-muted)]'}">{trialDays}d left</span
-						>
+				<a
+					href="/settings/billing"
+					class="mb-1.5 block rounded-[var(--radius-md)] bg-[var(--warning-light)] px-3 py-2 transition-opacity hover:opacity-80"
+				>
+					<div class="mb-1.5 flex items-center justify-between">
+						<span class="text-[11px] font-medium text-[var(--warning)]">Free trial</span>
+						<span class="text-[11px] font-semibold text-[var(--warning)]">{trialDays}d left</span>
 					</div>
-					<div class="h-0.5 w-full rounded-full bg-[var(--background-subtle)]">
+					<div class="h-1 w-full rounded-full bg-[var(--background-subtle)]">
 						<div
-							class="h-0.5 rounded-full transition-all {trialDays <= 3
-								? 'bg-[var(--warning)]'
-								: 'bg-[var(--brand)]'}"
+							class="h-1 rounded-full bg-[var(--warning)] transition-all"
 							style="width: {Math.min(100, (trialDays / 10) * 100)}%"
 						></div>
 					</div>
-				</div>
+					<p class="mt-1.5 text-[10px] text-[var(--warning)]">Upgrade to keep access →</p>
+				</a>
 			{/if}
 
 			<!-- User + theme toggle -->
-			<div class="flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5">
+			<div class="flex items-center gap-2 rounded-[var(--radius-md)] px-2.5 py-2 hover:bg-[var(--background-subtle)]">
 				<div
-					class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--brand-light)] text-[10px] font-semibold text-[var(--brand)]"
+					class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)] text-[10px] font-bold text-white"
 				>
 					{initials}
 				</div>
 				<div class="min-w-0 flex-1">
-					<p class="truncate text-[12px] leading-tight font-medium text-[var(--foreground)]">
+					<p class="truncate text-[12px] font-semibold leading-tight text-[var(--foreground)]">
 						{data.organization.name}
 					</p>
-					<p class="truncate text-[11px] leading-tight text-[var(--foreground-subtle)]">
+					<p class="truncate text-[10px] leading-tight text-[var(--foreground-subtle)]">
 						{data.user.email}
 					</p>
 				</div>
@@ -112,7 +117,7 @@
 	</aside>
 
 	<!-- Main -->
-	<main class="ml-52 min-h-screen flex-1 bg-[var(--background)]">
+	<main class="ml-56 min-h-screen flex-1 bg-[var(--background)]">
 		<div class="p-6">
 			{@render children()}
 		</div>

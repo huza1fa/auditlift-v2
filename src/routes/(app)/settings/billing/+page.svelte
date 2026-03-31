@@ -62,6 +62,26 @@
 			loading = null;
 		}
 	}
+
+	async function syncBilling() {
+		loading = 'portal'; // reuse loading state
+		errorMsg = '';
+		try {
+			const res = await fetch('/api/billing/sync', { method: 'POST' });
+			const body = await res.json();
+			if (body.synced) {
+				// Reload the page to get fresh data
+				window.location.reload();
+			} else {
+				errorMsg =
+					'No active subscription found in Stripe. If you just subscribed, please wait a moment and try again.';
+				loading = null;
+			}
+		} catch (err) {
+			errorMsg = 'Failed to sync billing status';
+			loading = null;
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -258,4 +278,18 @@
 	{#if errorMsg}
 		<p class="text-sm text-[var(--danger)]">{errorMsg}</p>
 	{/if}
+
+	<!-- Manual sync -->
+	<div class="mt-2 flex items-center gap-2">
+		<button
+			onclick={syncBilling}
+			disabled={loading !== null}
+			class="text-sm text-[var(--foreground-subtle)] hover:text-[var(--foreground-muted)] disabled:opacity-50"
+		>
+			{loading === 'portal' ? 'Syncing...' : '↻ Sync billing status'}
+		</button>
+		<span class="text-xs text-[var(--foreground-subtle)]">
+			Use this if your subscription status isn't updating.
+		</span>
+	</div>
 </div>

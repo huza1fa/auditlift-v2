@@ -15,6 +15,7 @@
 	--background: #f7f6f3;
 	--background-elevated: #ffffff;
 	--background-subtle: #edecea;
+	--background-alt: #f0eeea;
 
 	/* Foregrounds */
 	--foreground: #1c1e1c;
@@ -61,6 +62,7 @@
 	--background: #141714;
 	--background-elevated: #1c201c;
 	--background-subtle: #222622;
+	--background-alt: #1a1e1a;
 
 	--foreground: #e4e9e4;
 	--foreground-muted: #8a978a;
@@ -96,6 +98,7 @@
 		--background: #141714;
 		--background-elevated: #1c201c;
 		--background-subtle: #222622;
+		--background-alt: #1a1e1a;
 
 		--foreground: #e4e9e4;
 		--foreground-muted: #8a978a;

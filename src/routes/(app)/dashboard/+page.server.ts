@@ -30,10 +30,76 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		readiness = await computeReadinessScore(orgId, orgFramework.framework.id);
 	}
 
+	// Sync subscription from Stripe if user just completed checkout
+	// This handles webhook delivery failures in dev/prod
+	if (justSubscribed && url.searchParams.get('session_id')) {
+		const sessionId = url.searchParams.get('session_id')!;
+		try {
+			const { stripe } = await import('$lib/server/stripe');
+			const { db } = await import('$lib/server/db');
+			const { subscriptions } = await import('$lib/server/db/schema');
+			const { eq } = await import('drizzle-orm');
+
+			const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+
+			if (checkoutSession.subscription && checkoutSession.metadata?.organizationId === orgId) {
+				const stripeSub = await stripe.subscriptions.retrieve(
+					checkoutSession.subscription as string
+				);
+				const currentPeriodEnd = new Date((stripeSub as any).current_period_end * 1000);
+
+				// Check if sub exists in DB
+				const [existingSub] = await db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.organizationId, orgId))
+					.limit(1);
+
+				if (existingSub) {
+					await db
+						.update(subscriptions)
+						.set({
+							status: 'active',
+							stripeCustomerId: checkoutSession.customer as string,
+							stripeSubscriptionId: stripeSub.id,
+							currentPeriodEnd,
+							cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end,
+							updatedAt: new Date()
+						})
+						.where(eq(subscriptions.organizationId, orgId));
+				} else {
+					await db.insert(subscriptions).values({
+						organizationId: orgId,
+						status: 'active',
+						stripeCustomerId: checkoutSession.customer as string,
+						stripeSubscriptionId: stripeSub.id,
+						currentPeriodEnd,
+						cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end
+					});
+				}
+
+				// Re-fetch subscription to reflect updated state
+				locals.subscription =
+					(
+						await db
+							.select()
+							.from(subscriptions)
+							.where(eq(subscriptions.organizationId, orgId))
+							.limit(1)
+					)[0] ?? null;
+			}
+		} catch (err) {
+			console.error('[Dashboard] Failed to sync subscription from Stripe:', err);
+		}
+	}
+
 	const trialEndsAt = locals.organization?.trialEndsAt;
-	const trialDaysRemaining = trialEndsAt
-		? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000))
-		: null;
+	const isActiveSubscription = locals.subscription?.status === 'active';
+	const trialDaysRemaining = isActiveSubscription
+		? null
+		: trialEndsAt
+			? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000))
+			: null;
 
 	return {
 		readiness,
