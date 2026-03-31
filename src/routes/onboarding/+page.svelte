@@ -16,6 +16,9 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	let step = $state(1);
 	const totalSteps = 5;
@@ -34,28 +37,10 @@
 		{ value: '50+', label: '50+ people', sub: 'Enterprise', icon: Buildings }
 	];
 
-	// Step 3 state
-	let framework = $state('soc2');
-	const frameworkOptions = [
-		{
-			value: 'soc2',
-			label: 'SOC 2',
-			description: 'Most common for SaaS companies',
-			popular: true
-		},
-		{
-			value: 'pci',
-			label: 'PCI-DSS',
-			description: 'Required for payment processing',
-			popular: false
-		},
-		{
-			value: 'iso27001',
-			label: 'ISO 27001',
-			description: 'International security standard',
-			popular: false
-		}
-	];
+	// Step 3 state — slug of selected framework, default to first recommended or first available
+	let framework = $state(
+		data.frameworks.find((f) => f.recommended)?.slug ?? data.frameworks[0]?.slug ?? ''
+	);
 
 	// Step 4 state
 	let stack = $state<string[]>([]);
@@ -63,6 +48,9 @@
 
 	let loading = $state(false);
 	let errorMsg = $state('');
+	// Domain block: set when check-domain returns hasExistingOrg && !isMember
+	let domainBlocked = $state(false);
+	let domainBlockMsg = $state('');
 
 	function toggleStack(item: string) {
 		if (stack.includes(item)) {
@@ -73,12 +61,14 @@
 	}
 
 	const frameworkLabel = $derived(
-		frameworkOptions.find((f) => f.value === framework)?.label ?? framework
+		data.frameworks.find((f) => f.slug === framework)?.name ?? framework
 	);
 	const teamLabel = $derived(teamOptions.find((t) => t.value === teamSize)?.label ?? teamSize);
 
 	async function next() {
 		errorMsg = '';
+		domainBlocked = false;
+		domainBlockMsg = '';
 		loading = true;
 		try {
 			if (step === 1) {
@@ -87,6 +77,24 @@
 					loading = false;
 					return;
 				}
+
+				// Check domain BEFORE creating the org — catches cases where another
+				// company on the same domain already exists and this user isn't a member.
+				const domainRes = await fetch('/api/onboarding/check-domain');
+				if (domainRes.ok) {
+					const domainData = await domainRes.json();
+					if (domainData.hasExistingOrg && !domainData.isMember) {
+						// A different org owns this domain — block with invite prompt
+						domainBlocked = true;
+						domainBlockMsg = `An organization for ${domainData.domain} already exists on AuditLift. Ask your team admin to send you an invite.`;
+						loading = false;
+						return;
+					}
+					// isMember: true means they already have an org (e.g. refreshed mid-onboarding).
+					// Just fall through and update the org name — the server handles this safely.
+				}
+
+				// Create or update the organization
 				const res = await fetch('/api/onboarding/organization', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -222,6 +230,13 @@
 										<option value="Other">Other</option>
 									</select>
 								</div>
+								{#if domainBlocked}
+									<div
+										class="rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light,#fef2f2)] px-4 py-3 text-sm text-[var(--danger)]"
+									>
+										{domainBlockMsg}
+									</div>
+								{/if}
 							</div>
 
 							<!-- Step 2: Team Size -->
@@ -289,20 +304,20 @@
 							</div>
 
 							<div class="space-y-3">
-								{#each frameworkOptions as option}
+								{#each data.frameworks as option}
 									<button
 										type="button"
-										onclick={() => (framework = option.value)}
+										onclick={() => (framework = option.slug)}
 										class="flex w-full cursor-pointer items-start gap-4 rounded-[var(--radius-lg)] border-2 p-4 text-left transition-all duration-150
-										{framework === option.value
+										{framework === option.slug
 											? 'border-[var(--brand)] bg-[var(--brand-light)]'
 											: 'border-[var(--border)] bg-white hover:border-[var(--foreground-subtle)]'}"
 									>
 										<div
 											class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors
-											{framework === option.value ? 'border-[var(--brand)] bg-[var(--brand)]' : 'border-[var(--border)]'}"
+											{framework === option.slug ? 'border-[var(--brand)] bg-[var(--brand)]' : 'border-[var(--border)]'}"
 										>
-											{#if framework === option.value}
+											{#if framework === option.slug}
 												<div class="h-2 w-2 rounded-full bg-white"></div>
 											{/if}
 										</div>
@@ -310,12 +325,12 @@
 											<div class="mb-0.5 flex items-center gap-2">
 												<span
 													class="text-sm font-semibold
-													{framework === option.value ? 'text-[var(--brand)]' : 'text-[var(--foreground)]'}"
+													{framework === option.slug ? 'text-[var(--brand)]' : 'text-[var(--foreground)]'}"
 												>
-													{option.label}
+													{option.name}
 												</span>
-												{#if option.popular}
-													<Badge variant="info">⭐ Most Popular</Badge>
+												{#if option.recommended}
+													<Badge variant="info">Recommended</Badge>
 												{/if}
 											</div>
 											<p class="text-xs text-[var(--foreground-muted)]">{option.description}</p>

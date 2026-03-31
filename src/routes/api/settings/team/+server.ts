@@ -5,6 +5,7 @@ import { userOrganizations, organizationInvitations, organizations } from '$lib/
 import { eq, and, or } from 'drizzle-orm';
 import { requireInvitePermission, canInvite } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
+import { sendInviteEmail } from '$lib/server/email';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -143,6 +144,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const origin = process.env.ORIGIN || 'http://localhost:5173';
 	const inviteLink = `${origin}/invite/${token}`;
+
+	const inviterName = locals.session?.user?.name ?? locals.session?.user?.email ?? 'A team member';
+
+	sendInviteEmail({
+		to: email,
+		inviterName,
+		organizationName: locals.organization?.name ?? 'your organization',
+		inviteLink,
+		role: role as string,
+		expiresAt: invitation.expiresAt
+	}).catch(console.error);
 
 	return json({
 		invitation: {

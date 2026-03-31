@@ -101,13 +101,16 @@
 		"src/routes/invite/[token]/+page.server.ts"
 	],
 	"/(marketing)/login": [],
-	"/onboarding": [],
+	"/onboarding": [
+		"src/routes/onboarding/+page.server.ts"
+	],
 	"/(app)/policies": [
 		"src/routes/(app)/policies/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(marketing)/pricing": [],
 	"/(app)/settings": [
+		"src/routes/(app)/settings/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/billing": [

@@ -1,9 +1,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { evidence } from '$lib/server/db/schema';
+import { evidence, controls } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { fileExists, deleteFile } from '$lib/server/storage';
+import { computeReadinessScore } from '$lib/server/score';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -43,6 +44,15 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 				updatedAt: new Date()
 			})
 			.where(and(eq(evidence.id, evidenceId), eq(evidence.organizationId, orgId)));
+
+		const [ctrl] = await db
+			.select({ frameworkId: controls.frameworkId })
+			.from(controls)
+			.where(eq(controls.id, existingEvidence.controlId))
+			.limit(1);
+		if (ctrl) {
+			computeReadinessScore(orgId, ctrl.frameworkId).catch(console.error);
+		}
 
 		return json({ success: true });
 	} catch (err) {

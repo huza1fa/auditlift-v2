@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "readiness_scores_org_framework_idx" ON "readiness_scores" USING btree ("organization_id","framework_id");

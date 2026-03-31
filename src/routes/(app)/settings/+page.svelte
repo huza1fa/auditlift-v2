@@ -3,11 +3,11 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let { data } = $props();
 
-	let currentPath = $state($page.url.pathname);
+	const currentPath = $derived(page.url.pathname);
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
 

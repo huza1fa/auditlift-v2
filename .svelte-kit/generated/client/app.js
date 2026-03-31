@@ -36,10 +36,10 @@ export const dictionary = {
 		"/(app)/frameworks": [~9,[2]],
 		"/invite/[token]": [~17],
 		"/(marketing)/login": [15,[3]],
-		"/onboarding": [18],
+		"/onboarding": [~18],
 		"/(app)/policies": [~10,[2]],
 		"/(marketing)/pricing": [16,[3]],
-		"/(app)/settings": [11,[2]],
+		"/(app)/settings": [~11,[2]],
 		"/(app)/settings/billing": [~12,[2]],
 		"/(app)/settings/team": [~13,[2]]
 	};

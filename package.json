@@ -51,6 +51,7 @@
 		"bits-ui": "^2.16.4",
 		"pdf-lib": "^1.17.1",
 		"phosphor-svelte": "^3.1.0",
+		"resend": "^6.10.0",
 		"stripe": "^21.0.1"
 	}
 }

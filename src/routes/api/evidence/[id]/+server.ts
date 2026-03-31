@@ -1,9 +1,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { evidence } from '$lib/server/db/schema';
+import { evidence, controls } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getPresignedDownloadUrl, deleteFile } from '$lib/server/storage';
+import { computeReadinessScore } from '$lib/server/score';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -61,6 +62,15 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	await db
 		.delete(evidence)
 		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)));
+
+	const [ctrl] = await db
+		.select({ frameworkId: controls.frameworkId })
+		.from(controls)
+		.where(eq(controls.id, ev.controlId))
+		.limit(1);
+	if (ctrl) {
+		computeReadinessScore(orgId, ctrl.frameworkId).catch(console.error);
+	}
 
 	return json({ success: true });
 };

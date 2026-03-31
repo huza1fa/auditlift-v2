@@ -133,20 +133,26 @@ export const policies = pgTable('policies', {
 
 // ─── Readiness Scores ─────────────────────────────────────────────────────────
 
-export const readinessScores = pgTable('readiness_scores', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	organizationId: uuid('organization_id')
-		.notNull()
-		.references(() => organizations.id),
-	frameworkId: uuid('framework_id')
-		.notNull()
-		.references(() => frameworks.id),
-	score: integer('score').notNull().default(0),
-	blockerCount: integer('blocker_count').notNull().default(0),
-	computedAt: timestamp('computed_at').notNull().defaultNow(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
-});
+export const readinessScores = pgTable(
+	'readiness_scores',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id),
+		frameworkId: uuid('framework_id')
+			.notNull()
+			.references(() => frameworks.id),
+		score: integer('score').notNull().default(0),
+		blockerCount: integer('blocker_count').notNull().default(0),
+		computedAt: timestamp('computed_at').notNull().defaultNow(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('readiness_scores_org_framework_idx').on(table.organizationId, table.frameworkId)
+	]
+);
 
 // ─── User Organizations ───────────────────────────────────────────────────────
 

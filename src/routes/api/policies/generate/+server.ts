@@ -11,6 +11,34 @@ import {
 	POLICY_TITLES,
 	type StandardPolicyType
 } from '$lib/server/policy-config';
+import { computeReadinessScore } from '$lib/server/score';
+
+// ─── Template fallback ────────────────────────────────────────────────────────
+
+const templateFiles = import.meta.glob('/src/lib/server/policy-templates/*.md', {
+	eager: true,
+	query: '?raw',
+	import: 'default'
+}) as Record<string, string>;
+
+function getTemplateContent(policyType: string, ctx: PolicyContext): string | null {
+	const key = `/src/lib/server/policy-templates/${policyType}.md`;
+	const raw = templateFiles[key];
+	if (!raw) return null;
+
+	const date = new Date().toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	});
+
+	return raw
+		.replace(/\{\{companyName\}\}/g, ctx.companyName)
+		.replace(/\{\{teamSize\}\}/g, ctx.teamSize)
+		.replace(/\{\{stack\}\}/g, ctx.stack)
+		.replace(/\{\{framework\}\}/g, ctx.framework)
+		.replace(/\{\{date\}\}/g, date);
+}
 
 // ─── OpenRouter client ────────────────────────────────────────────────────────
 
@@ -431,7 +459,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		: POLICY_PROMPTS[policyType as StandardPolicyType](ctx);
 
 	// Generate with AI
-	let content: string;
+	let content = '';
 	try {
 		const result = await generateText({
 			model: openrouter('openai/gpt-4o-mini'),
@@ -440,11 +468,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		});
 		content = result.text;
 	} catch (err) {
-		console.error('[policy-generate] AI generation failed:', err);
-		throw error(
-			500,
-			'Policy generation failed. Please try again. If the problem persists, contact support.'
-		);
+		console.error('[policy-generate] AI generation failed, trying template fallback:', err);
+		if (!isCustom) {
+			content = getTemplateContent(policyType, ctx) ?? '';
+		}
+		if (!content) {
+			throw error(500, { message: 'Policy generation failed. Please try again.' });
+		}
 	}
 
 	// Determine title
@@ -466,5 +496,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		})
 		.returning();
 
-	return json({ policy });
+	if (frameworkId) {
+		computeReadinessScore(orgId, frameworkId).catch(console.error);
+	}
+
+	return json(policy);
 };

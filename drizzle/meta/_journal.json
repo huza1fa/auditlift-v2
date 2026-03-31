@@ -29,6 +29,13 @@
       "when": 1774818933346,
       "tag": "0003_productive_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774987442897,
+      "tag": "0004_black_thundra",
+      "breakpoints": true
     }
   ]
 }

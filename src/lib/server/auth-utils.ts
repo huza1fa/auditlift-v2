@@ -81,7 +81,16 @@ export function extractDomainFromEmail(email: string): string | null {
 	if (parts.length !== 2) return null;
 	const domain = parts[1].toLowerCase();
 	// Skip common personal email domains
-	const personalDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
+	const personalDomains = [
+		'gmail.com',
+		'yahoo.com',
+		'hotmail.com',
+		'outlook.com',
+		'icloud.com',
+		'protonmail.com',
+		'proton.me',
+		'users.noreply.github.com' // GitHub private email proxy
+	];
 	if (personalDomains.includes(domain)) return null;
 	return domain;
 }
