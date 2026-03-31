@@ -8,44 +8,76 @@ import {
 	evidence,
 	policies
 } from '$lib/server/db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, sql } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
 	const orgId = locals.organizationId;
 
-	const [orgFramework] = await db
+	// Get all frameworks for this organization
+	const orgFrameworks = await db
 		.select({ frameworkId: organizationFrameworks.frameworkId, framework: frameworks })
 		.from(organizationFrameworks)
 		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
-		.where(eq(organizationFrameworks.organizationId, orgId))
-		.limit(1);
+		.where(eq(organizationFrameworks.organizationId, orgId));
 
-	if (!orgFramework) return { controls: [], framework: null };
+	if (orgFrameworks.length === 0) return { controls: [], framework: null, frameworks: [] };
 
-	const allControls = await db
-		.select()
-		.from(controls)
-		.where(eq(controls.frameworkId, orgFramework.frameworkId));
+	// Determine which framework to show (from query param or first one)
+	const selectedFrameworkSlug = url.searchParams.get('framework');
+	let selectedFramework = orgFrameworks[0];
+	if (selectedFrameworkSlug) {
+		const found = orgFrameworks.find((f) => f.framework.slug === selectedFrameworkSlug);
+		if (found) selectedFramework = found;
+	}
 
-	const controlsWithStatus = await Promise.all(
-		allControls.map(async (control) => {
-			const [ev] = await db
-				.select({ count: count() })
-				.from(evidence)
-				.where(and(eq(evidence.organizationId, orgId), eq(evidence.controlId, control.id)));
-			const [pol] = await db
-				.select({ count: count() })
-				.from(policies)
-				.where(and(eq(policies.organizationId, orgId), eq(policies.controlId, control.id)));
-			return {
-				...control,
-				evidenceCount: ev?.count ?? 0,
-				policyCount: pol?.count ?? 0,
-				complete: (ev?.count ?? 0) > 0 || (pol?.count ?? 0) > 0
-			};
+	// Single query with LEFT JOINs to get evidence and policy counts per control
+	const controlsWithCounts = await db
+		.select({
+			id: controls.id,
+			frameworkId: controls.frameworkId,
+			code: controls.code,
+			title: controls.title,
+			description: controls.description,
+			whyItMatters: controls.whyItMatters,
+			whatAuditorExpects: controls.whatAuditorExpects,
+			category: controls.category,
+			createdAt: controls.createdAt,
+			updatedAt: controls.updatedAt,
+			evidenceCount: sql<number>`count(distinct ${evidence.id})::int`,
+			policyCount: sql<number>`count(distinct ${policies.id})::int`
 		})
-	);
+		.from(controls)
+		.leftJoin(
+			evidence,
+			and(eq(evidence.controlId, controls.id), eq(evidence.organizationId, orgId))
+		)
+		.leftJoin(
+			policies,
+			and(eq(policies.controlId, controls.id), eq(policies.organizationId, orgId))
+		)
+		.where(eq(controls.frameworkId, selectedFramework.frameworkId))
+		.groupBy(controls.id);
 
-	return { controls: controlsWithStatus, framework: orgFramework.framework };
+	const result = controlsWithCounts.map((c) => ({
+		id: c.id,
+		frameworkId: c.frameworkId,
+		code: c.code,
+		title: c.title,
+		description: c.description,
+		whyItMatters: c.whyItMatters,
+		whatAuditorExpects: c.whatAuditorExpects,
+		category: c.category,
+		createdAt: c.createdAt,
+		updatedAt: c.updatedAt,
+		evidenceCount: c.evidenceCount ?? 0,
+		policyCount: c.policyCount ?? 0,
+		complete: (c.evidenceCount ?? 0) > 0 || (c.policyCount ?? 0) > 0
+	}));
+
+	return {
+		controls: result,
+		framework: selectedFramework.framework,
+		frameworks: orgFrameworks.map((f) => f.framework)
+	};
 };

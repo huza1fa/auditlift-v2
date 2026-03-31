@@ -11,8 +11,8 @@ import {
 import { eq } from 'drizzle-orm';
 import { hasActiveAccess } from '$lib/server/billing';
 import archiver from 'archiver';
-import fs from 'fs';
-import path from 'path';
+import { generatePolicyPdf } from '$lib/server/pdf';
+import { downloadFile } from '$lib/server/storage';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
@@ -62,20 +62,25 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 	archive.append(csvLines.join('\n'), { name: `${folderName}/control-mapping.csv` });
 
-	// Policies
+	// Policies as PDF
+	const companyName = org.name ?? 'AuditLift';
 	for (const policy of allPolicies) {
-		const filename = `${folderName}/Policies/${policy.type}.md`;
-		archive.append(policy.content, { name: filename });
+		const safeFilename = policy.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+		const pdfBytes = await generatePolicyPdf(policy.title, policy.content, companyName);
+		archive.append(Buffer.from(pdfBytes), { name: `${folderName}/Policies/${safeFilename}.pdf` });
 	}
 
-	// Evidence files
-	const uploadDir = path.join(process.cwd(), 'uploads');
+	// Evidence files from S3
 	for (const ev of allEvidence) {
 		const control = allControls.find((c) => c.id === ev.controlId);
 		const controlCode = control?.code ?? 'unknown';
-		const filePath = path.join(uploadDir, ev.storageKey);
-		if (fs.existsSync(filePath)) {
-			archive.file(filePath, { name: `${folderName}/Evidence/${controlCode}/${ev.filename}` });
+		try {
+			const fileBuffer = await downloadFile(ev.storageKey);
+			archive.append(fileBuffer, {
+				name: `${folderName}/Evidence/${controlCode}/${ev.filename}`
+			});
+		} catch (err) {
+			console.warn(`[Export] Failed to download evidence ${ev.id}: ${err}`);
 		}
 	}
 

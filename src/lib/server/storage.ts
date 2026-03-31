@@ -2,7 +2,8 @@ import {
 	S3Client,
 	PutObjectCommand,
 	DeleteObjectCommand,
-	HeadObjectCommand
+	HeadObjectCommand,
+	GetObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { error } from '@sveltejs/kit';
@@ -108,4 +109,17 @@ export async function fileExists(storageKey: string): Promise<boolean> {
 	} catch {
 		return false;
 	}
+}
+
+export async function downloadFile(storageKey: string): Promise<Buffer> {
+	const command = new GetObjectCommand({
+		Bucket: BUCKET_NAME,
+		Key: storageKey
+	});
+	const response = await s3Client.send(command);
+	if (!response.Body) {
+		throw error(404, `File not found: ${storageKey}`);
+	}
+	const bytes = await response.Body.transformToByteArray();
+	return Buffer.from(bytes);
 }

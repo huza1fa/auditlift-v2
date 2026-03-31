@@ -45,9 +45,16 @@ export async function seed() {
 	// We use a workaround: fetch after insert regardless
 	const allFrameworks = await db.select().from(frameworks);
 	const soc2Framework = allFrameworks.find((f) => f.slug === 'soc2');
+	const pciFramework = allFrameworks.find((f) => f.slug === 'pci');
+	const isoFramework = allFrameworks.find((f) => f.slug === 'iso27001');
 
 	if (!soc2Framework) {
 		console.error('SOC2 framework not found after seeding. Aborting controls seed.');
+		return;
+	}
+
+	if (!pciFramework || !isoFramework) {
+		console.error('PCI or ISO27001 framework not found after seeding. Aborting controls seed.');
 		return;
 	}
 

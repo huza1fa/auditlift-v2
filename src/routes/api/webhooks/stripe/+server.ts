@@ -57,7 +57,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 		cancel_at_period_end: boolean;
 	};
 
-	const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+	const currentPeriodEnd = subscription.current_period_end
+		? new Date(subscription.current_period_end * 1000)
+		: null;
 
 	// Check if subscription exists for this org
 	const [existingSub] = await db
@@ -106,7 +108,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 	};
 
 	const status = mapStripeStatus(sub.status);
-	const currentPeriodEnd = new Date(sub.current_period_end * 1000);
+	const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
 
 	await db
 		.update(subscriptions)

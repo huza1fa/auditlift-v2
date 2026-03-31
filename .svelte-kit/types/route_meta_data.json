@@ -55,6 +55,12 @@
 	"/api/policies/generate": [
 		"src/routes/api/policies/generate/+server.ts"
 	],
+	"/api/policies/[id]": [
+		"src/routes/api/policies/[id]/+server.ts"
+	],
+	"/api/policies/[id]/download": [
+		"src/routes/api/policies/[id]/download/+server.ts"
+	],
 	"/api/settings/organization": [
 		"src/routes/api/settings/organization/+server.ts"
 	],

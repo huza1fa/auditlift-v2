@@ -436,7 +436,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const result = await generateText({
 			model: openrouter('openai/gpt-4o-mini'),
 			prompt,
-			maxTokens: 4096
+			maxOutputTokens: 4096
 		});
 		content = result.text;
 	} catch (err) {

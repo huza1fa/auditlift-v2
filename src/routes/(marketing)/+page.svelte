@@ -39,19 +39,20 @@
 		{
 			icon: ChartBar,
 			title: 'Readiness Score',
-			description: 'Live dashboard shows exactly how close you are and what\'s blocking you.',
+			description: "Live dashboard shows exactly how close you are and what's blocking you.",
 			iconBg: 'feature-icon-warning'
 		},
 		{
 			icon: Users,
 			title: 'Team Collaboration',
-			description: 'Invite your team and assign control owners. Track who\'s done what.',
+			description: "Invite your team and assign control owners. Track who's done what.",
 			iconBg: 'feature-icon-brand'
 		},
 		{
 			icon: DownloadSimple,
 			title: 'Auditor Export',
-			description: 'One-click ZIP with your policies, evidence, and control mapping. Auditor-ready.',
+			description:
+				'One-click ZIP with your policies, evidence, and control mapping. Auditor-ready.',
 			iconBg: 'feature-icon-success'
 		}
 	];
@@ -148,7 +149,14 @@
 						<!-- Progress ring -->
 						<div class="progress-ring-wrapper">
 							<svg class="progress-ring" viewBox="0 0 56 56" aria-hidden="true">
-								<circle cx="28" cy="28" r="22" fill="none" stroke="var(--border)" stroke-width="5" />
+								<circle
+									cx="28"
+									cy="28"
+									r="22"
+									fill="none"
+									stroke="var(--border)"
+									stroke-width="5"
+								/>
 								<circle
 									cx="28"
 									cy="28"
@@ -349,9 +357,7 @@
 	<section class="final-cta-section">
 		<div class="final-cta-inner">
 			<h2 class="final-cta-headline">Ready to close that enterprise deal?</h2>
-			<p class="final-cta-sub">
-				Start your 10-day free trial today. No credit card required.
-			</p>
+			<p class="final-cta-sub">Start your 10-day free trial today. No credit card required.</p>
 			<a href="/login" class="btn-primary btn-lg">
 				Get started free
 				<ArrowRight size={16} weight="bold" />
@@ -433,7 +439,9 @@
 		font-weight: 500;
 		color: var(--foreground-muted);
 		border-radius: var(--radius);
-		transition: color 0.15s, background 0.15s;
+		transition:
+			color 0.15s,
+			background 0.15s;
 	}
 
 	.nav-link:hover {
@@ -475,7 +483,9 @@
 		font-weight: 500;
 		text-decoration: none;
 		cursor: pointer;
-		transition: background 0.15s, opacity 0.15s;
+		transition:
+			background 0.15s,
+			opacity 0.15s;
 		white-space: nowrap;
 	}
 
@@ -502,7 +512,10 @@
 		font-weight: 500;
 		text-decoration: none;
 		cursor: pointer;
-		transition: border-color 0.15s, color 0.15s, background 0.15s;
+		transition:
+			border-color 0.15s,
+			color 0.15s,
+			background 0.15s;
 	}
 
 	.btn-ghost:hover {
@@ -861,7 +874,9 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 
 	.feature-card:hover {
@@ -1009,7 +1024,9 @@
 		font-size: 0.875rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background 0.2s, color 0.2s;
+		transition:
+			background 0.2s,
+			color 0.2s;
 		background: transparent;
 		color: var(--foreground-muted);
 	}

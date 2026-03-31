@@ -29,7 +29,9 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 		if (stripeSubs.data.length > 0) {
 			const stripeSub = stripeSubs.data[0];
-			const currentPeriodEnd = new Date((stripeSub as any).current_period_end * 1000);
+			const currentPeriodEnd = (stripeSub as any).current_period_end
+				? new Date((stripeSub as any).current_period_end * 1000)
+				: null;
 
 			await db
 				.update(subscriptions)
@@ -61,7 +63,9 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 			if (stripeSubs.data.length > 0) {
 				const stripeSub = stripeSubs.data[0];
-				const currentPeriodEnd = new Date((stripeSub as any).current_period_end * 1000);
+				const currentPeriodEnd = (stripeSub as any).current_period_end
+					? new Date((stripeSub as any).current_period_end * 1000)
+					: null;
 
 				if (existingSub) {
 					await db

@@ -1,8 +1,19 @@
 <script lang="ts">
-	import { FileText, Download, Plus, Spinner, CaretDown, CaretUp } from 'phosphor-svelte';
+	import {
+		FileText,
+		Download,
+		Plus,
+		Spinner,
+		CaretDown,
+		CaretUp,
+		PencilSimple,
+		FloppyDisk,
+		X
+	} from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
+	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 
 	// ── Types ────────────────────────────────────────────────────────────────
@@ -20,6 +31,9 @@
 	let errorMessage = $state('');
 	let policyList = $state<Policy[]>([...data.policies]);
 	let expandedId = $state<string | null>(null);
+	let editingId = $state<string | null>(null);
+	let editContent = $state('');
+	let saving = $state(false);
 
 	// ── Policy groups ────────────────────────────────────────────────────────
 	const policyGroups = [
@@ -81,13 +95,7 @@
 	}
 
 	function downloadPolicy(policy: Policy) {
-		const blob = new Blob([policy.content], { type: 'text/markdown' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `${policy.type}.md`;
-		a.click();
-		URL.revokeObjectURL(url);
+		window.open(`/api/policies/${policy.id}/download`, '_blank');
 	}
 
 	function toggleExpand(id: string) {
@@ -140,6 +148,38 @@
 			body.customPrompt = policy.customPrompt;
 		}
 		await callGenerate(body);
+	}
+
+	function startEdit(policy: Policy) {
+		editingId = policy.id;
+		editContent = policy.content;
+	}
+
+	function cancelEdit() {
+		editingId = null;
+		editContent = '';
+	}
+
+	async function saveEdit(policy: Policy) {
+		saving = true;
+		try {
+			const res = await fetch(`/api/policies/${policy.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ content: editContent })
+			});
+			if (!res.ok) throw new Error('Failed to save');
+			toastSuccess('Policy saved');
+			policyList = policyList.map((p) =>
+				p.id === policy.id ? { ...p, content: editContent, editedAt: new Date() } : p
+			);
+			editingId = null;
+			editContent = '';
+		} catch {
+			toastError('Failed to save policy');
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -322,13 +362,32 @@
 							>
 								{m.policies_regenerate()}
 							</Button>
+							<Button variant="ghost" size="sm" onclick={() => startEdit(policy)}>
+								<PencilSimple size={14} />
+							</Button>
 						</div>
 					</div>
 
 					{#if expandedId === policy.id}
 						<div class="border-t border-[var(--border)] bg-[var(--background-alt)] p-4">
-							<pre
-								class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{policy.content}</pre>
+							{#if editingId === policy.id}
+								<textarea
+									bind:value={editContent}
+									class="h-64 w-full resize-none rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+								></textarea>
+								<div class="mt-3 flex justify-end gap-2">
+									<Button variant="ghost" size="sm" onclick={cancelEdit}>
+										<X size={14} /> Cancel
+									</Button>
+									<Button size="sm" onclick={() => saveEdit(policy)} disabled={saving}>
+										<FloppyDisk size={14} />
+										{saving ? 'Saving...' : 'Save'}
+									</Button>
+								</div>
+							{:else}
+								<pre
+									class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{policy.content}</pre>
+							{/if}
 						</div>
 					{/if}
 				</Card>

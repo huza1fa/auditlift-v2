@@ -3,6 +3,7 @@
 	import { House, CheckSquare, FileText, FolderOpen, DownloadSimple, Gear } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import Toast from '$lib/components/ui/Toast.svelte';
 
 	let { data, children } = $props();
 
@@ -41,13 +42,18 @@
 	>
 		<!-- Logo -->
 		<div class="flex items-center gap-2.5 border-b border-[var(--border)] px-4 py-3.5">
-			<div class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]">
-				<LogoMark size={14} color="white" />
+			<div
+				class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]"
+			>
+				<LogoMark size={14} />
 			</div>
 			<div class="flex items-center gap-1.5">
 				<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">AuditLift</span>
 				{#if data.subscription?.status === 'active'}
-					<span class="rounded-full bg-[var(--success-light)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--success)]">Pro</span>
+					<span
+						class="rounded-full bg-[var(--success-light)] px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[var(--success)] uppercase"
+						>Pro</span
+					>
 				{/if}
 			</div>
 		</div>
@@ -97,14 +103,16 @@
 			{/if}
 
 			<!-- User + theme toggle -->
-			<div class="flex items-center gap-2 rounded-[var(--radius-md)] px-2.5 py-2 hover:bg-[var(--background-subtle)]">
+			<div
+				class="flex items-center gap-2 rounded-[var(--radius-md)] px-2.5 py-2 hover:bg-[var(--background-subtle)]"
+			>
 				<div
 					class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)] text-[10px] font-bold text-white"
 				>
 					{initials}
 				</div>
 				<div class="min-w-0 flex-1">
-					<p class="truncate text-[12px] font-semibold leading-tight text-[var(--foreground)]">
+					<p class="truncate text-[12px] leading-tight font-semibold text-[var(--foreground)]">
 						{data.organization.name}
 					</p>
 					<p class="truncate text-[10px] leading-tight text-[var(--foreground-subtle)]">
@@ -122,4 +130,7 @@
 			{@render children()}
 		</div>
 	</main>
+
+	<!-- Toast notifications -->
+	<Toast />
 </div>

@@ -19,7 +19,22 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-[var(--foreground)]">Controls</h1>
-		{#if data.framework}
+		{#if data.frameworks && data.frameworks.length > 1}
+			<select
+				onchange={(e) => {
+					const url = new URL(window.location.href);
+					url.searchParams.set('framework', (e.target as HTMLSelectElement).value);
+					window.location.href = url.toString();
+				}}
+				class="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-sm text-[var(--foreground)]"
+			>
+				{#each data.frameworks as fw (fw.id)}
+					<option value={fw.slug} selected={fw.id === data.framework?.id}>
+						{fw.name}
+					</option>
+				{/each}
+			</select>
+		{:else if data.framework}
 			<Badge variant="info">{data.framework.name}</Badge>
 		{/if}
 	</div>

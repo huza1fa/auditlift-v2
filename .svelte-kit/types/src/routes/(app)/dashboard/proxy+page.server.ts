@@ -47,7 +47,9 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 				const stripeSub = await stripe.subscriptions.retrieve(
 					checkoutSession.subscription as string
 				);
-				const currentPeriodEnd = new Date((stripeSub as any).current_period_end * 1000);
+				const currentPeriodEnd = (stripeSub as any).current_period_end
+					? new Date((stripeSub as any).current_period_end * 1000)
+					: null;
 
 				// Check if sub exists in DB
 				const [existingSub] = await db

@@ -1,10 +1,26 @@
 <script lang="ts">
-	import { FolderOpen, File, ArrowRight, Download } from 'phosphor-svelte';
+	import {
+		FolderOpen,
+		File,
+		ArrowRight,
+		Download,
+		PencilSimple,
+		FloppyDisk,
+		X,
+		Note
+	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
 
 	let { data } = $props();
+
+	type Evidence = (typeof data.evidenceList)[0];
+
+	let editingId = $state<string | null>(null);
+	let editNotes = $state('');
+	let saving = $state(false);
 
 	function formatSize(bytes: number): string {
 		if (bytes < 1024) return `${bytes}B`;
@@ -26,6 +42,36 @@
 			a.click();
 		} catch (err) {
 			console.error('Download failed:', err);
+		}
+	}
+
+	function startEditNotes(ev: Evidence) {
+		editingId = ev.id;
+		editNotes = ev.notes ?? '';
+	}
+
+	function cancelEditNotes() {
+		editingId = null;
+		editNotes = '';
+	}
+
+	async function saveNotes(ev: Evidence) {
+		saving = true;
+		try {
+			const res = await fetch(`/api/evidence/${ev.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ notes: editNotes })
+			});
+			if (!res.ok) throw new Error('Failed to save');
+			toastSuccess('Notes saved');
+			ev.notes = editNotes;
+			editingId = null;
+			editNotes = '';
+		} catch {
+			toastError('Failed to save notes');
+		} finally {
+			saving = false;
 		}
 	}
 </script>
@@ -69,9 +115,35 @@
 									{formatSize(ev.sizeBytes)} &middot;
 									{new Date(ev.createdAt).toLocaleDateString()}
 								</p>
+								{#if editingId === ev.id}
+									<div class="mt-2 flex items-center gap-2">
+										<input
+											bind:value={editNotes}
+											placeholder="Add notes..."
+											class="flex-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)]"
+										/>
+										<button
+											onclick={() => saveNotes(ev)}
+											class="text-[var(--success)] hover:opacity-70"
+										>
+											<FloppyDisk size={12} />
+										</button>
+										<button
+											onclick={cancelEditNotes}
+											class="text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+										>
+											<X size={12} />
+										</button>
+									</div>
+								{:else if ev.notes}
+									<p class="mt-1 text-xs text-[var(--foreground-muted)] italic">"{ev.notes}"</p>
+								{/if}
 							</div>
 						</div>
 						<div class="flex items-center gap-3">
+							<Button variant="ghost" size="sm" onclick={() => startEditNotes(ev)}>
+								<PencilSimple size={14} />
+							</Button>
 							<Button
 								variant="ghost"
 								size="sm"
