@@ -13,9 +13,24 @@
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
-	const monthlyPrice = 290;
-	const yearlyPrice = 2958;
-	const yearlyPerMonth = $derived(Math.round(yearlyPrice / 12));
+
+	const pricingPlans = [
+		{
+			id: 'starter',
+			name: 'Starter',
+			monthlyPrice: 149,
+			yearlyPrice: 1431,
+			features: ['1 framework (SOC 2)', 'Unlimited evidence & policies', 'Up to 5 team members', 'Auditor export', '14-day free trial']
+		},
+		{
+			id: 'growth',
+			name: 'Growth',
+			monthlyPrice: 299,
+			yearlyPrice: 2870,
+			highlighted: true,
+			features: ['All 3 frameworks', 'Unlimited evidence & policies', 'Unlimited team members', 'Auditor export', '14-day free trial']
+		}
+	];
 
 	const features = [
 		{
@@ -55,17 +70,6 @@
 				'One-click ZIP with your policies, evidence, and control mapping. Auditor-ready.',
 			iconBg: 'feature-icon-success'
 		}
-	];
-
-	const pricingFeatures = [
-		'Unlimited frameworks (SOC 2, PCI-DSS, ISO 27001)',
-		'All pre-mapped controls included',
-		'AI policy generator (unlimited)',
-		'Evidence locker (10 GB storage)',
-		'Readiness score dashboard',
-		'Team collaboration (up to 10 seats)',
-		'Auditor export (PDF + ZIP)',
-		'Priority email support'
 	];
 
 	const steps = [
@@ -298,56 +302,53 @@
 					onclick={() => (pricingPlan = 'yearly')}
 				>
 					Yearly
-					<span class="pricing-save-badge">Save 15%</span>
+					<span class="pricing-save-badge">Save 20%</span>
 				</button>
 			</div>
 
-			<!-- Pricing card -->
-			<div class="pricing-card">
-				<div class="pricing-card-accent"></div>
-				<div class="pricing-card-body">
-					<div class="pricing-card-header">
-						<div>
-							<p class="pricing-plan-name">AuditLift Pro</p>
-							<p class="pricing-plan-tagline">Everything you need to get audit-ready fast.</p>
-						</div>
-						<div class="pricing-price-group">
-							<span class="pricing-price">
-								${pricingPlan === 'monthly' ? monthlyPrice : yearlyPerMonth}
-							</span>
-							<span class="pricing-price-period">/month</span>
+			<!-- Pricing cards -->
+			<div class="pricing-cards-grid">
+				{#each pricingPlans as plan (plan.id)}
+					<div class="pricing-card {plan.highlighted ? 'pricing-card--highlighted' : ''}">
+						<div class="pricing-card-body">
+							<div class="pricing-card-header">
+								<div>
+									<p class="pricing-plan-name">{plan.name}</p>
+								</div>
+								<div class="pricing-price-group">
+									<span class="pricing-price">
+										${pricingPlan === 'monthly' ? plan.monthlyPrice : Math.round(plan.yearlyPrice / 12)}
+									</span>
+									<span class="pricing-price-period">/mo</span>
+								</div>
+							</div>
+							{#if pricingPlan === 'yearly'}
+								<p class="pricing-yearly-note">
+									${plan.yearlyPrice.toLocaleString()}/yr billed annually
+								</p>
+							{/if}
+							<ul class="pricing-features-list">
+								{#each plan.features as item (item)}
+									<li class="pricing-feature-item">
+										<span class="pricing-check-icon"><Check size={14} weight="bold" /></span>
+										{item}
+									</li>
+								{/each}
+							</ul>
+							<a href="/login" class="btn-primary pricing-cta-btn">Start free trial</a>
+							<p class="pricing-trial-note">14-day free trial. No credit card required.</p>
 						</div>
 					</div>
-
-					{#if pricingPlan === 'yearly'}
-						<p class="pricing-yearly-note">
-							Billed annually — ${yearlyPrice.toLocaleString()}/year
-						</p>
-					{/if}
-
-					<ul class="pricing-features-list">
-						{#each pricingFeatures as item (item)}
-							<li class="pricing-feature-item">
-								<span class="pricing-check-icon">
-									<Check size={14} weight="bold" />
-								</span>
-								{item}
-							</li>
-						{/each}
-					</ul>
-
-					<a href="/login" class="btn-primary pricing-cta-btn">Start your free trial</a>
-					<p class="pricing-trial-note">10-day free trial. No credit card required.</p>
-				</div>
+				{/each}
 			</div>
 
 			<!-- Competitor compare -->
 			<div class="competitor-compare">
 				<p class="competitor-compare-text">
 					Compare to
-					<span class="competitor-name">Vanta ($2,000+/month)</span>,
-					<span class="competitor-name">Drata ($1,500+/month)</span>,
-					<span class="competitor-name">Sprinto ($800+/month)</span>
+					<span class="competitor-name">Vanta ($7,500+/yr)</span>,
+					<span class="competitor-name">Drata ($10,000+/yr)</span>,
+					<span class="competitor-name">Sprinto ($6,000+/yr)</span>
 				</p>
 			</div>
 		</div>
@@ -357,7 +358,7 @@
 	<section class="final-cta-section">
 		<div class="final-cta-inner">
 			<h2 class="final-cta-headline">Ready to close that enterprise deal?</h2>
-			<p class="final-cta-sub">Start your 10-day free trial today. No credit card required.</p>
+			<p class="final-cta-sub">Start your 14-day free trial today. No credit card required.</p>
 			<a href="/login" class="btn-primary btn-lg">
 				Get started free
 				<ArrowRight size={16} weight="bold" />
@@ -1046,18 +1047,30 @@
 		color: var(--brand);
 	}
 
-	.pricing-card {
-		max-width: 30rem;
+	.pricing-cards-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+		max-width: 52rem;
 		margin: 0 auto;
+	}
+
+	@media (max-width: 640px) {
+		.pricing-cards-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.pricing-card {
 		border-radius: var(--radius-xl, 1rem);
 		border: 1px solid var(--border);
 		overflow: hidden;
-		box-shadow: 0 8px 40px color-mix(in srgb, var(--brand) 10%, transparent);
+		box-shadow: 0 4px 20px color-mix(in srgb, var(--brand) 8%, transparent);
 	}
 
-	.pricing-card-accent {
-		height: 4px;
-		background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 70%, #fff));
+	.pricing-card--highlighted {
+		border-color: var(--brand);
+		box-shadow: 0 8px 40px color-mix(in srgb, var(--brand) 15%, transparent);
 	}
 
 	.pricing-card-body {

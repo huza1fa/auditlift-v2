@@ -1,8 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { organizationFrameworks, frameworks } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { organizationFrameworks, frameworks, readinessSnapshots } from '$lib/server/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -28,6 +28,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	if (orgFramework) {
 		readiness = await computeReadinessScore(orgId, orgFramework.framework.id);
+	}
+
+	let scoreHistory: Array<{ score: number; snapshotAt: Date }> = [];
+	if (orgFramework) {
+		scoreHistory = await db
+			.select({ score: readinessSnapshots.score, snapshotAt: readinessSnapshots.snapshotAt })
+			.from(readinessSnapshots)
+			.where(
+				and(
+					eq(readinessSnapshots.organizationId, orgId),
+					eq(readinessSnapshots.frameworkId, orgFramework.framework.id)
+				)
+			)
+			.orderBy(desc(readinessSnapshots.snapshotAt))
+			.limit(8)
+			.then((rows) => rows.reverse());
 	}
 
 	// Sync subscription from Stripe if user just completed checkout
@@ -107,6 +123,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		readiness,
 		framework: orgFramework?.framework ?? null,
 		trialDaysRemaining,
-		justSubscribed
+		justSubscribed,
+		scoreHistory
 	};
 };

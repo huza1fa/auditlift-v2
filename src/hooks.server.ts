@@ -11,7 +11,6 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 
 	if (session?.user) {
-		// Attach organizationId to locals
 		const [userOrg] = await db
 			.select()
 			.from(userOrganizations)
@@ -21,18 +20,21 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		if (userOrg) {
 			event.locals.organizationId = userOrg.organizationId;
 
-			const [org] = await db
-				.select()
-				.from(organizations)
-				.where(eq(organizations.id, userOrg.organizationId))
-				.limit(1);
-			event.locals.organization = org;
+			// Fetch org + subscription in parallel
+			const [[org], [sub]] = await Promise.all([
+				db
+					.select()
+					.from(organizations)
+					.where(eq(organizations.id, userOrg.organizationId))
+					.limit(1),
+				db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.organizationId, userOrg.organizationId))
+					.limit(1)
+			]);
 
-			const [sub] = await db
-				.select()
-				.from(subscriptions)
-				.where(eq(subscriptions.organizationId, userOrg.organizationId))
-				.limit(1);
+			event.locals.organization = org;
 			event.locals.subscription = sub ?? null;
 		} else {
 			event.locals.organizationId = null;

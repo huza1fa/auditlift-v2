@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { House, CheckSquare, FileText, FolderOpen, DownloadSimple, Gear } from 'phosphor-svelte';
+	import { House, CheckSquare, FileText, FolderOpen, DownloadSimple, Gear, SignOut } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import Toast from '$lib/components/ui/Toast.svelte';
+	import { createAuthClient } from 'better-auth/svelte';
+
+	const authClient = createAuthClient();
+
+	async function signOut() {
+		await authClient.signOut();
+		window.location.href = '/login';
+	}
 
 	let { data, children } = $props();
 
@@ -95,7 +103,7 @@
 					<div class="h-1 w-full rounded-full bg-[var(--background-subtle)]">
 						<div
 							class="h-1 rounded-full bg-[var(--warning)] transition-all"
-							style="width: {Math.min(100, (trialDays / 10) * 100)}%"
+							style="width: {Math.min(100, (trialDays / 14) * 100)}%"
 						></div>
 					</div>
 					<p class="mt-1.5 text-[10px] text-[var(--warning)]">Upgrade to keep access →</p>
@@ -120,12 +128,31 @@
 					</p>
 				</div>
 				<ThemeToggle />
+				<button
+					onclick={signOut}
+					title="Sign out"
+					class="cursor-pointer rounded p-1 text-[var(--foreground-subtle)] transition-colors hover:bg-[var(--background-alt)] hover:text-[var(--foreground)]"
+				>
+					<SignOut size={14} />
+				</button>
 			</div>
 		</div>
 	</aside>
 
 	<!-- Main -->
 	<main class="ml-56 min-h-screen flex-1 bg-[var(--background)]">
+		{#if data.isReadOnly}
+			<div
+				class="border-b border-[var(--warning)] bg-[var(--warning-light)] px-6 py-2.5 text-center"
+			>
+				<p class="text-sm text-[var(--warning)]">
+					Your trial has ended. You're in read-only mode —
+					<a href="/settings/billing" class="font-semibold underline"
+						>upgrade to unlock uploads, policy generation, and export</a
+					>.
+				</p>
+			</div>
+		{/if}
 		<div class="p-6">
 			{@render children()}
 		</div>

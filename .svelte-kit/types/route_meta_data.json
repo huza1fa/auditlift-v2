@@ -113,6 +113,10 @@
 		"src/routes/(app)/settings/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
+	"/(app)/settings/activity": [
+		"src/routes/(app)/settings/activity/+page.server.ts",
+		"src/routes/(app)/+layout.server.ts"
+	],
 	"/(app)/settings/billing": [
 		"src/routes/(app)/settings/billing/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"

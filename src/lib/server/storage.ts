@@ -8,30 +8,32 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { error } from '@sveltejs/kit';
 
-const BUCKET_ENDPOINT = process.env.BUCKET_ENDPOINT;
-const BUCKET_REGION = process.env.BUCKET_REGION || 'auto';
-const BUCKET_NAME = process.env.BUCKET_NAME;
-const BUCKET_ACCESS_KEY = process.env.BUCKET_ACCESS_KEY;
-const BUCKET_SECRET_KEY = process.env.BUCKET_SECRET_KEY;
+let _s3Client: S3Client | null = null;
+let _bucketName: string | null = null;
 
-if (!BUCKET_ENDPOINT || !BUCKET_NAME || !BUCKET_ACCESS_KEY || !BUCKET_SECRET_KEY) {
-	console.error('[Storage] Missing S3 bucket configuration:', {
-		BUCKET_ENDPOINT: !!BUCKET_ENDPOINT,
-		BUCKET_NAME: !!BUCKET_NAME,
-		BUCKET_ACCESS_KEY: !!BUCKET_ACCESS_KEY,
-		BUCKET_SECRET_KEY: !!BUCKET_SECRET_KEY
-	});
-	throw new Error('Missing S3 bucket configuration in environment variables');
-}
+function getS3(): { client: S3Client; bucket: string } {
+	if (_s3Client && _bucketName) return { client: _s3Client, bucket: _bucketName };
 
-const s3Client = new S3Client({
-	endpoint: BUCKET_ENDPOINT,
-	region: BUCKET_REGION,
-	credentials: {
-		accessKeyId: BUCKET_ACCESS_KEY,
-		secretAccessKey: BUCKET_SECRET_KEY
+	const endpoint = process.env.BUCKET_ENDPOINT;
+	const region = process.env.BUCKET_REGION || 'auto';
+	const bucket = process.env.BUCKET_NAME;
+	const accessKey = process.env.BUCKET_ACCESS_KEY;
+	const secretKey = process.env.BUCKET_SECRET_KEY;
+
+	if (!endpoint || !bucket || !accessKey || !secretKey) {
+		throw new Error(
+			`Missing S3 configuration: ${JSON.stringify({ endpoint: !!endpoint, bucket: !!bucket, accessKey: !!accessKey, secretKey: !!secretKey })}`
+		);
 	}
-});
+
+	_s3Client = new S3Client({
+		endpoint,
+		region,
+		credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
+	});
+	_bucketName = bucket;
+	return { client: _s3Client, bucket: _bucketName };
+}
 
 export const ALLOWED_MIME_TYPES = [
 	'application/pdf',
@@ -64,34 +66,24 @@ export async function getPresignedUploadUrl(
 	mimeType: string,
 	expiresIn: number = 3600
 ): Promise<string> {
-	const command = new PutObjectCommand({
-		Bucket: BUCKET_NAME,
-		Key: storageKey,
-		ContentType: mimeType
-	});
-	const url = await getSignedUrl(s3Client, command, { expiresIn });
-	return url;
+	const { client, bucket } = getS3();
+	const command = new PutObjectCommand({ Bucket: bucket, Key: storageKey, ContentType: mimeType });
+	return getSignedUrl(client, command, { expiresIn });
 }
 
 export async function getPresignedDownloadUrl(
 	storageKey: string,
 	expiresIn: number = 3600
 ): Promise<string> {
-	const command = new HeadObjectCommand({
-		Bucket: BUCKET_NAME,
-		Key: storageKey
-	});
-	const url = await getSignedUrl(s3Client, command, { expiresIn });
-	return url;
+	const { client, bucket } = getS3();
+	const command = new GetObjectCommand({ Bucket: bucket, Key: storageKey });
+	return getSignedUrl(client, command, { expiresIn });
 }
 
 export async function deleteFile(storageKey: string): Promise<void> {
 	try {
-		const command = new DeleteObjectCommand({
-			Bucket: BUCKET_NAME,
-			Key: storageKey
-		});
-		await s3Client.send(command);
+		const { client, bucket } = getS3();
+		await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: storageKey }));
 	} catch (err) {
 		console.error('Failed to delete file from S3:', err);
 		throw error(500, 'Failed to delete file from storage');
@@ -100,11 +92,8 @@ export async function deleteFile(storageKey: string): Promise<void> {
 
 export async function fileExists(storageKey: string): Promise<boolean> {
 	try {
-		const command = new HeadObjectCommand({
-			Bucket: BUCKET_NAME,
-			Key: storageKey
-		});
-		await s3Client.send(command);
+		const { client, bucket } = getS3();
+		await client.send(new HeadObjectCommand({ Bucket: bucket, Key: storageKey }));
 		return true;
 	} catch {
 		return false;
@@ -112,14 +101,9 @@ export async function fileExists(storageKey: string): Promise<boolean> {
 }
 
 export async function downloadFile(storageKey: string): Promise<Buffer> {
-	const command = new GetObjectCommand({
-		Bucket: BUCKET_NAME,
-		Key: storageKey
-	});
-	const response = await s3Client.send(command);
-	if (!response.Body) {
-		throw error(404, `File not found: ${storageKey}`);
-	}
+	const { client, bucket } = getS3();
+	const response = await client.send(new GetObjectCommand({ Bucket: bucket, Key: storageKey }));
+	if (!response.Body) throw error(404, `File not found: ${storageKey}`);
 	const bytes = await response.Body.transformToByteArray();
 	return Buffer.from(bytes);
 }

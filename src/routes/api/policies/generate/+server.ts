@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { hasActiveAccess } from '$lib/server/billing';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { db } from '$lib/server/db';
@@ -12,6 +13,7 @@ import {
 	type StandardPolicyType
 } from '$lib/server/policy-config';
 import { computeReadinessScore } from '$lib/server/score';
+import { logActivity } from '$lib/server/activity';
 
 // ─── Template fallback ────────────────────────────────────────────────────────
 
@@ -409,6 +411,11 @@ Using the description above, write a complete, auditor-ready policy document. St
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
 	const orgId = locals.organizationId;
+
+	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
+		throw error(402, 'Trial expired. Upgrade to generate policies.');
+	}
+
 	const org = locals.organization;
 	if (!org) throw error(400, 'No organization found');
 
@@ -495,6 +502,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			generatedAt: new Date()
 		})
 		.returning();
+
+	logActivity({
+		organizationId: orgId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name,
+		action: 'policy.generate',
+		entityType: 'policy',
+		entityId: policy.id,
+		entityName: policy.title
+	}).catch(console.error);
 
 	if (frameworkId) {
 		computeReadinessScore(orgId, frameworkId).catch(console.error);

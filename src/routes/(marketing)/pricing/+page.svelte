@@ -1,25 +1,53 @@
 <script lang="ts">
-	import { Check, ArrowRight } from 'phosphor-svelte';
+	import { Check, ArrowRight, Envelope } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
 
-	let plan = $state<'monthly' | 'yearly'>('monthly');
+	let billing = $state<'monthly' | 'yearly'>('monthly');
 
-	const monthlyPrice = 290;
-	const yearlyPrice = 2958;
-	const yearlyPerMonth = $derived(Math.round(yearlyPrice / 12));
-
-	const features = [
-		'Unlimited controls & evidence',
-		'AI-powered policy generator',
-		'SOC 2, PCI-DSS, ISO 27001',
-		'Auditor-ready export package',
-		'Team management & invites',
-		'Priority email support',
-		'Readiness score dashboard',
-		'10-day free trial'
+	const plans = [
+		{
+			id: 'starter',
+			name: 'Starter',
+			description: 'Perfect for founders getting audit-ready for the first time.',
+			monthlyPrice: 149,
+			yearlyPrice: 1431,
+			highlighted: false,
+			cta: 'Start free trial',
+			ctaHref: '/login',
+			features: [
+				'1 compliance framework (SOC 2)',
+				'Unlimited controls & evidence',
+				'AI-powered policy generator',
+				'Auditor-ready export package',
+				'Up to 5 team members',
+				'Email support',
+				'Readiness score dashboard',
+				'14-day free trial'
+			]
+		},
+		{
+			id: 'growth',
+			name: 'Growth',
+			description: 'For teams scaling compliance across multiple frameworks.',
+			monthlyPrice: 299,
+			yearlyPrice: 2870,
+			highlighted: true,
+			cta: 'Start free trial',
+			ctaHref: '/login',
+			features: [
+				'All 3 frameworks (SOC 2, PCI-DSS, ISO 27001)',
+				'Unlimited controls & evidence',
+				'AI-powered policy generator',
+				'Auditor-ready export package',
+				'Unlimited team members',
+				'Priority email support',
+				'Readiness score dashboard',
+				'14-day free trial'
+			]
+		}
 	];
 </script>
 
@@ -42,107 +70,161 @@
 			<ThemeToggle />
 			<a
 				href="/login"
-				class="text-[13px] font-medium text-[var(--foreground-muted)] no-underline transition-colors hover:text-[var(--foreground)]"
+				class="text-[13px] font-medium text-[var(--foreground-muted)] no-underline hover:text-[var(--foreground)]"
+				>Sign in</a
 			>
-				Sign in
-			</a>
 			<a
 				href="/login"
-				class="rounded-[var(--radius)] bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white no-underline transition-colors hover:bg-[var(--brand-hover)]"
+				class="rounded-[var(--radius)] bg-[var(--brand)] px-3 py-1.5 text-[13px] font-medium text-white no-underline hover:bg-[var(--brand-hover)]"
+				>Start free trial</a
 			>
-				Start free trial
-			</a>
 		</div>
 	</div>
 </nav>
 
 <div class="flex min-h-screen flex-col bg-[var(--background)]">
-	<section class="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-32 pb-24 text-center">
-		<h1 class="mb-3 text-4xl font-bold tracking-tight text-[var(--foreground)]">
-			Simple, transparent pricing
-		</h1>
-		<p class="mb-10 max-w-md text-[15px] text-[var(--foreground-muted)]">
-			No hidden fees. No per-seat pricing. Just everything you need to pass your audit.
-		</p>
+	<section class="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-32 pb-24">
+		<div class="mb-3 text-center">
+			<h1 class="text-4xl font-bold tracking-tight text-[var(--foreground)]">
+				Simple, transparent pricing
+			</h1>
+			<p class="mt-3 text-[15px] text-[var(--foreground-muted)]">
+				No hidden fees. No per-seat pricing. Cancel any time.
+			</p>
+		</div>
 
-		<!-- Toggle -->
+		<!-- Billing toggle -->
 		<div
-			class="mb-10 inline-flex items-center rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--background-alt)] p-1"
+			class="my-8 inline-flex items-center rounded-[var(--radius-full)] border border-[var(--border)] bg-[var(--background-alt)] p-1"
 		>
 			<button
-				onclick={() => (plan = 'monthly')}
-				class="cursor-pointer rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all
-				{plan === 'monthly'
+				onclick={() => (billing = 'monthly')}
+				class="cursor-pointer rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all {billing ===
+				'monthly'
 					? 'bg-white text-[var(--foreground)] shadow-sm'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
 			>
 				Monthly
 			</button>
 			<button
-				onclick={() => (plan = 'yearly')}
-				class="flex cursor-pointer items-center gap-2 rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all
-				{plan === 'yearly'
+				onclick={() => (billing = 'yearly')}
+				class="flex cursor-pointer items-center gap-2 rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all {billing ===
+				'yearly'
 					? 'bg-white text-[var(--foreground)] shadow-sm'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
 			>
 				Yearly
 				<span
 					class="rounded-full bg-[var(--success-light)] px-2 py-0.5 text-[11px] font-semibold text-[var(--success)]"
+					>Save 20%</span
 				>
-					Save 15%
-				</span>
 			</button>
 		</div>
 
-		<!-- Pricing Card -->
-		<Card class="w-full max-w-md p-8">
-			<div class="mb-6 text-left">
-				<p class="text-[13px] font-medium text-[var(--foreground-muted)]">AuditLift Pro</p>
-				<div class="mt-1 flex items-baseline gap-1">
-					<span class="text-4xl font-bold tracking-tight text-[var(--foreground)]">
-						${plan === 'monthly' ? monthlyPrice : yearlyPerMonth}
-					</span>
-					<span class="text-[15px] text-[var(--foreground-muted)]">/month</span>
-				</div>
-				{#if plan === 'yearly'}
-					<p class="mt-1 text-[13px] text-[var(--foreground-muted)]">
-						${yearlyPrice}/year — billed annually
-					</p>
-				{/if}
-				<p class="mt-4 text-[13px] text-[var(--foreground-muted)]">
-					10-day free trial included. No credit card required.
-				</p>
-			</div>
-
-			<div class="mb-8 space-y-3">
-				{#each features as feature}
-					<div class="flex items-center gap-3">
-						<div
-							class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success-light)]"
-						>
-							<Check size={12} color="var(--success)" weight="bold" />
+		<!-- Plan cards -->
+		<div class="grid w-full grid-cols-1 gap-6 md:grid-cols-3">
+			{#each plans as plan (plan.id)}
+				<Card
+					class="relative flex flex-col p-8 {plan.highlighted
+						? 'border-[var(--brand)] ring-1 ring-[var(--brand)]'
+						: ''}"
+				>
+					{#if plan.highlighted}
+						<div class="absolute -top-3 left-1/2 -translate-x-1/2">
+							<Badge variant="info">Most popular</Badge>
 						</div>
-						<span class="text-[14px] text-[var(--foreground)]">{feature}</span>
+					{/if}
+					<div class="mb-6">
+						<p
+							class="text-[13px] font-semibold tracking-wider text-[var(--foreground-muted)] uppercase"
+						>
+							{plan.name}
+						</p>
+						<div class="mt-2 flex items-baseline gap-1">
+							<span class="text-4xl font-bold tracking-tight text-[var(--foreground)]">
+								${billing === 'monthly' ? plan.monthlyPrice : Math.round(plan.yearlyPrice / 12)}
+							</span>
+							<span class="text-[15px] text-[var(--foreground-muted)]">/mo</span>
+						</div>
+						{#if billing === 'yearly'}
+							<p class="mt-1 text-[13px] text-[var(--foreground-muted)]">
+								${plan.yearlyPrice}/yr billed annually
+							</p>
+						{/if}
+						<p class="mt-3 text-[13px] text-[var(--foreground-muted)]">{plan.description}</p>
 					</div>
-				{/each}
-			</div>
 
-			<a
-				href="/login"
-				class="flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--brand)] px-5 py-3 text-[14px] font-medium text-white no-underline transition-colors hover:bg-[var(--brand-hover)]"
-			>
-				Start your free trial
-				<ArrowRight size={16} />
-			</a>
-		</Card>
+					<div class="mb-8 flex-1 space-y-3">
+						{#each plan.features as feature}
+							<div class="flex items-start gap-3">
+								<div
+									class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success-light)]"
+								>
+									<Check size={10} color="var(--success)" weight="bold" />
+								</div>
+								<span class="text-[13px] text-[var(--foreground)]">{feature}</span>
+							</div>
+						{/each}
+					</div>
 
-		<!-- Trust line -->
-		<p class="mt-8 text-[12px] text-[var(--foreground-subtle)]">
-			Trusted by startups building SOC 2, PCI-DSS, and ISO 27001 programs.
+					<a
+						href={plan.ctaHref}
+						class="flex items-center justify-center gap-2 rounded-[var(--radius)] px-5 py-2.5 text-[14px] font-medium no-underline transition-colors {plan.highlighted
+							? 'bg-[var(--brand)] text-white hover:bg-[var(--brand-hover)]'
+							: 'border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--background-alt)]'}"
+					>
+						{plan.cta}
+						<ArrowRight size={14} />
+					</a>
+				</Card>
+			{/each}
+
+			<!-- Enterprise card -->
+			<Card class="flex flex-col p-8">
+				<div class="mb-6">
+					<p
+						class="text-[13px] font-semibold tracking-wider text-[var(--foreground-muted)] uppercase"
+					>
+						Enterprise
+					</p>
+					<div class="mt-2">
+						<span class="text-2xl font-bold text-[var(--foreground)]">Custom</span>
+					</div>
+					<p class="mt-3 text-[13px] text-[var(--foreground-muted)]">
+						For larger teams with advanced security, SSO, and dedicated onboarding needs.
+					</p>
+				</div>
+
+				<div class="mb-8 flex-1 space-y-3">
+					{#each ['Everything in Growth', 'SSO / SAML', 'Dedicated onboarding', 'SLA & uptime guarantees', 'Custom contract & billing', 'Priority phone support'] as feature}
+						<div class="flex items-start gap-3">
+							<div
+								class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success-light)]"
+							>
+								<Check size={10} color="var(--success)" weight="bold" />
+							</div>
+							<span class="text-[13px] text-[var(--foreground)]">{feature}</span>
+						</div>
+					{/each}
+				</div>
+
+				<a
+					href="mailto:hello@auditlift.io"
+					class="flex items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] px-5 py-2.5 text-[14px] font-medium text-[var(--foreground)] no-underline transition-colors hover:bg-[var(--background-alt)]"
+				>
+					<Envelope size={14} />
+					Talk to us
+				</a>
+			</Card>
+		</div>
+
+		<!-- Anchor line -->
+		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
+			Vanta starts at <strong>$7,500/yr</strong>. AuditLift gets you audit-ready from
+			<strong>$149/mo</strong>.
 		</p>
 	</section>
 
-	<!-- Footer -->
 	<footer class="border-t border-[var(--border)] py-8">
 		<div class="mx-auto flex max-w-6xl items-center justify-between px-6">
 			<p class="text-[12px] text-[var(--foreground-subtle)]">

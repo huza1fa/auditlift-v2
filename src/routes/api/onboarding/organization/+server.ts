@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		Date.now().toString(36);
 
 	const trialEndsAt = new Date();
-	trialEndsAt.setDate(trialEndsAt.getDate() + 10);
+	trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
 	const [org] = await db
 		.insert(organizations)

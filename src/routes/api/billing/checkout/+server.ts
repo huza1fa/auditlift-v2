@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createCheckoutSession, type PlanInterval } from '$lib/server/stripe';
+import { createCheckoutSession, type PlanInterval, type PlanTier } from '$lib/server/stripe';
 import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
@@ -8,10 +8,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		throw error(401, 'Unauthorized');
 	}
 
-	const { interval } = await request.json();
+	const { plan, interval } = await request.json();
 
 	if (interval !== 'monthly' && interval !== 'yearly') {
 		throw error(400, 'Invalid interval. Must be "monthly" or "yearly"');
+	}
+
+	if (plan !== 'starter' && plan !== 'growth') {
+		throw error(400, 'Invalid plan. Must be "starter" or "growth"');
 	}
 
 	const origin = env.ORIGIN || 'http://localhost:5173';
@@ -19,6 +23,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const checkoutUrl = await createCheckoutSession(
 		locals.session.user.email,
+		plan as PlanTier,
 		interval as PlanInterval,
 		locals.organizationId,
 		`${cleanOrigin}/dashboard?subscribed=true`,

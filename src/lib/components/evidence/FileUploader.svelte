@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Upload, Spinner } from 'phosphor-svelte';
+	import { Upload, Spinner, CheckCircle, X as XIcon } from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
@@ -16,24 +16,14 @@
 		maxSize = 10 * 1024 * 1024
 	}: Props = $props();
 
+	type FileEntry = { file: File; progress: number; done: boolean; error: string };
+
 	let fileInput: HTMLInputElement;
 	let uploading = $state(false);
-	let error = $state('');
-	let progress = $state(0);
+	let queue = $state<FileEntry[]>([]);
 
-	async function handleFileChange(e: Event) {
-		const file = (e.target as HTMLInputElement).files?.[0];
-		if (!file) return;
-
-		error = '';
-
-		if (file.size > maxSize) {
-			error = `File too large. Maximum size is ${maxSize / 1024 / 1024}MB`;
-			return;
-		}
-
-		uploading = true;
-		progress = 10;
+	async function uploadOne(entry: FileEntry): Promise<void> {
+		entry.progress = 10;
 
 		try {
 			const presignRes = await fetch('/api/evidence/presign', {
@@ -41,61 +31,82 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					controlId,
-					filename: file.name,
-					mimeType: file.type,
-					sizeBytes: file.size
+					filename: entry.file.name,
+					mimeType: entry.file.type,
+					sizeBytes: entry.file.size
 				})
 			});
 
 			if (!presignRes.ok) {
 				const err = await presignRes.json().catch(() => ({}));
-				throw new Error(err.message || 'Failed to get upload URL');
+				throw new Error((err as { message?: string }).message || 'Failed to get upload URL');
 			}
 
 			const { evidenceId, uploadUrl } = await presignRes.json();
-			progress = 30;
+			entry.progress = 30;
 
 			const uploadRes = await fetch(uploadUrl, {
 				method: 'PUT',
-				body: file,
-				headers: {
-					'Content-Type': file.type
-				}
+				body: entry.file,
+				headers: { 'Content-Type': entry.file.type }
 			});
 
-			if (!uploadRes.ok) {
-				throw new Error('Failed to upload file to storage');
-			}
+			if (!uploadRes.ok) throw new Error('Failed to upload file to storage');
+			entry.progress = 70;
 
-			progress = 70;
-
-			const confirmRes = await fetch(`/api/evidence/${evidenceId}/confirm`, {
-				method: 'POST'
-			});
-
+			const confirmRes = await fetch(`/api/evidence/${evidenceId}/confirm`, { method: 'POST' });
 			if (!confirmRes.ok) {
 				const err = await confirmRes.json().catch(() => ({}));
-				throw new Error(err.message || 'Failed to confirm upload');
+				throw new Error((err as { message?: string }).message || 'Failed to confirm upload');
 			}
 
-			progress = 100;
+			entry.progress = 100;
+			entry.done = true;
 
-			onUploadSuccess({
-				id: evidenceId,
-				filename: file.name,
-				sizeBytes: file.size
-			});
+			onUploadSuccess({ id: evidenceId, filename: entry.file.name, sizeBytes: entry.file.size });
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Upload failed. Please try again.';
-		} finally {
-			uploading = false;
-			progress = 0;
-			if (fileInput) fileInput.value = '';
+			entry.error = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+			entry.progress = 0;
 		}
+	}
+
+	async function handleFileChange(e: Event) {
+		const files = Array.from((e.target as HTMLInputElement).files ?? []);
+		if (!files.length) return;
+
+		const valid = files.filter((f) => {
+			if (f.size > maxSize) return false;
+			return true;
+		});
+		const oversized = files.filter((f) => f.size > maxSize);
+
+		const entries: FileEntry[] = [
+			...valid.map((f) => ({ file: f, progress: 0, done: false, error: '' })),
+			...oversized.map((f) => ({
+				file: f,
+				progress: 0,
+				done: false,
+				error: `Too large (max ${maxSize / 1024 / 1024}MB)`
+			}))
+		];
+
+		queue = [...queue, ...entries];
+		uploading = true;
+
+		for (const entry of entries.filter((e) => !e.error)) {
+			await uploadOne(entry);
+		}
+
+		uploading = false;
+		if (fileInput) fileInput.value = '';
 	}
 
 	function triggerUpload() {
 		fileInput?.click();
+	}
+
+	function clearDone() {
+		queue = queue.filter((e) => !e.done && !e.error);
 	}
 </script>
 
@@ -105,12 +116,15 @@
 		type="file"
 		class="hidden"
 		{accept}
+		multiple
 		onchange={handleFileChange}
 		disabled={uploading}
 	/>
 
 	<div
-		class="cursor-pointer rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)] p-6 text-center transition-colors hover:border-[var(--brand)]"
+		class="cursor-pointer rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)] p-6 text-center transition-colors hover:border-[var(--brand)] {uploading
+			? 'pointer-events-none opacity-60'
+			: ''}"
 		onclick={triggerUpload}
 		onkeydown={(e) => e.key === 'Enter' && triggerUpload()}
 		role="button"
@@ -124,22 +138,51 @@
 			{/if}
 		</div>
 		<p class="text-sm font-medium text-[var(--foreground)]">
-			{#if uploading}
-				Uploading... {progress}%
-			{:else}
-				Click to upload
-			{/if}
+			{uploading ? 'Uploading...' : 'Click to upload'}
 		</p>
 		<p class="text-xs text-[var(--foreground-muted)]">
-			{#if uploading}
-				Please wait while your file is uploaded
-			{:else}
-				PDF, PNG, JPG, CSV, DOCX up to {maxSize / 1024 / 1024}MB
-			{/if}
+			{uploading
+				? 'Please wait'
+				: `PDF, PNG, JPG, CSV, DOCX up to ${maxSize / 1024 / 1024}MB · multiple files supported`}
 		</p>
 	</div>
 
-	{#if error}
-		<p class="text-sm text-[var(--danger)]">{error}</p>
+	{#if queue.length > 0}
+		<div class="space-y-2">
+			{#each queue as entry (entry.file.name + entry.file.size)}
+				<div
+					class="flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] px-3 py-2"
+				>
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm text-[var(--foreground)]">{entry.file.name}</p>
+						{#if entry.error}
+							<p class="text-xs text-[var(--danger)]">{entry.error}</p>
+						{:else if entry.done}
+							<p class="text-xs text-[var(--success)]">Uploaded</p>
+						{:else if entry.progress > 0}
+							<div class="mt-1 h-1 w-full rounded-full bg-[var(--border)]">
+								<div
+									class="h-1 rounded-full bg-[var(--brand)] transition-all"
+									style="width: {entry.progress}%"
+								></div>
+							</div>
+						{/if}
+					</div>
+					{#if entry.done}
+						<CheckCircle size={16} color="var(--success)" weight="fill" />
+					{:else if entry.error}
+						<XIcon size={16} color="var(--danger)" />
+					{/if}
+				</div>
+			{/each}
+			{#if queue.some((e) => e.done || e.error)}
+				<button
+					onclick={clearDone}
+					class="text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+				>
+					Clear completed
+				</button>
+			{/if}
+		</div>
 	{/if}
 </div>

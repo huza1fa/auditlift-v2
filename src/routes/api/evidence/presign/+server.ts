@@ -10,6 +10,7 @@ import {
 	ALLOWED_MIME_TYPES,
 	MAX_FILE_SIZE
 } from '$lib/server/storage';
+import { hasActiveAccess } from '$lib/server/billing';
 import { eq, and } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -17,6 +18,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(401, 'Unauthorized');
 	}
 	const orgId = locals.organizationId;
+
+	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
+		throw error(402, 'Trial expired. Upgrade to upload evidence.');
+	}
 
 	const body = await request.json();
 	const { controlId, filename, mimeType, sizeBytes } = body;

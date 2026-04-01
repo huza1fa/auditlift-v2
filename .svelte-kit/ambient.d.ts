@@ -52,8 +52,10 @@ declare module '$env/static/private' {
 	export const BUCKET_SECRET_KEY: string;
 	export const STRIPE_SECRET_KEY: string;
 	export const STRIPE_WEBHOOK_SECRET: string;
-	export const STRIPE_PRICE_MONTHLY: string;
-	export const STRIPE_PRICE_YEARLY: string;
+	export const STRIPE_STARTER_MONTHLY_PRICE_ID: string;
+	export const STRIPE_STARTER_YEARLY_PRICE_ID: string;
+	export const STRIPE_GROWTH_MONTHLY_PRICE_ID: string;
+	export const STRIPE_GROWTH_YEARLY_PRICE_ID: string;
 	export const RESEND_API_KEY: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
@@ -203,8 +205,10 @@ declare module '$env/dynamic/private' {
 		BUCKET_SECRET_KEY: string;
 		STRIPE_SECRET_KEY: string;
 		STRIPE_WEBHOOK_SECRET: string;
-		STRIPE_PRICE_MONTHLY: string;
-		STRIPE_PRICE_YEARLY: string;
+		STRIPE_STARTER_MONTHLY_PRICE_ID: string;
+		STRIPE_STARTER_YEARLY_PRICE_ID: string;
+		STRIPE_GROWTH_MONTHLY_PRICE_ID: string;
+		STRIPE_GROWTH_YEARLY_PRICE_ID: string;
 		RESEND_API_KEY: string;
 		TERM_PROGRAM: string;
 		NODE: string;

@@ -1,3 +1,0 @@
-Price ID,Product ID,Product Name,Product Statement Descriptor,Product Tax Code,Description,Created (UTC),Amount,Currency,Interval,Interval Count,Usage Type,Aggregate Usage,Billing Scheme,Trial Period Days,Tax Behavior
-price_1TGQZjPIkjUsw4wJNd9ZhN1Y,prod_UEuCYci7Rf6uvk,Auditlift Pro Subscription,,,15%  off if subscribed for the whole year.,2026-03-29 21:08,2958.00,cad,year,1,licensed,,per_unit,,unspecified
-price_1TGQOQPIkjUsw4wJWZ5LFDbe,prod_UEuCYci7Rf6uvk,Auditlift Pro Subscription,,,,2026-03-29 20:57,290.00,cad,month,1,licensed,,per_unit,,unspecified

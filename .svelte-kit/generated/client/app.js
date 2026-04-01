@@ -21,27 +21,29 @@ export const nodes = [
 	() => import('./nodes/15'),
 	() => import('./nodes/16'),
 	() => import('./nodes/17'),
-	() => import('./nodes/18')
+	() => import('./nodes/18'),
+	() => import('./nodes/19')
 ];
 
 export const server_loads = [2];
 
 export const dictionary = {
-		"/(marketing)": [14,[3]],
+		"/(marketing)": [15,[3]],
 		"/(app)/controls": [~4,[2]],
 		"/(app)/controls/[controlId]": [~5,[2]],
 		"/(app)/dashboard": [~6,[2]],
 		"/(app)/evidence": [~7,[2]],
 		"/(app)/export": [~8,[2]],
 		"/(app)/frameworks": [~9,[2]],
-		"/invite/[token]": [~17],
-		"/(marketing)/login": [15,[3]],
-		"/onboarding": [~18],
+		"/invite/[token]": [~18],
+		"/(marketing)/login": [16,[3]],
+		"/onboarding": [~19],
 		"/(app)/policies": [~10,[2]],
-		"/(marketing)/pricing": [16,[3]],
+		"/(marketing)/pricing": [17,[3]],
 		"/(app)/settings": [~11,[2]],
-		"/(app)/settings/billing": [~12,[2]],
-		"/(app)/settings/team": [~13,[2]]
+		"/(app)/settings/activity": [~12,[2]],
+		"/(app)/settings/billing": [~13,[2]],
+		"/(app)/settings/team": [~14,[2]]
 	};
 
 export const hooks = {

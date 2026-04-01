@@ -5,6 +5,7 @@ import { evidence, controls } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getPresignedDownloadUrl, deleteFile } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
+import { logActivity } from '$lib/server/activity';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -64,10 +65,22 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)));
 
 	const [ctrl] = await db
-		.select({ frameworkId: controls.frameworkId })
+		.select({ frameworkId: controls.frameworkId, code: controls.code })
 		.from(controls)
 		.where(eq(controls.id, ev.controlId))
 		.limit(1);
+
+	logActivity({
+		organizationId: orgId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name,
+		action: 'evidence.delete',
+		entityType: 'evidence',
+		entityId: ev.id,
+		entityName: ev.filename,
+		controlCode: ctrl?.code ?? null
+	}).catch(console.error);
+
 	if (ctrl) {
 		computeReadinessScore(orgId, ctrl.frameworkId).catch(console.error);
 	}

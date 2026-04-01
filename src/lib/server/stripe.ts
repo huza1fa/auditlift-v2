@@ -4,8 +4,10 @@ import { env } from '$env/dynamic/private';
 
 const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
-const STRIPE_PRICE_MONTHLY = env.STRIPE_PRICE_MONTHLY;
-const STRIPE_PRICE_YEARLY = env.STRIPE_PRICE_YEARLY;
+const STRIPE_STARTER_MONTHLY = env.STRIPE_STARTER_MONTHLY_PRICE_ID;
+const STRIPE_STARTER_YEARLY = env.STRIPE_STARTER_YEARLY_PRICE_ID;
+const STRIPE_GROWTH_MONTHLY = env.STRIPE_GROWTH_MONTHLY_PRICE_ID;
+const STRIPE_GROWTH_YEARLY = env.STRIPE_GROWTH_YEARLY_PRICE_ID;
 
 if (!STRIPE_SECRET_KEY) {
 	console.error('[Stripe] Missing STRIPE_SECRET_KEY in environment variables');
@@ -17,12 +19,17 @@ export const stripe = new Stripe(STRIPE_SECRET_KEY, {
 });
 
 export type PlanInterval = 'monthly' | 'yearly';
+export type PlanTier = 'starter' | 'growth';
 
-export function getPriceId(interval: PlanInterval): string {
-	const priceId = interval === 'yearly' ? STRIPE_PRICE_YEARLY : STRIPE_PRICE_MONTHLY;
-	if (!priceId) {
-		throw error(500, `Missing Stripe price ID for ${interval} interval`);
-	}
+export function getPriceId(tier: PlanTier, interval: PlanInterval): string {
+	const map: Record<string, string | undefined> = {
+		'starter-monthly': STRIPE_STARTER_MONTHLY,
+		'starter-yearly': STRIPE_STARTER_YEARLY,
+		'growth-monthly': STRIPE_GROWTH_MONTHLY,
+		'growth-yearly': STRIPE_GROWTH_YEARLY
+	};
+	const priceId = map[`${tier}-${interval}`];
+	if (!priceId) throw error(500, `Missing Stripe price ID for ${tier} ${interval}`);
 	return priceId;
 }
 
@@ -44,12 +51,13 @@ export function constructWebhookEvent(body: string | Buffer, signature: string):
 
 export async function createCheckoutSession(
 	customerEmail: string,
+	tier: PlanTier,
 	interval: PlanInterval,
 	organizationId: string,
 	successUrl: string,
 	cancelUrl: string
 ): Promise<string> {
-	const priceId = getPriceId(interval);
+	const priceId = getPriceId(tier, interval);
 
 	const session = await stripe.checkout.sessions.create({
 		mode: 'subscription',

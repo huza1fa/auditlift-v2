@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Buildings, CreditCard, Users, Warning, Trash } from 'phosphor-svelte';
+	import { Buildings, CreditCard, Users, Warning, Trash, ChartLine } from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -67,6 +67,17 @@
 			<CreditCard size={16} />
 			Billing
 		</a>
+		<a
+			href="/settings/activity"
+			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
+				'/settings/activity'
+			)
+				? 'border-[var(--brand)] text-[var(--brand)]'
+				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
+		>
+			<ChartLine size={16} />
+			ChartLine
+		</a>
 	</div>
 
 	<Card class="p-6">
@@ -109,7 +120,11 @@
 				</span>
 			{/if}
 		</div>
-		<p class="mt-4 text-sm text-[var(--foreground-muted)]">Stripe billing portal coming soon.</p>
+		<div class="mt-4">
+			<a href="/settings/billing">
+				<Button variant="secondary" size="sm">Manage billing</Button>
+			</a>
+		</div>
 	</Card>
 
 	<Card class="border-[var(--danger)] p-6">

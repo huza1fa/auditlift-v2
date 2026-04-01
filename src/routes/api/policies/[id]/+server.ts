@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { policies } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { logActivity } from '$lib/server/activity';
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -44,6 +45,16 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		.set(updates)
 		.where(eq(policies.id, policyId))
 		.returning();
+
+	logActivity({
+		organizationId: locals.organizationId!,
+		userId: locals.session!.user.id,
+		userName: locals.session!.user.name,
+		action: 'policy.edit',
+		entityType: 'policy',
+		entityId: updated.id,
+		entityName: updated.title
+	}).catch(console.error);
 
 	return json({ policy: updated });
 };

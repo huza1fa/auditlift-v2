@@ -5,6 +5,7 @@ import { evidence, controls } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { fileExists, deleteFile } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
+import { logActivity } from '$lib/server/activity';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -46,10 +47,22 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			.where(and(eq(evidence.id, evidenceId), eq(evidence.organizationId, orgId)));
 
 		const [ctrl] = await db
-			.select({ frameworkId: controls.frameworkId })
+			.select({ frameworkId: controls.frameworkId, code: controls.code })
 			.from(controls)
 			.where(eq(controls.id, existingEvidence.controlId))
 			.limit(1);
+
+		logActivity({
+			organizationId: orgId,
+			userId: locals.session.user.id,
+			userName: locals.session.user.name,
+			action: 'evidence.upload',
+			entityType: 'evidence',
+			entityId: existingEvidence.id,
+			entityName: existingEvidence.filename,
+			controlCode: ctrl?.code ?? null
+		}).catch(console.error);
+
 		if (ctrl) {
 			computeReadinessScore(orgId, ctrl.frameworkId).catch(console.error);
 		}

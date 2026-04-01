@@ -185,6 +185,37 @@ export const organizationInvitations = pgTable('organization_invitations', {
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// ─── Activity Logs ────────────────────────────────────────────────────────────
+
+export const activityLogs = pgTable('activity_logs', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id),
+	userId: text('user_id').notNull(),
+	userName: text('user_name'),
+	action: text('action').notNull(), // 'evidence.upload' | 'evidence.delete' | 'policy.generate' | 'policy.edit'
+	entityType: text('entity_type').notNull(), // 'evidence' | 'policy'
+	entityId: text('entity_id').notNull(),
+	entityName: text('entity_name'),
+	controlCode: text('control_code'),
+	createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// ─── Readiness Snapshots ──────────────────────────────────────────────────────
+
+export const readinessSnapshots = pgTable('readiness_snapshots', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id),
+	frameworkId: uuid('framework_id')
+		.notNull()
+		.references(() => frameworks.id),
+	score: integer('score').notNull(),
+	snapshotAt: timestamp('snapshot_at').defaultNow().notNull()
+});
+
 // ─── Re-export auth schema ────────────────────────────────────────────────────
 
 export * from './auth.schema';

@@ -7,7 +7,8 @@
 		PencilSimple,
 		FloppyDisk,
 		X,
-		Note
+		Note,
+		Warning
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
@@ -17,6 +18,11 @@
 	let { data } = $props();
 
 	type Evidence = (typeof data.evidenceList)[0];
+
+	const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+	function isStale(createdAt: Date | string): boolean {
+		return Date.now() - new Date(createdAt).getTime() > NINETY_DAYS_MS;
+	}
 
 	let editingId = $state<string | null>(null);
 	let editNotes = $state('');
@@ -79,7 +85,14 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-[var(--foreground)]">Evidence</h1>
-		<Badge variant="default">{data.evidenceList.length} files</Badge>
+		<div class="flex items-center gap-2">
+			<Badge variant="default">{data.evidenceList.length} files</Badge>
+			{#if data.evidenceList.filter((ev) => isStale(ev.createdAt)).length > 0}
+				<Badge variant="warning"
+					>{data.evidenceList.filter((ev) => isStale(ev.createdAt)).length} stale</Badge
+				>
+			{/if}
+		</div>
 	</div>
 
 	{#if data.evidenceList.length === 0}
@@ -115,6 +128,11 @@
 									{formatSize(ev.sizeBytes)} &middot;
 									{new Date(ev.createdAt).toLocaleDateString()}
 								</p>
+								{#if isStale(ev.createdAt)}
+									<span class="mt-0.5 flex items-center gap-1 text-xs text-[var(--warning)]">
+										<Warning size={10} weight="fill" /> Needs refresh — older than 90 days
+									</span>
+								{/if}
 								{#if editingId === ev.id}
 									<div class="mt-2 flex items-center gap-2">
 										<input

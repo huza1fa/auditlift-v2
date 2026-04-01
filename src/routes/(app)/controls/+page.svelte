@@ -6,6 +6,13 @@
 	let { data } = $props();
 
 	type ControlItem = (typeof data.controls)[number];
+
+	function getStatus(c: ControlItem): 'not-started' | 'in-progress' | 'complete' {
+		if (c.evidenceCount === 0 && c.policyCount === 0) return 'not-started';
+		if (c.evidenceCount > 0 && c.policyCount > 0) return 'complete';
+		return 'in-progress';
+	}
+
 	const grouped = $derived.by(() => {
 		const map = new Map<string, ControlItem[]>();
 		for (const c of data.controls) {
@@ -70,16 +77,19 @@
 							>
 							<span class="text-sm text-[var(--foreground)]">{control.title}</span>
 						</div>
-						<div
-							class="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100"
-						>
-							{#if control.evidenceCount > 0}
-								<Badge variant="success">{control.evidenceCount} files</Badge>
+						<div class="flex items-center gap-2">
+							{#if getStatus(control) === 'complete'}
+								<Badge variant="success">Complete</Badge>
+							{:else if getStatus(control) === 'in-progress'}
+								<Badge variant="info">In Progress</Badge>
+							{:else}
+								<Badge variant="warning">Not Started</Badge>
 							{/if}
-							{#if control.policyCount > 0}
-								<Badge variant="info">{control.policyCount} policies</Badge>
-							{/if}
-							<ArrowRight size={14} color="var(--foreground-muted)" />
+							<ArrowRight
+								size={14}
+								color="var(--foreground-muted)"
+								class="opacity-0 transition-opacity group-hover:opacity-100"
+							/>
 						</div>
 					</a>
 				{/each}

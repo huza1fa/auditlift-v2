@@ -8,6 +8,7 @@
 
 	let loading = $state<'monthly' | 'yearly' | 'portal' | null>(null);
 	let errorMsg = $state('');
+	let selectedPlan = $state<'starter' | 'growth'>('starter');
 
 	const isActive = $derived(data.subscription?.status === 'active');
 	const isPastDue = $derived(data.subscription?.status === 'past_due');
@@ -38,7 +39,7 @@
 			const res = await fetch('/api/billing/checkout', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ interval })
+				body: JSON.stringify({ plan: selectedPlan, interval })
 			});
 			const body = await res.json();
 			if (!res.ok) throw new Error(body.message || 'Failed to start checkout');
@@ -177,6 +178,36 @@
 					: `Your next billing date is ${periodEnd}.`}
 			</p>
 		{/if}
+
+		<!-- Plan picker -->
+		<div class="mb-4 grid grid-cols-2 gap-3">
+			<button
+				onclick={() => (selectedPlan = 'starter')}
+				class="rounded-[var(--radius)] border p-4 text-left transition-colors {selectedPlan ===
+				'starter'
+					? 'border-[var(--brand)] bg-[var(--brand-light)]'
+					: 'border-[var(--border)] hover:bg-[var(--background-alt)]'}"
+			>
+				<p class="font-semibold text-[var(--foreground)]">Starter</p>
+				<p class="text-xs text-[var(--foreground-muted)]">1 framework · up to 5 members</p>
+				<p class="mt-2 font-bold text-[var(--foreground)]">
+					$149<span class="text-xs font-normal">/mo</span>
+				</p>
+			</button>
+			<button
+				onclick={() => (selectedPlan = 'growth')}
+				class="rounded-[var(--radius)] border p-4 text-left transition-colors {selectedPlan ===
+				'growth'
+					? 'border-[var(--brand)] bg-[var(--brand-light)]'
+					: 'border-[var(--border)] hover:bg-[var(--background-alt)]'}"
+			>
+				<p class="font-semibold text-[var(--foreground)]">Growth</p>
+				<p class="text-xs text-[var(--foreground-muted)]">All 3 frameworks · unlimited members</p>
+				<p class="mt-2 font-bold text-[var(--foreground)]">
+					$299<span class="text-xs font-normal">/mo</span>
+				</p>
+			</button>
+		</div>
 
 		<!-- Plan options -->
 		<div class="grid gap-4 md:grid-cols-2">

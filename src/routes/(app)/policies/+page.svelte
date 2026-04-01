@@ -15,6 +15,7 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { POLICY_DESCRIPTIONS } from '$lib/policy-descriptions';
 
 	// ── Types ────────────────────────────────────────────────────────────────
 	type Policy = (typeof data.policies)[0];
@@ -235,7 +236,10 @@
 										? 'border-[var(--brand)] bg-[var(--brand-light)] font-medium text-[var(--brand)]'
 										: 'border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--brand)] hover:bg-[var(--background-alt)]'}"
 								>
-									{item.label}
+									<span class="block font-medium">{item.label}</span>
+									{#if POLICY_DESCRIPTIONS[item.value]}
+										<span class="mt-0.5 block text-xs leading-tight text-[var(--foreground-muted)] {selectedType === item.value ? 'text-[var(--brand)]' : ''}">{POLICY_DESCRIPTIONS[item.value]}</span>
+									{/if}
 								</button>
 							{/each}
 						</div>

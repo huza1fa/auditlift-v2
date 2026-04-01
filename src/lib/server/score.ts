@@ -1,6 +1,6 @@
 import { db } from './db';
-import { controls, evidence, policies, readinessScores } from './db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { controls, evidence, policies, readinessScores, readinessSnapshots } from './db/schema';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 export interface ReadinessResult {
 	score: number;
@@ -13,42 +13,42 @@ export async function computeReadinessScore(
 	orgId: string,
 	frameworkId: string
 ): Promise<ReadinessResult> {
-	// Get all controls for this framework
-	const allControls = await db.select().from(controls).where(eq(controls.frameworkId, frameworkId));
+	// Single query with LEFT JOINs — replaces N+1 loop (was 2 queries per control)
+	const rows = await db
+		.select({
+			id: controls.id,
+			code: controls.code,
+			title: controls.title,
+			category: controls.category,
+			evidenceCount: sql<number>`count(distinct ${evidence.id})::int`,
+			policyCount: sql<number>`count(distinct ${policies.id})::int`
+		})
+		.from(controls)
+		.leftJoin(
+			evidence,
+			and(
+				eq(evidence.controlId, controls.id),
+				eq(evidence.organizationId, orgId),
+				eq(evidence.status, 'active')
+			)
+		)
+		.leftJoin(
+			policies,
+			and(eq(policies.controlId, controls.id), eq(policies.organizationId, orgId))
+		)
+		.where(eq(controls.frameworkId, frameworkId))
+		.groupBy(controls.id);
 
-	if (allControls.length === 0) {
+	if (rows.length === 0) {
 		return { score: 0, totalControls: 0, completedControls: 0, blockers: [] };
 	}
 
-	// For each control, check if it has evidence or policy
-	const results = await Promise.all(
-		allControls.map(async (control) => {
-			const [evidenceCount] = await db
-				.select({ count: count() })
-				.from(evidence)
-				.where(and(eq(evidence.organizationId, orgId), eq(evidence.controlId, control.id)));
+	const completed = rows.filter((r) => (r.evidenceCount ?? 0) > 0 || (r.policyCount ?? 0) > 0);
+	const blockerItems = rows
+		.filter((r) => (r.evidenceCount ?? 0) === 0 && (r.policyCount ?? 0) === 0)
+		.map((r) => ({ id: r.id, code: r.code, title: r.title, category: r.category }));
 
-			const [policyCount] = await db
-				.select({ count: count() })
-				.from(policies)
-				.where(and(eq(policies.organizationId, orgId), eq(policies.controlId, control.id)));
-
-			const isComplete = (evidenceCount?.count ?? 0) > 0 || (policyCount?.count ?? 0) > 0;
-			return { control, isComplete };
-		})
-	);
-
-	const completed = results.filter((r) => r.isComplete);
-	const blockerItems = results
-		.filter((r) => !r.isComplete)
-		.map((r) => ({
-			id: r.control.id,
-			code: r.control.code,
-			title: r.control.title,
-			category: r.control.category
-		}));
-
-	const score = Math.round((completed.length / allControls.length) * 100);
+	const score = Math.round((completed.length / rows.length) * 100);
 
 	// Cache the score
 	try {
@@ -65,13 +65,31 @@ export async function computeReadinessScore(
 				target: [readinessScores.organizationId, readinessScores.frameworkId],
 				set: { score, blockerCount: blockerItems.length, computedAt: new Date() }
 			});
+
+		// Snapshot: insert at most once per 24h per org+framework
+		const [lastSnap] = await db
+			.select({ snapshotAt: readinessSnapshots.snapshotAt })
+			.from(readinessSnapshots)
+			.where(
+				and(
+					eq(readinessSnapshots.organizationId, orgId),
+					eq(readinessSnapshots.frameworkId, frameworkId)
+				)
+			)
+			.orderBy(desc(readinessSnapshots.snapshotAt))
+			.limit(1);
+
+		const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		if (!lastSnap || lastSnap.snapshotAt < oneDayAgo) {
+			await db.insert(readinessSnapshots).values({ organizationId: orgId, frameworkId, score });
+		}
 	} catch {
 		// Ignore conflict errors — score caching is best-effort
 	}
 
 	return {
 		score,
-		totalControls: allControls.length,
+		totalControls: rows.length,
 		completedControls: completed.length,
 		blockers: blockerItems
 	};

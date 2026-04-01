@@ -1,4 +1,4 @@
-import { betterAuth } from 'better-auth/minimal';
+import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { env } from '$env/dynamic/private';
@@ -59,6 +59,10 @@ export const auth = betterAuth({
 				};
 			}
 		}
+	},
+	emailAndPassword: {
+		enabled: true,
+		requireEmailVerification: false
 	},
 	plugins: [sveltekitCookies(getRequestEvent)]
 });
