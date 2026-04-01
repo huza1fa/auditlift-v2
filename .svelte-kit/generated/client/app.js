@@ -22,28 +22,35 @@ export const nodes = [
 	() => import('./nodes/16'),
 	() => import('./nodes/17'),
 	() => import('./nodes/18'),
-	() => import('./nodes/19')
+	() => import('./nodes/19'),
+	() => import('./nodes/20'),
+	() => import('./nodes/21'),
+	() => import('./nodes/22'),
+	() => import('./nodes/23')
 ];
 
 export const server_loads = [2];
 
 export const dictionary = {
-		"/(marketing)": [15,[3]],
-		"/(app)/controls": [~4,[2]],
-		"/(app)/controls/[controlId]": [~5,[2]],
-		"/(app)/dashboard": [~6,[2]],
-		"/(app)/evidence": [~7,[2]],
-		"/(app)/export": [~8,[2]],
-		"/(app)/frameworks": [~9,[2]],
-		"/invite/[token]": [~18],
-		"/(marketing)/login": [16,[3]],
-		"/onboarding": [~19],
-		"/(app)/policies": [~10,[2]],
-		"/(marketing)/pricing": [17,[3]],
-		"/(app)/settings": [~11,[2]],
-		"/(app)/settings/activity": [~12,[2]],
-		"/(app)/settings/billing": [~13,[2]],
-		"/(app)/settings/team": [~14,[2]]
+		"/(marketing)": [16,[4]],
+		"/(app)/controls": [~5,[2]],
+		"/(app)/controls/[controlId]": [~6,[2]],
+		"/(app)/dashboard": [~7,[2]],
+		"/(app)/evidence": [~8,[2]],
+		"/(app)/export": [~9,[2]],
+		"/(marketing)/forgot-password": [17,[4]],
+		"/(app)/frameworks": [~10,[2]],
+		"/invite/[token]": [~22],
+		"/(marketing)/login": [18,[4]],
+		"/onboarding": [~23],
+		"/(app)/policies": [~11,[2]],
+		"/(marketing)/pricing": [19,[4]],
+		"/(marketing)/privacy": [20,[4]],
+		"/(marketing)/reset-password": [21,[4]],
+		"/(app)/settings": [~12,[2,3]],
+		"/(app)/settings/activity": [~13,[2,3]],
+		"/(app)/settings/billing": [~14,[2,3]],
+		"/(app)/settings/team": [~15,[2,3]]
 	};
 
 export const hooks = {

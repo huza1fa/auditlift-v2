@@ -139,3 +139,13 @@ dist
 .sfdx
 .sfdx-cache
 nul
+
+#claude code files
+.claude
+.claude/agents
+
+#cursor code files
+.cursor
+.cursor/agents
+
+.vscode

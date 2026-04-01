@@ -93,6 +93,7 @@
 		"src/routes/(app)/export/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
+	"/(marketing)/forgot-password": [],
 	"/(app)/frameworks": [
 		"src/routes/(app)/frameworks/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
@@ -109,8 +110,11 @@
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(marketing)/pricing": [],
+	"/(marketing)/privacy": [],
+	"/(marketing)/reset-password": [],
 	"/(app)/settings": [
 		"src/routes/(app)/settings/+page.server.ts",
+		"src/routes/(app)/+layout.server.ts",
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/activity": [
@@ -124,5 +128,8 @@
 	"/(app)/settings/team": [
 		"src/routes/(app)/settings/team/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
+	],
+	"/sitemap.xml": [
+		"src/routes/sitemap.xml/+server.ts"
 	]
 }

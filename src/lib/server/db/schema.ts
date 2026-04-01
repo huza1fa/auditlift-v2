@@ -22,6 +22,8 @@ export const organizations = pgTable('organizations', {
 	stack: jsonb('stack').$type<string[]>(),
 	trialEndsAt: timestamp('trial_ends_at'),
 	onboardingComplete: boolean('onboarding_complete').default(false),
+	trialReminderSentAt: timestamp('trial_reminder_sent_at'),
+	trialExpiredEmailSentAt: timestamp('trial_expired_email_sent_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });

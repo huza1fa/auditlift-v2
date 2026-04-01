@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { Buildings, CreditCard, Users, Warning, Trash, ChartLine } from 'phosphor-svelte';
+	import { Buildings, CreditCard, Warning, Trash } from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { page } from '$app/state';
 
 	let { data } = $props();
 
-	const currentPath = $derived(page.url.pathname);
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
 
@@ -31,55 +29,7 @@
 	const org = data.organization as { domain?: string | null } | undefined;
 </script>
 
-<div class="space-y-6">
-	<h1 class="text-2xl font-bold text-[var(--foreground)]">Settings</h1>
-
-	<div class="flex gap-1 border-b border-[var(--border)]">
-		<a
-			href="/settings"
-			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath ===
-			'/settings'
-				? 'border-[var(--brand)] text-[var(--brand)]'
-				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
-		>
-			<Buildings size={16} />
-			Organization
-		</a>
-		<a
-			href="/settings/team"
-			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
-				'/settings/team'
-			)
-				? 'border-[var(--brand)] text-[var(--brand)]'
-				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
-		>
-			<Users size={16} />
-			Team
-		</a>
-		<a
-			href="/settings/billing"
-			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
-				'/settings/billing'
-			)
-				? 'border-[var(--brand)] text-[var(--brand)]'
-				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
-		>
-			<CreditCard size={16} />
-			Billing
-		</a>
-		<a
-			href="/settings/activity"
-			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
-				'/settings/activity'
-			)
-				? 'border-[var(--brand)] text-[var(--brand)]'
-				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
-		>
-			<ChartLine size={16} />
-			ChartLine
-		</a>
-	</div>
-
+<div class="space-y-4">
 	<Card class="p-6">
 		<div class="mb-4 flex items-center gap-3">
 			<Buildings size={20} color="var(--brand)" />

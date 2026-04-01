@@ -52,7 +52,30 @@
 </script>
 
 <svelte:head>
-	<title>Pricing - AuditLift</title>
+	<title>Pricing — AuditLift | SOC 2 Compliance Software</title>
+	<meta
+		name="description"
+		content="Simple, flat-rate pricing for SOC 2, PCI-DSS, and ISO 27001 compliance. Starter from $149/mo. No per-seat pricing. Cancel anytime. 14-day free trial included."
+	/>
+	<link rel="canonical" href="https://auditlift.app/pricing" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://auditlift.app/pricing" />
+	<meta property="og:site_name" content="AuditLift" />
+	<meta property="og:title" content="Pricing — AuditLift | SOC 2 Compliance Software" />
+	<meta
+		property="og:description"
+		content="SOC 2 compliance from $149/mo. No per-seat pricing. All 3 frameworks on Growth. 14-day free trial."
+	/>
+	<meta property="og:image" content="https://auditlift.app/og.png" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Pricing — AuditLift" />
+	<meta
+		name="twitter:description"
+		content="SOC 2 compliance from $149/mo. No per-seat pricing. 14-day free trial."
+	/>
+	<meta name="twitter:image" content="https://auditlift.app/og.png" />
 </svelte:head>
 
 <!-- Nav -->
@@ -220,7 +243,7 @@
 
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
-			Vanta starts at <strong>$7,500/yr</strong>. AuditLift gets you audit-ready from
+			Enterprise compliance tools start at $7,500/yr or more. AuditLift gets you audit-ready from
 			<strong>$149/mo</strong>.
 		</p>
 	</section>
@@ -240,6 +263,11 @@
 					href="/pricing"
 					class="text-[12px] text-[var(--foreground-subtle)] no-underline hover:text-[var(--foreground)]"
 					>Pricing</a
+				>
+				<a
+					href="/privacy"
+					class="text-[12px] text-[var(--foreground-subtle)] no-underline hover:text-[var(--foreground)]"
+					>Privacy</a
 				>
 			</div>
 		</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createAuthClient } from 'better-auth/svelte';
+	import { goto } from '$app/navigation';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { GithubLogo, Spinner } from 'phosphor-svelte';
@@ -28,7 +29,11 @@
 					password,
 					callbackURL: '/dashboard'
 				});
-				if (res.error) errorMsg = res.error.message ?? 'Sign in failed';
+				if (res.error) {
+					errorMsg = res.error.message ?? 'Sign in failed';
+				} else {
+					goto('/dashboard');
+				}
 			} else {
 				if (!name.trim()) {
 					errorMsg = 'Name is required';
@@ -41,7 +46,11 @@
 					name: name.trim(),
 					callbackURL: '/dashboard'
 				});
-				if (res.error) errorMsg = res.error.message ?? 'Sign up failed';
+				if (res.error) {
+					errorMsg = res.error.message ?? 'Sign up failed';
+				} else {
+					goto('/dashboard');
+				}
 			}
 		} catch {
 			errorMsg = 'Something went wrong. Please try again.';
@@ -50,6 +59,11 @@
 		}
 	}
 </script>
+
+<svelte:head>
+	<title>Sign In — AuditLift</title>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
 
 <div
 	class="relative flex min-h-screen flex-col items-center justify-center bg-[var(--background)] p-6"
@@ -139,6 +153,16 @@
 				minlength={8}
 			/>
 
+			{#if mode === 'signin'}
+				<div class="text-right">
+					<a
+						href="/forgot-password"
+						class="text-[12px] text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+						>Forgot password?</a
+					>
+				</div>
+			{/if}
+
 			{#if errorMsg}
 				<p class="text-[12px] text-[var(--danger)]">{errorMsg}</p>
 			{/if}
@@ -155,6 +179,6 @@
 	</div>
 
 	<p class="mt-6 text-[12px] text-[var(--foreground-subtle)]">
-		10-day free trial · No credit card required
+		14-day free trial · No credit card required
 	</p>
 </div>

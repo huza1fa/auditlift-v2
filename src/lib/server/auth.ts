@@ -62,7 +62,15 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: false
+		requireEmailVerification: false,
+		sendResetPassword: async ({ user, url }) => {
+			const { sendPasswordResetEmail } = await import('$lib/server/email');
+			await sendPasswordResetEmail({
+				to: user.email,
+				name: user.name ?? '',
+				resetLink: url
+			});
+		}
 	},
 	plugins: [sveltekitCookies(getRequestEvent)]
 });

@@ -10,6 +10,16 @@
 	let errorMsg = $state('');
 	let selectedPlan = $state<'starter' | 'growth'>('starter');
 
+	const plans = {
+		starter: { monthly: 149, yearly: 1431 },
+		growth: { monthly: 299, yearly: 2870 }
+	};
+
+	const monthlyPrice = $derived(plans[selectedPlan].monthly);
+	const yearlyTotal = $derived(plans[selectedPlan].yearly);
+	const yearlyMonthly = $derived(Math.round(yearlyTotal / 12));
+	const yearlySavings = $derived(monthlyPrice * 12 - yearlyTotal);
+
 	const isActive = $derived(data.subscription?.status === 'active');
 	const isPastDue = $derived(data.subscription?.status === 'past_due');
 	const isCanceled = $derived(data.subscription?.status === 'canceled');
@@ -227,14 +237,14 @@
 					{/if}
 				</div>
 				<p class="mb-3 text-2xl font-bold text-[var(--foreground)]">
-					$290<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
+					${monthlyPrice}<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
 				</p>
 				<ul class="mb-4 space-y-1.5 text-sm text-[var(--foreground-muted)]">
 					<li class="flex items-center gap-2">
 						<Check size={14} color="var(--success)" weight="bold" /> Unlimited controls & evidence
 					</li>
 					<li class="flex items-center gap-2">
-						<Check size={14} color="var(--success)" weight="bold" /> AI policy generator
+						<Check size={14} color="var(--success)" weight="bold" /> Policy generator
 					</li>
 					<li class="flex items-center gap-2">
 						<Check size={14} color="var(--success)" weight="bold" /> Auditor export
@@ -261,21 +271,21 @@
 				{isActive && !data.subscription?.cancelAtPeriodEnd && periodEnd ? '' : 'border-[var(--border)]'}"
 			>
 				<div class="absolute -top-2.5 right-4">
-					<Badge variant="success">Save 15%</Badge>
+					<Badge variant="success">Save 20%</Badge>
 				</div>
 				<div class="mb-3 flex items-center justify-between">
 					<p class="font-semibold text-[var(--foreground)]">Yearly</p>
 				</div>
 				<p class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-					$247<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
+					${yearlyMonthly}<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
 				</p>
-				<p class="mb-3 text-sm text-[var(--foreground-muted)]">$2,958/year billed annually</p>
+				<p class="mb-3 text-sm text-[var(--foreground-muted)]">${yearlyTotal.toLocaleString()}/year billed annually</p>
 				<ul class="mb-4 space-y-1.5 text-sm text-[var(--foreground-muted)]">
 					<li class="flex items-center gap-2">
 						<Check size={14} color="var(--success)" weight="bold" /> Everything in Monthly
 					</li>
 					<li class="flex items-center gap-2">
-						<Check size={14} color="var(--success)" weight="bold" /> Save $622/year
+						<Check size={14} color="var(--success)" weight="bold" /> Save ${yearlySavings}/year
 					</li>
 					<li class="flex items-center gap-2">
 						<Check size={14} color="var(--success)" weight="bold" /> Priority support

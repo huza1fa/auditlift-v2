@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CheckCircle, Circle, ArrowRight } from 'phosphor-svelte';
+	import { CheckCircle, Circle, ArrowRight, CheckSquare } from 'phosphor-svelte';
+	import * as m from '$lib/paraglide/messages';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 
@@ -45,6 +46,35 @@
 			<Badge variant="info">{data.framework.name}</Badge>
 		{/if}
 	</div>
+
+	{#if data.frameworks.length === 0}
+		<Card class="p-10">
+			<div class="flex flex-col items-center justify-center gap-3 text-center">
+				<CheckSquare size={48} color="var(--foreground-subtle)" />
+				<p class="text-[15px] font-semibold text-[var(--foreground)]">
+					{m.controls_empty_no_frameworks_title()}
+				</p>
+				<p class="text-[13px] text-[var(--foreground-muted)]">
+					{m.controls_empty_no_frameworks_body()}
+				</p>
+				<a href="/settings" class="text-[13px] text-[var(--brand)] hover:underline">
+					{m.controls_empty_no_frameworks_link()}
+				</a>
+			</div>
+		</Card>
+	{:else if data.controls.length === 0}
+		<Card class="p-10">
+			<div class="flex flex-col items-center justify-center gap-3 text-center">
+				<Circle size={48} color="var(--foreground-subtle)" />
+				<p class="text-[15px] font-semibold text-[var(--foreground)]">
+					{m.controls_empty_no_controls_title()}
+				</p>
+				<p class="text-[13px] text-[var(--foreground-muted)]">
+					{m.controls_empty_no_controls_body()}
+				</p>
+			</div>
+		</Card>
+	{/if}
 
 	{#each grouped as [category, categoryControls] (category)}
 		{@const completed = categoryControls.filter((c) => c.complete).length}

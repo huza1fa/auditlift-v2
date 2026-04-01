@@ -20,7 +20,13 @@
 			name: 'Starter',
 			monthlyPrice: 149,
 			yearlyPrice: 1431,
-			features: ['1 framework (SOC 2)', 'Unlimited evidence & policies', 'Up to 5 team members', 'Auditor export', '14-day free trial']
+			features: [
+				'1 framework (SOC 2)',
+				'Unlimited evidence & policies',
+				'Up to 5 team members',
+				'Auditor export',
+				'14-day free trial'
+			]
 		},
 		{
 			id: 'growth',
@@ -28,7 +34,13 @@
 			monthlyPrice: 299,
 			yearlyPrice: 2870,
 			highlighted: true,
-			features: ['All 3 frameworks', 'Unlimited evidence & policies', 'Unlimited team members', 'Auditor export', '14-day free trial']
+			features: [
+				'All 3 frameworks',
+				'Unlimited evidence & policies',
+				'Unlimited team members',
+				'Auditor export',
+				'14-day free trial'
+			]
 		}
 	];
 
@@ -41,8 +53,9 @@
 		},
 		{
 			icon: FileText,
-			title: 'AI Policy Generator',
-			description: 'Describe your stack and get audit-grade policies in seconds. Edit in-browser.',
+			title: 'Policy Generator',
+			description:
+				'Answer a few questions about your stack and get audit-grade policies in minutes. Edit in-browser.',
 			iconBg: 'feature-icon-success'
 		},
 		{
@@ -95,6 +108,80 @@
 	}
 </script>
 
+<svelte:head>
+	<title>AuditLift — SOC 2 &amp; Compliance Software for Startups</title>
+	<meta
+		name="description"
+		content="Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and an auditor-ready export package. No consultant needed. From $149/mo."
+	/>
+	<link rel="canonical" href="https://auditlift.app" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://auditlift.app" />
+	<meta property="og:site_name" content="AuditLift" />
+	<meta property="og:title" content="AuditLift — SOC 2 & Compliance Software for Startups" />
+	<meta
+		property="og:description"
+		content="Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and an auditor-ready export. No consultant needed."
+	/>
+	<meta property="og:image" content="https://auditlift.app/og.png" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@auditlift" />
+	<meta name="twitter:title" content="AuditLift — SOC 2 & Compliance Software for Startups" />
+	<meta
+		name="twitter:description"
+		content="Get audit-ready in 30 days. Pre-mapped controls, generated policies, and auditor-ready exports. From $149/mo."
+	/>
+	<meta name="twitter:image" content="https://auditlift.app/og.png" />
+
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'Organization',
+				'@id': 'https://auditlift.app/#organization',
+				name: 'AuditLift',
+				url: 'https://auditlift.app',
+				email: 'hello@auditlift.io',
+				description: 'SOC 2, PCI-DSS, and ISO 27001 compliance software for startups and SMBs.'
+			},
+			{
+				'@type': 'WebSite',
+				'@id': 'https://auditlift.app/#website',
+				url: 'https://auditlift.app',
+				name: 'AuditLift',
+				publisher: { '@id': 'https://auditlift.app/#organization' }
+			},
+			{
+				'@type': 'SoftwareApplication',
+				name: 'AuditLift',
+				applicationCategory: 'BusinessApplication',
+				operatingSystem: 'Web',
+				url: 'https://auditlift.app',
+				description:
+					'Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and auditor-ready exports.',
+				offers: [
+					{
+						'@type': 'Offer',
+						name: 'Starter',
+						price: '149.00',
+						priceCurrency: 'USD',
+						description: '1 compliance framework, up to 5 team members, 14-day free trial'
+					},
+					{
+						'@type': 'Offer',
+						name: 'Growth',
+						price: '299.00',
+						priceCurrency: 'USD',
+						description: 'All 3 frameworks, unlimited team members, 14-day free trial'
+					}
+				]
+			}
+		]
+	})}</script>`}
+</svelte:head>
+
 <!-- Nav -->
 <nav class="nav-bar">
 	<div class="nav-inner">
@@ -128,8 +215,8 @@
 
 			<!-- Subheadline -->
 			<p class="hero-subheadline">
-				Without the $20K consultant. Pre-mapped controls, AI-generated policies, and a clean export
-				package your auditor can actually use.
+				Skip the compliance consultant. Pre-mapped controls, generated policies tailored to your
+				stack, and a clean export your auditor can open on day one.
 			</p>
 
 			<!-- CTA row -->
@@ -192,13 +279,13 @@
 								<Check size={10} weight="bold" />
 							</span>
 							<span class="control-id">CC7.2</span>
-							<span class="control-name">Change Management</span>
+							<span class="control-name">System Monitoring</span>
 							<span class="control-badge control-badge-done">Done</span>
 						</div>
 						<div class="hero-control-item">
 							<span class="control-status-dot control-pending"></span>
 							<span class="control-id">CC8.1</span>
-							<span class="control-name">Risk Assessment</span>
+							<span class="control-name">Change Management</span>
 							<span class="control-badge control-badge-pending">Pending</span>
 						</div>
 					</div>
@@ -223,8 +310,8 @@
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
 			<div class="stat-item">
-				<p class="stat-value">80% cheaper</p>
-				<p class="stat-label">Than Vanta or Drata</p>
+				<p class="stat-value">From $149/mo</p>
+				<p class="stat-label">No per-seat pricing</p>
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
 			<div class="stat-item">
@@ -317,7 +404,9 @@
 								</div>
 								<div class="pricing-price-group">
 									<span class="pricing-price">
-										${pricingPlan === 'monthly' ? plan.monthlyPrice : Math.round(plan.yearlyPrice / 12)}
+										${pricingPlan === 'monthly'
+											? plan.monthlyPrice
+											: Math.round(plan.yearlyPrice / 12)}
 									</span>
 									<span class="pricing-price-period">/mo</span>
 								</div>
@@ -345,10 +434,9 @@
 			<!-- Competitor compare -->
 			<div class="competitor-compare">
 				<p class="competitor-compare-text">
-					Compare to
-					<span class="competitor-name">Vanta ($7,500+/yr)</span>,
-					<span class="competitor-name">Drata ($10,000+/yr)</span>,
-					<span class="competitor-name">Sprinto ($6,000+/yr)</span>
+					Enterprise compliance tools typically cost <span class="competitor-name"
+						>$7,500–$15,000/yr</span
+					>. AuditLift starts at <span class="competitor-name">$149/mo</span>.
 				</p>
 			</div>
 		</div>
@@ -378,6 +466,7 @@
 				<a href="/" class="footer-link">Home</a>
 				<button class="footer-link" onclick={() => scrollTo('#features')}>Features</button>
 				<button class="footer-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/login" class="footer-link">Sign in</a>
 			</nav>
 			<ThemeToggle />
