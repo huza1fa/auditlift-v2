@@ -110,7 +110,8 @@ export const evidence = pgTable('evidence', {
 	notes: text('notes'),
 	uploadedBy: text('uploaded_by').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	deletedAt: timestamp('deleted_at')
 });
 
 // ─── Policies ─────────────────────────────────────────────────────────────────
@@ -130,7 +131,8 @@ export const policies = pgTable('policies', {
 	generatedAt: timestamp('generated_at'),
 	editedAt: timestamp('edited_at'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull()
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	archivedAt: timestamp('archived_at')
 });
 
 // ─── Readiness Scores ─────────────────────────────────────────────────────────

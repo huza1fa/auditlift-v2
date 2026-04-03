@@ -2,8 +2,8 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { evidence, controls } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { getPresignedDownloadUrl, deleteFile } from '$lib/server/storage';
+import { eq, and, isNull } from 'drizzle-orm';
+import { getPresignedDownloadUrl } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
 
@@ -16,7 +16,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const [ev] = await db
 		.select()
 		.from(evidence)
-		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)))
+		.where(
+			and(
+				eq(evidence.id, params.id),
+				eq(evidence.organizationId, orgId),
+				isNull(evidence.deletedAt)
+			)
+		)
 		.limit(1);
 
 	if (!ev) {
@@ -47,21 +53,22 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	const [ev] = await db
 		.select()
 		.from(evidence)
-		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)))
+		.where(
+			and(
+				eq(evidence.id, params.id),
+				eq(evidence.organizationId, orgId),
+				isNull(evidence.deletedAt)
+			)
+		)
 		.limit(1);
 
 	if (!ev) {
 		throw error(404, 'Evidence not found');
 	}
 
-	try {
-		await deleteFile(ev.storageKey);
-	} catch (err) {
-		console.error('Failed to delete file from S3:', err);
-	}
-
 	await db
-		.delete(evidence)
+		.update(evidence)
+		.set({ deletedAt: new Date(), updatedAt: new Date() })
 		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)));
 
 	const [ctrl] = await db
@@ -97,7 +104,13 @@ export const PATCH: RequestHandler = async ({ params, locals, request }) => {
 	const [ev] = await db
 		.select()
 		.from(evidence)
-		.where(and(eq(evidence.id, params.id), eq(evidence.organizationId, orgId)))
+		.where(
+			and(
+				eq(evidence.id, params.id),
+				eq(evidence.organizationId, orgId),
+				isNull(evidence.deletedAt)
+			)
+		)
 		.limit(1);
 
 	if (!ev) {

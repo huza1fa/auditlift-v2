@@ -1,6 +1,6 @@
 import { db } from './db';
 import { controls, evidence, policies, readinessScores, readinessSnapshots } from './db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull } from 'drizzle-orm';
 
 export interface ReadinessResult {
 	score: number;
@@ -29,12 +29,17 @@ export async function computeReadinessScore(
 			and(
 				eq(evidence.controlId, controls.id),
 				eq(evidence.organizationId, orgId),
-				eq(evidence.status, 'active')
+				eq(evidence.status, 'active'),
+				isNull(evidence.deletedAt)
 			)
 		)
 		.leftJoin(
 			policies,
-			and(eq(policies.controlId, controls.id), eq(policies.organizationId, orgId))
+			and(
+				eq(policies.controlId, controls.id),
+				eq(policies.organizationId, orgId),
+				isNull(policies.archivedAt)
+			)
 		)
 		.where(eq(controls.frameworkId, frameworkId))
 		.groupBy(controls.id);

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		ArrowLeft,
+		ArrowRight,
 		FileText,
 		Trash,
 		File,
@@ -28,36 +29,103 @@
 	// ── Props ────────────────────────────────────────────────────────────────
 	let { data } = $props();
 
+	// ── Policy label map ──────────────────────────────────────────────────────
+	const POLICY_LABELS: Record<string, string> = {
+		'security-policy': 'Security Policy',
+		'access-control-policy': 'Access Control Policy',
+		'password-policy': 'Password Policy',
+		'acceptable-use-policy': 'Acceptable Use Policy',
+		'incident-response-policy': 'Incident Response Policy',
+		'change-management-policy': 'Change Management Policy',
+		'vulnerability-management-policy': 'Vulnerability Management Policy',
+		'physical-security-policy': 'Physical Security Policy',
+		'data-classification-policy': 'Data Classification Policy',
+		'data-retention-policy': 'Data Retention Policy',
+		'privacy-policy': 'Privacy Policy',
+		'business-continuity-policy': 'Business Continuity Policy',
+		'vendor-management-policy': 'Vendor Management Policy',
+		'cryptography-policy': 'Cryptography Policy',
+		'remote-work-policy': 'Remote Work Policy',
+		'ai-usage-policy': 'AI Usage Policy'
+	};
+
+	// ── Policy types for the full dropdown fallback ───────────────────────────
+	const allPolicyTypes = Object.entries(POLICY_LABELS).map(([value, label]) => ({ value, label }));
+
+	// ── Smart policy suggestions ──────────────────────────────────────────────
+	function getSuggestedPolicies(code: string): string[] {
+		const prefix = code.split('.')[0].toUpperCase();
+		const map: Record<string, string[]> = {
+			// SOC2
+			CC1: ['security-policy', 'acceptable-use-policy'],
+			CC2: ['security-policy'],
+			CC3: ['security-policy'],
+			CC4: ['vulnerability-management-policy'],
+			CC5: ['change-management-policy', 'security-policy'],
+			CC6: ['access-control-policy', 'password-policy'],
+			CC7: ['incident-response-policy', 'change-management-policy'],
+			CC8: ['change-management-policy'],
+			CC9: ['vendor-management-policy', 'business-continuity-policy'],
+			A1: ['business-continuity-policy'],
+			C1: ['data-classification-policy', 'data-retention-policy'],
+			// PCI
+			REQ1: ['security-policy'],
+			REQ3: ['data-classification-policy', 'cryptography-policy'],
+			REQ7: ['access-control-policy', 'password-policy'],
+			REQ9: ['physical-security-policy'],
+			REQ12: ['security-policy'],
+			// ISO 27001
+			A5: ['security-policy'],
+			A6: ['acceptable-use-policy'],
+			A8: ['data-classification-policy', 'data-retention-policy'],
+			A9: ['access-control-policy', 'password-policy'],
+			A10: ['cryptography-policy'],
+			A11: ['physical-security-policy'],
+			A12: ['change-management-policy', 'vulnerability-management-policy'],
+			A15: ['vendor-management-policy'],
+			A16: ['incident-response-policy'],
+			A17: ['business-continuity-policy']
+		};
+		return map[prefix] ?? ['security-policy'];
+	}
+
+	// ── Upload guidance ───────────────────────────────────────────────────────
+	function getUploadGuidance(category: string, code: string): string {
+		const cat = category.toLowerCase();
+		if (cat.includes('access') || code.startsWith('CC6'))
+			return 'Upload screenshots of MFA settings, access control lists, user permission reports, or SSO configuration.';
+		if (cat.includes('incident') || code.startsWith('CC7'))
+			return 'Upload incident response runbooks, post-incident reports, on-call schedules, or alert screenshots.';
+		if (cat.includes('change') || code.startsWith('CC8'))
+			return 'Upload PR/merge policies, deployment approval screenshots, or change log exports.';
+		if (cat.includes('vendor') || code.startsWith('CC9'))
+			return 'Upload vendor agreements, security assessments, or vendor review records.';
+		if (cat.includes('data') || cat.includes('privacy'))
+			return 'Upload data flow diagrams, retention schedules, or data handling procedures.';
+		if (cat.includes('physical'))
+			return 'Upload office access logs, badge records, or physical security photos.';
+		if (cat.includes('crypto'))
+			return 'Upload encryption configuration screenshots, key management procedures, or TLS certificate records.';
+		return 'Upload any document, screenshot, or file that demonstrates this control is in place.';
+	}
+
 	// ── Local state ──────────────────────────────────────────────────────────
 	let evidenceList = $state<EvidenceItem[]>([...data.evidenceList]);
+	let linkedPolicies = $state<LinkedPolicy[]>([...data.linkedPolicies]);
 
-	// Policy generation state
-	let showPolicyPanel = $state(false);
-	let selectedPolicyType = $state('security-policy');
+	// ── Derived: completion status ────────────────────────────────────────────
+	const isComplete = $derived(evidenceList.length > 0 || linkedPolicies.length > 0);
+
+	// ── Policy generation state ───────────────────────────────────────────────
+	let showPolicyPanel = $state(data.linkedPolicies.length === 0);
 	let generatingPolicy = $state(false);
 	let policyError = $state('');
-	let linkedPolicies = $state<LinkedPolicy[]>([...data.linkedPolicies]);
 	let expandedPolicyId = $state<string | null>(null);
+	let showAllPolicies = $state(false);
 
-	// ── Policy types ─────────────────────────────────────────────────────────
-	const allPolicyTypes = [
-		{ value: 'security-policy', label: 'Security Policy' },
-		{ value: 'access-control-policy', label: 'Access Control Policy' },
-		{ value: 'password-policy', label: 'Password Policy' },
-		{ value: 'acceptable-use-policy', label: 'Acceptable Use Policy' },
-		{ value: 'incident-response-policy', label: 'Incident Response Policy' },
-		{ value: 'change-management-policy', label: 'Change Management Policy' },
-		{ value: 'vulnerability-management-policy', label: 'Vulnerability Management Policy' },
-		{ value: 'physical-security-policy', label: 'Physical Security Policy' },
-		{ value: 'data-classification-policy', label: 'Data Classification Policy' },
-		{ value: 'data-retention-policy', label: 'Data Retention Policy' },
-		{ value: 'privacy-policy', label: 'Privacy Policy' },
-		{ value: 'business-continuity-policy', label: 'Business Continuity Policy' },
-		{ value: 'vendor-management-policy', label: 'Vendor Management Policy' },
-		{ value: 'cryptography-policy', label: 'Cryptography Policy' },
-		{ value: 'remote-work-policy', label: 'Remote Work Policy' },
-		{ value: 'ai-usage-policy', label: 'AI Usage Policy' }
-	];
+	// ── Suggested policies ────────────────────────────────────────────────────
+	const suggestedTypes = $derived(getSuggestedPolicies(data.control.code));
+	let selectedPolicyType = $state(getSuggestedPolicies(data.control.code)[0]);
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	async function deleteEvidence(id: string) {
@@ -127,6 +195,21 @@
 		{m.control_back_to_controls()}
 	</a>
 
+	<!-- Completion status banner -->
+	{#if isComplete}
+		<div
+			class="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--success)] bg-[var(--success-light)] px-4 py-3 text-sm font-medium text-[var(--success)]"
+		>
+			✓ Control complete — this control has evidence or a policy attached
+		</div>
+	{:else}
+		<div
+			class="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--warning)] bg-[var(--warning-light)] px-4 py-3 text-sm font-medium text-[var(--warning)]"
+		>
+			⚠ Incomplete — upload evidence or generate a policy to complete this control
+		</div>
+	{/if}
+
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 		<!-- Left column: Control details + Policy generation -->
 		<div class="space-y-4">
@@ -177,14 +260,50 @@
 						{m.control_generate_policy_section()}
 					</h3>
 					<div class="space-y-3">
-						<select
-							bind:value={selectedPolicyType}
-							class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+						<!-- Suggested policy pills -->
+						<div>
+							<p class="mb-2 text-xs text-[var(--foreground-muted)]">Suggested for this control</p>
+							<div class="flex flex-wrap gap-2">
+								{#each suggestedTypes as type, i (type)}
+									<button
+										onclick={() => (selectedPolicyType = type)}
+										class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors {selectedPolicyType === type
+											? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+											: 'border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--brand)] hover:text-[var(--brand)]'}"
+									>
+										{#if i === 0}
+											<span
+												class="rounded px-1 py-0.5 text-[10px] font-semibold {selectedPolicyType === type
+													? 'bg-white/20 text-white'
+													: 'bg-[var(--brand-light)] text-[var(--brand)]'}"
+											>
+												Suggested
+											</span>
+										{/if}
+										{POLICY_LABELS[type] ?? type}
+									</button>
+								{/each}
+							</div>
+						</div>
+
+						<!-- Show all policies toggle -->
+						<button
+							onclick={() => (showAllPolicies = !showAllPolicies)}
+							class="text-xs text-[var(--brand)] hover:underline"
 						>
-							{#each allPolicyTypes as pt (pt.value)}
-								<option value={pt.value}>{pt.label}</option>
-							{/each}
-						</select>
+							{showAllPolicies ? 'Hide all policies' : 'Show all policies'}
+						</button>
+
+						{#if showAllPolicies}
+							<select
+								bind:value={selectedPolicyType}
+								class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+							>
+								{#each allPolicyTypes as pt (pt.value)}
+									<option value={pt.value}>{pt.label}</option>
+								{/each}
+							</select>
+						{/if}
 
 						<Button onclick={generatePolicy} disabled={generatingPolicy}>
 							{#if generatingPolicy}
@@ -273,13 +392,18 @@
 
 				<FileUploader controlId={data.control.id} onUploadSuccess={handleUploadSuccess} />
 
+				<!-- Upload guidance hint -->
+				<p class="mt-2 text-xs text-[var(--foreground-muted)]">
+					{getUploadGuidance(data.control.category, data.control.code)}
+				</p>
+
 				<!-- Evidence list -->
 				{#if evidenceList.length === 0}
 					<p class="py-4 text-center text-sm text-[var(--foreground-muted)]">
 						{m.control_no_evidence()}
 					</p>
 				{:else}
-					<div class="space-y-2">
+					<div class="mt-4 space-y-2">
 						{#each evidenceList as ev (ev.id)}
 							<div
 								class="flex items-center justify-between rounded-[var(--radius)] bg-[var(--background-alt)] p-3"
@@ -305,4 +429,21 @@
 			</Card>
 		</div>
 	</div>
+
+	<!-- Next incomplete control navigation -->
+	{#if data.nextIncompleteControl}
+		<div
+			class="flex items-center justify-between rounded-[var(--radius)] bg-[var(--background-alt)] px-4 py-3"
+		>
+			<span class="text-sm text-[var(--foreground-muted)]">Keep going</span>
+			<a
+				href="/controls/{data.nextIncompleteControl.id}"
+				class="flex items-center gap-2 text-sm font-medium text-[var(--brand)] hover:underline"
+			>
+				Next incomplete: <span class="font-mono">{data.nextIncompleteControl.code}</span> — {data
+					.nextIncompleteControl.title}
+				<ArrowRight size={14} />
+			</a>
+		</div>
+	{/if}
 </div>

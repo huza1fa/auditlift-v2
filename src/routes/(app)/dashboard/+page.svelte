@@ -42,6 +42,13 @@
 	const sparkScores = $derived((data.scoreHistory ?? []).map((s: { score: number }) => s.score));
 	const sparkMin = $derived(sparkScores.length ? Math.min(...sparkScores) : 0);
 	const sparkRange = $derived(Math.max(...sparkScores) - sparkMin || 1);
+
+	// Start Here guide visibility
+	const showStartHere = $derived(
+		data.readiness.completedControls === 0 &&
+			data.readiness.blockers.length > 0 &&
+			!data.isReadOnly
+	);
 </script>
 
 <div class="space-y-8">
@@ -171,7 +178,7 @@
 								stroke-linecap="round"
 								stroke-linejoin="round"
 							/>
-							{#each sparkScores as score, i}
+							{#each sparkScores as score, i (i)}
 								<circle
 									cx={(i / (sparkScores.length - 1)) * sparkW}
 									cy={sparkH - ((score - sparkMin) / sparkRange) * (sparkH - 4) - 2}
@@ -216,7 +223,7 @@
 				<div class="relative">
 					<!-- Blurred preview rows -->
 					<div class="space-y-2 blur-sm select-none">
-						{#each [1, 2, 3] as _}
+						{#each [1, 2, 3] as n (n)}
 							<div class="flex items-center justify-between border-b border-[var(--border)] py-2">
 								<div class="flex items-center gap-3">
 									<span
@@ -268,6 +275,71 @@
 					{/each}
 				</div>
 			{/if}
+		</Card>
+	{/if}
+
+	<!-- Start Here guide (shown when 0 controls completed and blockers exist) -->
+	{#if showStartHere}
+		<Card class="p-6">
+			<h2 class="mb-5 text-base font-semibold text-[var(--foreground)]">
+				Start here — complete your first control in 3 steps
+			</h2>
+			<div class="space-y-5">
+				<!-- Step 1 -->
+				<div class="flex gap-4">
+					<div
+						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white"
+					>
+						1
+					</div>
+					<div>
+						<p class="mb-1.5 text-sm font-semibold text-[var(--foreground)]">
+							Open your first control
+						</p>
+						<a
+							href="/controls/{data.readiness.blockers[0].id}"
+							class="inline-flex items-center gap-1.5 rounded-[var(--radius)] bg-[var(--brand)] px-3 py-1.5 text-sm font-medium text-white no-underline hover:bg-[var(--brand-hover)]"
+						>
+							Go to {data.readiness.blockers[0].code}
+							<ArrowRight size={14} />
+						</a>
+					</div>
+				</div>
+
+				<!-- Step 2 -->
+				<div class="flex gap-4">
+					<div
+						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white"
+					>
+						2
+					</div>
+					<div>
+						<p class="mb-1 text-sm font-semibold text-[var(--foreground)]">
+							Read what the auditor expects
+						</p>
+						<p class="text-sm text-[var(--foreground-muted)]">
+							Each control shows exactly what evidence or policy an auditor will check.
+						</p>
+					</div>
+				</div>
+
+				<!-- Step 3 -->
+				<div class="flex gap-4">
+					<div
+						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white"
+					>
+						3
+					</div>
+					<div>
+						<p class="mb-1 text-sm font-semibold text-[var(--foreground)]">
+							Upload evidence or generate a policy
+						</p>
+						<p class="text-sm text-[var(--foreground-muted)]">
+							Either one counts toward your readiness score.
+						</p>
+					</div>
+				</div>
+			</div>
 		</Card>
 	{/if}
 

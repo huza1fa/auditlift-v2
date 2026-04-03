@@ -2,8 +2,52 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { policies } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
+
+export const DELETE: RequestHandler = async ({ locals, params }) => {
+	if (!locals.session || !locals.organizationId) {
+		throw error(401, 'Unauthorized');
+	}
+
+	const policyId = params.id;
+	if (!policyId) {
+		throw error(400, 'Missing policy ID');
+	}
+
+	const [existing] = await db
+		.select()
+		.from(policies)
+		.where(
+			and(
+				eq(policies.id, policyId),
+				eq(policies.organizationId, locals.organizationId),
+				isNull(policies.archivedAt)
+			)
+		)
+		.limit(1);
+
+	if (!existing) {
+		throw error(404, 'Policy not found');
+	}
+
+	await db
+		.update(policies)
+		.set({ archivedAt: new Date(), updatedAt: new Date() })
+		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)));
+
+	logActivity({
+		organizationId: locals.organizationId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name,
+		action: 'policy.archive',
+		entityType: 'policy',
+		entityId: existing.id,
+		entityName: existing.title
+	}).catch(console.error);
+
+	return json({ success: true });
+};
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (!locals.session || !locals.organizationId) {

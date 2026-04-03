@@ -8,7 +8,8 @@
 		CaretUp,
 		PencilSimple,
 		FloppyDisk,
-		X
+		X,
+		Trash
 	} from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -30,11 +31,12 @@
 	let customPrompt = $state('');
 	let generating = $state(false);
 	let errorMessage = $state('');
-	let policyList = $state<Policy[]>([...data.policies]);
+	let policyList = $state<Policy[]>(data.policies);
 	let expandedId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let editContent = $state('');
 	let saving = $state(false);
+	let archivingId = $state<string | null>(null);
 
 	// ── Policy groups ────────────────────────────────────────────────────────
 	const policyGroups = [
@@ -182,6 +184,20 @@
 			saving = false;
 		}
 	}
+
+	async function archivePolicy(policy: Policy) {
+		archivingId = policy.id;
+		try {
+			const res = await fetch(`/api/policies/${policy.id}`, { method: 'DELETE' });
+			if (!res.ok) throw new Error('Failed to archive');
+			policyList = policyList.filter((p) => p.id !== policy.id);
+			toastSuccess('Policy archived');
+		} catch {
+			toastError('Failed to archive');
+		} finally {
+			archivingId = null;
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -220,7 +236,7 @@
 		<!-- Tab: Standard -->
 		{#if activeTab === 'standard'}
 			<div class="space-y-4">
-				{#each policyGroups as group}
+				{#each policyGroups as group (group.label)}
 					<div>
 						<p
 							class="mb-2 text-xs font-semibold tracking-wider text-[var(--foreground-muted)] uppercase"
@@ -238,7 +254,12 @@
 								>
 									<span class="block font-medium">{item.label}</span>
 									{#if POLICY_DESCRIPTIONS[item.value]}
-										<span class="mt-0.5 block text-xs leading-tight text-[var(--foreground-muted)] {selectedType === item.value ? 'text-[var(--brand)]' : ''}">{POLICY_DESCRIPTIONS[item.value]}</span>
+										<span
+											class="mt-0.5 block text-xs leading-tight text-[var(--foreground-muted)] {selectedType ===
+											item.value
+												? 'text-[var(--brand)]'
+												: ''}">{POLICY_DESCRIPTIONS[item.value]}</span
+										>
 									{/if}
 								</button>
 							{/each}
@@ -368,6 +389,14 @@
 							</Button>
 							<Button variant="ghost" size="sm" onclick={() => startEdit(policy)}>
 								<PencilSimple size={14} />
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={() => archivePolicy(policy)}
+								disabled={archivingId === policy.id}
+							>
+								<Trash size={14} />
 							</Button>
 						</div>
 					</div>

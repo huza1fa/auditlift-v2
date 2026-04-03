@@ -8,13 +8,13 @@ import {
 	organizationFrameworks,
 	frameworks
 } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { hasActiveAccess } from '$lib/server/billing';
 import archiver from 'archiver';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { downloadFile } from '$lib/server/storage';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
 
 	// Gate: active subscription only (no trial export)
@@ -24,6 +24,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	const orgId = locals.organizationId;
 	const org = locals.organization!;
+
+	const body = await request.json().catch(() => ({}));
+	const { policyIds, evidenceIds } = body as { policyIds?: string[]; evidenceIds?: string[] };
 
 	// Get org's framework
 	const [orgFramework] = await db
@@ -38,11 +41,34 @@ export const GET: RequestHandler = async ({ locals }) => {
 		? await db.select().from(controls).where(eq(controls.frameworkId, orgFramework.framework.id))
 		: [];
 
-	// Get all evidence
-	const allEvidence = await db.select().from(evidence).where(eq(evidence.organizationId, orgId));
+	// Get evidence — filtered by selection if provided, always excluding soft-deleted
+	const evidenceWhere =
+		evidenceIds && evidenceIds.length > 0
+			? and(
+					eq(evidence.organizationId, orgId),
+					eq(evidence.status, 'active'),
+					isNull(evidence.deletedAt),
+					inArray(evidence.id, evidenceIds)
+				)
+			: and(
+					eq(evidence.organizationId, orgId),
+					eq(evidence.status, 'active'),
+					isNull(evidence.deletedAt)
+				);
 
-	// Get all policies
-	const allPolicies = await db.select().from(policies).where(eq(policies.organizationId, orgId));
+	const allEvidence = await db.select().from(evidence).where(evidenceWhere);
+
+	// Get policies — filtered by selection if provided, always excluding archived
+	const policiesWhere =
+		policyIds && policyIds.length > 0
+			? and(
+					eq(policies.organizationId, orgId),
+					isNull(policies.archivedAt),
+					inArray(policies.id, policyIds)
+				)
+			: and(eq(policies.organizationId, orgId), isNull(policies.archivedAt));
+
+	const allPolicies = await db.select().from(policies).where(policiesWhere);
 
 	// Build ZIP
 	const archive = archiver('zip', { zlib: { level: 9 } });

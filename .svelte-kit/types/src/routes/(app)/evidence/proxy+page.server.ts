@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { evidence, controls } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 
 export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
@@ -22,7 +22,13 @@ export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 		})
 		.from(evidence)
 		.leftJoin(controls, eq(evidence.controlId, controls.id))
-		.where(and(eq(evidence.organizationId, locals.organizationId), eq(evidence.status, 'active')));
+		.where(
+			and(
+				eq(evidence.organizationId, locals.organizationId),
+				eq(evidence.status, 'active'),
+				isNull(evidence.deletedAt)
+			)
+		);
 
 	return { evidenceList };
 };

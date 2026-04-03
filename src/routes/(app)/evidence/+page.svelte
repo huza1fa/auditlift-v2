@@ -8,7 +8,8 @@
 		FloppyDisk,
 		X,
 		Note,
-		Warning
+		Warning,
+		Trash
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
@@ -27,6 +28,8 @@
 	let editingId = $state<string | null>(null);
 	let editNotes = $state('');
 	let saving = $state(false);
+	let deletingId = $state<string | null>(null);
+	let deleteInProgress = $state<string | null>(null);
 
 	function formatSize(bytes: number): string {
 		if (bytes < 1024) return `${bytes}B`;
@@ -80,6 +83,30 @@
 			saving = false;
 		}
 	}
+
+	function confirmDelete(id: string) {
+		deletingId = id;
+	}
+
+	function cancelDelete() {
+		deletingId = null;
+	}
+
+	async function deleteEvidence(id: string) {
+		deleteInProgress = id;
+		// optimistic removal
+		data.evidenceList = data.evidenceList.filter((ev: Evidence) => ev.id !== id);
+		deletingId = null;
+		try {
+			const res = await fetch(`/api/evidence/${id}`, { method: 'DELETE' });
+			if (!res.ok) throw new Error('Failed to delete');
+			toastSuccess('Evidence deleted');
+		} catch {
+			toastError('Failed to delete');
+		} finally {
+			deleteInProgress = null;
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -87,9 +114,9 @@
 		<h1 class="text-2xl font-bold text-[var(--foreground)]">Evidence</h1>
 		<div class="flex items-center gap-2">
 			<Badge variant="default">{data.evidenceList.length} files</Badge>
-			{#if data.evidenceList.filter((ev) => isStale(ev.createdAt)).length > 0}
+			{#if data.evidenceList.filter((ev: Evidence) => isStale(ev.createdAt)).length > 0}
 				<Badge variant="warning"
-					>{data.evidenceList.filter((ev) => isStale(ev.createdAt)).length} stale</Badge
+					>{data.evidenceList.filter((ev: Evidence) => isStale(ev.createdAt)).length} stale</Badge
 				>
 			{/if}
 		</div>
@@ -156,6 +183,28 @@
 								{:else if ev.notes}
 									<p class="mt-1 text-xs text-[var(--foreground-muted)] italic">"{ev.notes}"</p>
 								{/if}
+
+								{#if deletingId === ev.id}
+									<div
+										class="mt-2 flex items-center gap-2 rounded-[var(--radius)] bg-[var(--danger-light)] px-3 py-2"
+									>
+										<span class="text-xs font-medium text-[var(--danger)]">
+											This will reduce your readiness score. Delete?
+										</span>
+										<button
+											onclick={() => deleteEvidence(ev.id)}
+											class="rounded-[var(--radius)] bg-[var(--danger)] px-2 py-0.5 text-xs font-semibold text-white hover:opacity-80"
+										>
+											Delete
+										</button>
+										<button
+											onclick={cancelDelete}
+											class="text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+										>
+											Cancel
+										</button>
+									</div>
+								{/if}
 							</div>
 						</div>
 						<div class="flex items-center gap-3">
@@ -168,6 +217,14 @@
 								onclick={() => downloadEvidence(ev.id, ev.filename)}
 							>
 								<Download size={14} />
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={() => confirmDelete(ev.id)}
+								disabled={deleteInProgress === ev.id}
+							>
+								<Trash size={14} />
 							</Button>
 							{#if ev.controlCode}
 								<a
