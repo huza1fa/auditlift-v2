@@ -151,7 +151,7 @@
 			<p>
 				EU and UK users have these rights under GDPR. California residents have similar rights under
 				CCPA. To exercise any of these rights, email us at
-				<a href="mailto:hello@auditlift.io">hello@auditlift.io</a>.
+				<a href="mailto:hello@auditlift.app">hello@auditlift.app</a>.
 			</p>
 		</section>
 
@@ -176,7 +176,7 @@
 			<h2>Contact</h2>
 			<p>
 				Questions about this policy or your data? Email us at
-				<a href="mailto:hello@auditlift.io">hello@auditlift.io</a>. We'll respond within 2 business
+				<a href="mailto:hello@auditlift.app">hello@auditlift.app</a>. We'll respond within 2 business
 				days.
 			</p>
 		</section>

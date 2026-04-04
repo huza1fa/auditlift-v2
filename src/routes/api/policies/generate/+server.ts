@@ -52,7 +52,7 @@ function getOpenRouterClient() {
 		baseURL: 'https://openrouter.ai/api/v1',
 		apiKey,
 		headers: {
-			'HTTP-Referer': 'https://auditlift.io',
+			'HTTP-Referer': 'https://auditlift.app',
 			'X-Title': 'AuditLift'
 		}
 	});

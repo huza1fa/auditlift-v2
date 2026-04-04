@@ -17,7 +17,7 @@ export async function sendInviteEmail(opts: {
 	const resend = new Resend(env.RESEND_API_KEY);
 
 	await resend.emails.send({
-		from: 'AuditLift <invites@auditlift.io>',
+		from: 'AuditLift <invites@auditlift.app>',
 		to: opts.to,
 		subject: `You're invited to join ${opts.organizationName} on AuditLift`,
 		html: buildInviteHtml(opts)
@@ -39,7 +39,7 @@ export async function sendWelcomeEmail(opts: {
 	const resend = new Resend(env.RESEND_API_KEY);
 
 	await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.io>',
+		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: `Welcome to AuditLift — let's get ${opts.organizationName} audit-ready`,
 		html: buildWelcomeHtml(opts)
@@ -62,7 +62,7 @@ export async function sendTrialExpiringEmail(opts: {
 	const resend = new Resend(env.RESEND_API_KEY);
 
 	await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.io>',
+		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: `Your AuditLift trial ends in ${opts.daysLeft} day${opts.daysLeft === 1 ? '' : 's'}`,
 		html: buildTrialExpiringHtml(opts)
@@ -83,7 +83,7 @@ export async function sendTrialExpiredEmail(opts: {
 	const resend = new Resend(env.RESEND_API_KEY);
 
 	await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.io>',
+		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: 'Your AuditLift trial has ended',
 		html: buildTrialExpiredHtml(opts)
@@ -104,7 +104,7 @@ export async function sendPasswordResetEmail(opts: {
 	const resend = new Resend(env.RESEND_API_KEY);
 
 	await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.io>',
+		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: 'Reset your AuditLift password',
 		html: buildPasswordResetHtml(opts)
@@ -145,7 +145,7 @@ function buildWelcomeHtml(opts: {
         <li>Upload evidence files to each control in the <strong style="color:#18181b;">Evidence Locker</strong></li>
         <li>Generate AI-written policies in the <strong style="color:#18181b;">Policies</strong> section</li>
       </ul>
-      <a href="https://app.auditlift.io/dashboard"
+      <a href="https://app.auditlift.app/dashboard"
          style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;">
         Go to Dashboard
       </a>
@@ -185,7 +185,7 @@ function buildTrialExpiringHtml(opts: {
         <strong style="color:#18181b;">${expiryStr}</strong>.
         Upgrade now to keep full access to policy generation, evidence uploads, and auditor exports.
       </p>
-      <a href="https://app.auditlift.io/settings/billing"
+      <a href="https://app.auditlift.app/settings/billing"
          style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;">
         Upgrade Now
       </a>
@@ -212,7 +212,7 @@ function buildTrialExpiredHtml(opts: { name: string; organizationName: string })
         Your trial for <strong style="color:#18181b;">${opts.organizationName}</strong> has ended.
         Your data is safe — upgrade anytime to regain full access.
       </p>
-      <a href="https://app.auditlift.io/settings/billing"
+      <a href="https://app.auditlift.app/settings/billing"
          style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;">
         Reactivate Access
       </a>

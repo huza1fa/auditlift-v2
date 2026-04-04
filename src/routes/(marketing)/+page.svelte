@@ -143,7 +143,7 @@
 				'@id': 'https://auditlift.app/#organization',
 				name: 'AuditLift',
 				url: 'https://auditlift.app',
-				email: 'hello@auditlift.io',
+				email: 'hello@auditlift.app',
 				description: 'SOC 2, PCI-DSS, and ISO 27001 compliance software for startups and SMBs.'
 			},
 			{

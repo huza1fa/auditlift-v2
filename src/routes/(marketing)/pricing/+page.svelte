@@ -232,7 +232,7 @@
 				</div>
 
 				<a
-					href="mailto:hello@auditlift.io"
+					href="mailto:hello@auditlift.app"
 					class="flex items-center justify-center gap-2 rounded-[var(--radius)] border border-[var(--border)] px-5 py-2.5 text-[14px] font-medium text-[var(--foreground)] no-underline transition-colors hover:bg-[var(--background-alt)]"
 				>
 					<Envelope size={14} />
