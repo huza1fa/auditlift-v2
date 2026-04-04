@@ -55,8 +55,25 @@ export function validateFileSize(size: number): boolean {
 	return size > 0 && size <= MAX_FILE_SIZE;
 }
 
-export function generateStorageKey(orgId: string, controlId: string, filename: string): string {
-	const ext = filename.split('.').pop() || '';
+const MIME_TO_EXT: Record<string, string> = {
+	'application/pdf': 'pdf',
+	'image/png': 'png',
+	'image/jpeg': 'jpg',
+	'text/csv': 'csv',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx'
+};
+
+export function sanitizeFilename(filename: string): string {
+	// Strip directory traversal, null bytes, limit to basename only
+	const base = filename.split(/[/\\]/).pop() ?? 'file';
+	return base
+		.replace(/[^\w.\-]/g, '_')
+		.replace(/\.{2,}/g, '.')
+		.slice(0, 255);
+}
+
+export function generateStorageKey(orgId: string, controlId: string, mimeType: string): string {
+	const ext = MIME_TO_EXT[mimeType] ?? 'bin';
 	const uuid = crypto.randomUUID();
 	return `${orgId}/${controlId}/${uuid}.${ext}`;
 }

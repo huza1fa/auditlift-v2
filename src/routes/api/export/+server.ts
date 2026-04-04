@@ -9,7 +9,8 @@ import {
 	frameworks
 } from '$lib/server/db/schema';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
+import { hasActivePaidAccess } from '$lib/server/billing';
+import { ExportSchema } from '$lib/server/validation';
 import archiver from 'archiver';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { downloadFile } from '$lib/server/storage';
@@ -18,15 +19,22 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
 
 	// Gate: active subscription only (no trial export)
-	if (!hasActiveAccess(locals.subscription)) {
+	if (!hasActivePaidAccess(locals.subscription)) {
 		throw error(402, 'Active subscription required to export');
+	}
+
+	// Verify subscription belongs to requesting org
+	if (locals.subscription && locals.subscription.organizationId !== locals.organizationId) {
+		throw error(403, 'Forbidden');
 	}
 
 	const orgId = locals.organizationId;
 	const org = locals.organization!;
 
-	const body = await request.json().catch(() => ({}));
-	const { policyIds, evidenceIds } = body as { policyIds?: string[]; evidenceIds?: string[] };
+	const bodyRaw = await request.json().catch(() => ({}));
+	const bodyResult = ExportSchema.safeParse(bodyRaw);
+	if (!bodyResult.success) throw error(400, 'Invalid input');
+	const { policyIds, evidenceIds } = bodyResult.data;
 
 	// Get org's framework
 	const [orgFramework] = await db

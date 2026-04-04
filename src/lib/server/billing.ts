@@ -20,6 +20,11 @@ export function hasActiveAccess(subscription: Subscription, trialEndsAt?: Date |
 	return false;
 }
 
+export function hasActivePaidAccess(subscription: Subscription): boolean {
+	if (!subscription) return false;
+	return subscription.status === 'active';
+}
+
 export function isReadOnly(subscription: Subscription, trialEndsAt?: Date | null): boolean {
 	return !hasActiveAccess(subscription, trialEndsAt);
 }

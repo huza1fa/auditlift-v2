@@ -1,11 +1,17 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { userOrganizations, organizationInvitations, organizations } from '$lib/server/db/schema';
+import {
+	userOrganizations,
+	organizationInvitations,
+	organizations,
+	user
+} from '$lib/server/db/schema';
 import { eq, and, or } from 'drizzle-orm';
 import { requireInvitePermission, canInvite } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
 import { sendInviteEmail } from '$lib/server/email';
+import { InviteTeamMemberSchema } from '$lib/server/validation';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -14,18 +20,19 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	const orgId = locals.organizationId;
 
-	// Get team members
+	// Get team members with their profile data via join to auth user table
 	const members = await db
 		.select({
 			id: userOrganizations.id,
 			userId: userOrganizations.userId,
 			role: userOrganizations.role,
 			createdAt: userOrganizations.createdAt,
-			name: locals.session.user.name,
-			email: locals.session.user.email,
-			image: locals.session.user.image
+			name: user.name,
+			email: user.email,
+			image: user.image
 		})
 		.from(userOrganizations)
+		.leftJoin(user, eq(userOrganizations.userId, user.id))
 		.where(eq(userOrganizations.organizationId, orgId));
 
 	// Get pending invitations
@@ -80,32 +87,38 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	requireInvitePermission(userMembership.role as UserRole);
 
-	const body = await request.json();
-	const { email, role = 'member' } = body;
-
-	if (!email) {
-		throw error(400, 'Email is required');
-	}
+	const result = InviteTeamMemberSchema.safeParse(await request.json());
+	if (!result.success) throw error(400, 'Invalid input');
+	const body = result.data;
+	const { email, role } = body;
 
 	// Validate role - can't invite as owner
 	if (role === 'owner') {
 		throw error(400, 'Cannot invite someone as owner');
 	}
 
-	// Check if user is already a member
-	const [existingMember] = await db
-		.select()
-		.from(userOrganizations)
-		.where(
-			and(
-				eq(userOrganizations.organizationId, orgId),
-				eq(userOrganizations.userId, email) // Note: this might need userId lookup
-			)
-		)
+	// Check if user is already a member by first resolving the email to a userId
+	const [existingUser] = await db
+		.select({ id: user.id })
+		.from(user)
+		.where(eq(user.email, email))
 		.limit(1);
 
-	if (existingMember) {
-		throw error(400, 'User is already a member of this organization');
+	if (existingUser) {
+		const [existingMember] = await db
+			.select()
+			.from(userOrganizations)
+			.where(
+				and(
+					eq(userOrganizations.organizationId, orgId),
+					eq(userOrganizations.userId, existingUser.id)
+				)
+			)
+			.limit(1);
+
+		if (existingMember) {
+			throw error(400, 'User is already a member of this organization');
+		}
 	}
 
 	// Check for existing pending invitation

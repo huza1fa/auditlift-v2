@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { policies } from '$lib/server/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
+import { PatchPolicySchema } from '$lib/server/validation';
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -59,12 +60,10 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		throw error(400, 'Missing policy ID');
 	}
 
-	const body = await request.json();
-	const { content, title } = body as { content?: string; title?: string };
-
-	if (!content && !title) {
-		throw error(400, 'Nothing to update');
-	}
+	const result = PatchPolicySchema.safeParse(await request.json());
+	if (!result.success) throw error(400, 'Invalid input');
+	const body = result.data;
+	const { content, title } = body;
 
 	const [existing] = await db
 		.select()
@@ -87,7 +86,7 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	const [updated] = await db
 		.update(policies)
 		.set(updates)
-		.where(eq(policies.id, policyId))
+		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)))
 		.returning();
 
 	logActivity({

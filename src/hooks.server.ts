@@ -3,10 +3,25 @@ import { sequence } from '@sveltejs/kit/hooks';
 import type { Handle } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { userOrganizations, organizations, subscriptions } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
+import { env } from '$env/dynamic/private';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
 const authHandle: Handle = async ({ event, resolve }) => {
+	// CSRF protection for JSON API routes
+	const method = event.request.method;
+	if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(method)) {
+		const pathname = event.url.pathname;
+		// Exempt Stripe webhooks — they come from Stripe servers, not browsers
+		if (!pathname.startsWith('/api/webhooks/')) {
+			const origin = event.request.headers.get('origin');
+			const expectedOrigin = env.ORIGIN;
+			if (origin && expectedOrigin && origin !== expectedOrigin) {
+				return new Response('Forbidden', { status: 403 });
+			}
+		}
+	}
+
 	const session = await auth.api.getSession({ headers: event.request.headers });
 	event.locals.session = session;
 
@@ -15,6 +30,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 			.select()
 			.from(userOrganizations)
 			.where(eq(userOrganizations.userId, session.user.id))
+			.orderBy(asc(userOrganizations.createdAt))
 			.limit(1);
 
 		if (userOrg) {

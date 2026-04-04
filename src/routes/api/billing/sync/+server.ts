@@ -29,8 +29,8 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 		if (stripeSubs.data.length > 0) {
 			const stripeSub = stripeSubs.data[0];
-			const currentPeriodEnd = (stripeSub as any).current_period_end
-				? new Date((stripeSub as any).current_period_end * 1000)
+			const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
+				? new Date(stripeSub.items.data[0].current_period_end * 1000)
 				: null;
 
 			await db
@@ -39,7 +39,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 					status: 'active',
 					stripeSubscriptionId: stripeSub.id,
 					currentPeriodEnd,
-					cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end,
+					cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
 					updatedAt: new Date()
 				})
 				.where(eq(subscriptions.organizationId, orgId));
@@ -49,8 +49,9 @@ export const POST: RequestHandler = async ({ locals }) => {
 	} else {
 		// Search by customer email
 		const email = locals.session.user.email;
+		const escapedEmail = email.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 		const customers = await stripe.customers.search({
-			query: `email:"${email}"`
+			query: `email:"${escapedEmail}"`
 		});
 
 		if (customers.data.length > 0) {
@@ -63,8 +64,8 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 			if (stripeSubs.data.length > 0) {
 				const stripeSub = stripeSubs.data[0];
-				const currentPeriodEnd = (stripeSub as any).current_period_end
-					? new Date((stripeSub as any).current_period_end * 1000)
+				const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
+					? new Date(stripeSub.items.data[0].current_period_end * 1000)
 					: null;
 
 				if (existingSub) {
@@ -75,7 +76,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 							stripeCustomerId: customer.id,
 							stripeSubscriptionId: stripeSub.id,
 							currentPeriodEnd,
-							cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end,
+							cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
 							updatedAt: new Date()
 						})
 						.where(eq(subscriptions.organizationId, orgId));
@@ -86,7 +87,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 						stripeCustomerId: customer.id,
 						stripeSubscriptionId: stripeSub.id,
 						currentPeriodEnd,
-						cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end
+						cancelAtPeriodEnd: stripeSub.cancel_at_period_end
 					});
 				}
 

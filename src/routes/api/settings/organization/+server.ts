@@ -9,6 +9,8 @@ import {
 	policies,
 	organizationFrameworks,
 	readinessScores,
+	readinessSnapshots,
+	activityLogs,
 	subscriptions
 } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -40,15 +42,22 @@ export const DELETE: RequestHandler = async ({ locals }) => {
 
 	requireOrgDeletionPermission(membership.role as UserRole);
 
-	// Delete all organization data in correct order (respecting foreign keys)
-	await db.delete(organizationInvitations).where(eq(organizationInvitations.organizationId, orgId));
-	await db.delete(evidence).where(eq(evidence.organizationId, orgId));
-	await db.delete(policies).where(eq(policies.organizationId, orgId));
-	await db.delete(readinessScores).where(eq(readinessScores.organizationId, orgId));
-	await db.delete(organizationFrameworks).where(eq(organizationFrameworks.organizationId, orgId));
-	await db.delete(subscriptions).where(eq(subscriptions.organizationId, orgId));
-	await db.delete(userOrganizations).where(eq(userOrganizations.organizationId, orgId));
-	await db.delete(organizations).where(eq(organizations.id, orgId));
+	// Delete all organization data in a single transaction to prevent partial deletes
+	await db.transaction(async (tx) => {
+		await tx.delete(activityLogs).where(eq(activityLogs.organizationId, orgId));
+		await tx
+			.delete(organizationInvitations)
+			.where(eq(organizationInvitations.organizationId, orgId));
+		await tx.delete(evidence).where(eq(evidence.organizationId, orgId));
+		await tx.delete(policies).where(eq(policies.organizationId, orgId));
+		await tx.delete(readinessSnapshots).where(eq(readinessSnapshots.organizationId, orgId));
+		await tx.delete(readinessScores).where(eq(readinessScores.organizationId, orgId));
+		await tx.delete(organizationFrameworks).where(eq(organizationFrameworks.organizationId, orgId));
+		await tx.delete(subscriptions).where(eq(subscriptions.organizationId, orgId));
+		await tx.delete(userOrganizations).where(eq(userOrganizations.organizationId, orgId));
+		// Organization row must be last — all FK children are deleted above
+		await tx.delete(organizations).where(eq(organizations.id, orgId));
+	});
 
 	return json({ success: true });
 };

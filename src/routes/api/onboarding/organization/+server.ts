@@ -4,12 +4,14 @@ import { db } from '$lib/server/db';
 import { organizations, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { extractDomainFromEmail } from '$lib/server/auth-utils';
+import { OrganizationSchema } from '$lib/server/validation';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
 
-	const { name, website, industry } = await request.json();
-	if (!name?.trim()) throw error(400, 'Company name required');
+	const parseResult = OrganizationSchema.safeParse(await request.json());
+	if (!parseResult.success) throw error(400, 'Invalid input');
+	const { name, website, industry } = parseResult.data;
 
 	// Check if user already has an org
 	const [existingUserOrg] = await db
@@ -41,7 +43,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		Date.now().toString(36);
 
 	const trialEndsAt = new Date();
-	trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+	trialEndsAt.setDate(trialEndsAt.getDate() + 10);
 
 	const [org] = await db
 		.insert(organizations)

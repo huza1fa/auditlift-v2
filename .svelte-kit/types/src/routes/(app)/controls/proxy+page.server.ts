@@ -9,7 +9,7 @@ import {
 	evidence,
 	policies
 } from '$lib/server/db/schema';
-import { eq, and, count, sql } from 'drizzle-orm';
+import { eq, and, count, sql, isNull } from 'drizzle-orm';
 
 export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
@@ -51,11 +51,20 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		.from(controls)
 		.leftJoin(
 			evidence,
-			and(eq(evidence.controlId, controls.id), eq(evidence.organizationId, orgId))
+			and(
+				eq(evidence.controlId, controls.id),
+				eq(evidence.organizationId, orgId),
+				isNull(evidence.deletedAt),
+				eq(evidence.status, 'active')
+			)
 		)
 		.leftJoin(
 			policies,
-			and(eq(policies.controlId, controls.id), eq(policies.organizationId, orgId))
+			and(
+				eq(policies.controlId, controls.id),
+				eq(policies.organizationId, orgId),
+				isNull(policies.archivedAt)
+			)
 		)
 		.where(eq(controls.frameworkId, selectedFramework.frameworkId))
 		.groupBy(controls.id);

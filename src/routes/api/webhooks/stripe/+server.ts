@@ -51,14 +51,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
 	// Get the full subscription from Stripe
 	const stripeSub = await stripe.subscriptions.retrieve(session.subscription as string);
-	const subscription = stripeSub as unknown as {
-		id: string;
-		current_period_end: number;
-		cancel_at_period_end: boolean;
-	};
 
-	const currentPeriodEnd = subscription.current_period_end
-		? new Date(subscription.current_period_end * 1000)
+	const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
+		? new Date(stripeSub.items.data[0].current_period_end * 1000)
 		: null;
 
 	// Check if subscription exists for this org
@@ -68,15 +63,17 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 		.where(eq(subscriptions.organizationId, organizationId))
 		.limit(1);
 
+	console.log(`[Stripe] Activating subscription for org ${organizationId} (sub ${stripeSub.id})`);
+
 	if (existingSub) {
 		await db
 			.update(subscriptions)
 			.set({
 				status: 'active',
 				stripeCustomerId: session.customer as string,
-				stripeSubscriptionId: subscription.id,
+				stripeSubscriptionId: stripeSub.id,
 				currentPeriodEnd,
-				cancelAtPeriodEnd: subscription.cancel_at_period_end,
+				cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
 				updatedAt: new Date()
 			})
 			.where(eq(subscriptions.organizationId, organizationId));
@@ -85,9 +82,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 			organizationId,
 			status: 'active',
 			stripeCustomerId: session.customer as string,
-			stripeSubscriptionId: subscription.id,
+			stripeSubscriptionId: stripeSub.id,
 			currentPeriodEnd,
-			cancelAtPeriodEnd: subscription.cancel_at_period_end
+			cancelAtPeriodEnd: stripeSub.cancel_at_period_end
 		});
 	}
 
@@ -95,33 +92,44 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-	const organizationId = subscription.metadata?.organizationId;
-	if (!organizationId) {
+	const metadataOrgId = subscription.metadata?.organizationId;
+	if (!metadataOrgId) {
 		console.error('[Stripe] No organizationId in subscription metadata');
 		return;
 	}
 
-	const sub = subscription as unknown as {
-		status: string;
-		current_period_end: number;
-		cancel_at_period_end: boolean;
-	};
+	// Cross-validate: look up by stripeSubscriptionId to prevent metadata manipulation
+	const existingSub = await db.query.subscriptions.findFirst({
+		where: eq(subscriptions.stripeSubscriptionId, subscription.id)
+	});
 
-	const status = mapStripeStatus(sub.status);
-	const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+	if (existingSub && existingSub.organizationId !== metadataOrgId) {
+		console.error(
+			`[Stripe Webhook] organizationId mismatch for subscription ${subscription.id}: metadata says ${metadataOrgId}, DB says ${existingSub.organizationId}`
+		);
+		return;
+	}
+
+	// Prefer the DB-verified organizationId when one exists
+	const organizationId = existingSub?.organizationId ?? metadataOrgId;
+
+	const status = mapStripeStatus(subscription.status);
+	const currentPeriodEnd = subscription.items.data[0]?.current_period_end
+		? new Date(subscription.items.data[0].current_period_end * 1000)
+		: null;
 
 	await db
 		.update(subscriptions)
 		.set({
 			status,
 			currentPeriodEnd,
-			cancelAtPeriodEnd: sub.cancel_at_period_end,
+			cancelAtPeriodEnd: subscription.cancel_at_period_end,
 			updatedAt: new Date()
 		})
 		.where(eq(subscriptions.organizationId, organizationId));
 
 	console.log(
-		`[Stripe] Subscription updated for org ${organizationId}: status=${status}, cancelAtPeriodEnd=${sub.cancel_at_period_end}`
+		`[Stripe] Subscription updated for org ${organizationId}: status=${status}, cancelAtPeriodEnd=${subscription.cancel_at_period_end}`
 	);
 }
 

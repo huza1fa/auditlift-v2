@@ -7,11 +7,13 @@ import {
 	validateFileSize,
 	generateStorageKey,
 	getPresignedUploadUrl,
+	sanitizeFilename,
 	ALLOWED_MIME_TYPES,
 	MAX_FILE_SIZE
 } from '$lib/server/storage';
 import { hasActiveAccess } from '$lib/server/billing';
 import { eq, and } from 'drizzle-orm';
+import { PresignEvidenceSchema } from '$lib/server/validation';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -23,12 +25,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(402, 'Trial expired. Upgrade to upload evidence.');
 	}
 
-	const body = await request.json();
-	const { controlId, filename, mimeType, sizeBytes } = body;
+	const result = PresignEvidenceSchema.safeParse(await request.json());
+	if (!result.success) throw error(400, 'Invalid input');
+	const { controlId, filename, mimeType, sizeBytes } = result.data;
 
-	if (!controlId || !filename || !mimeType || !sizeBytes) {
-		throw error(400, 'Missing required fields: controlId, filename, mimeType, sizeBytes');
-	}
+	const safeFilename = sanitizeFilename(filename);
 
 	if (!validateFileType(mimeType)) {
 		throw error(400, `File type not allowed. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`);
@@ -38,7 +39,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`);
 	}
 
-	const storageKey = generateStorageKey(orgId, controlId, filename);
+	const storageKey = generateStorageKey(orgId, controlId, mimeType);
 	const uploadUrl = await getPresignedUploadUrl(storageKey, mimeType);
 
 	try {
@@ -47,7 +48,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.values({
 				organizationId: orgId,
 				controlId,
-				filename,
+				filename: safeFilename,
 				storageKey,
 				mimeType,
 				sizeBytes,

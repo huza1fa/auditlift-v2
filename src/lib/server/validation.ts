@@ -1,0 +1,44 @@
+import { z } from 'zod';
+
+export const InviteTeamMemberSchema = z.object({
+	email: z.string().email().max(254),
+	role: z.enum(['admin', 'member', 'viewer']).default('member')
+});
+
+export const GeneratePolicySchema = z.object({
+	policyType: z.string().min(1).max(100),
+	controlId: z.string().uuid().optional(),
+	customTitle: z.string().min(1).max(200).optional(),
+	customPrompt: z.string().min(1).max(2000).optional()
+});
+
+export const PatchPolicySchema = z
+	.object({
+		content: z.string().min(1).max(500_000).optional(),
+		title: z.string().min(1).max(200).optional()
+	})
+	.refine((data) => data.content !== undefined || data.title !== undefined, {
+		message: 'At least one field required'
+	});
+
+export const PresignEvidenceSchema = z.object({
+	controlId: z.string().uuid(),
+	filename: z.string().min(1).max(255),
+	mimeType: z.string().min(1).max(100),
+	sizeBytes: z
+		.number()
+		.int()
+		.positive()
+		.max(10 * 1024 * 1024)
+});
+
+export const OrganizationSchema = z.object({
+	name: z.string().min(1).max(100).trim(),
+	website: z.string().url().max(500).optional().nullable(),
+	industry: z.string().max(100).optional().nullable()
+});
+
+export const ExportSchema = z.object({
+	policyIds: z.array(z.string().uuid()).optional(),
+	evidenceIds: z.array(z.string().uuid()).optional()
+});

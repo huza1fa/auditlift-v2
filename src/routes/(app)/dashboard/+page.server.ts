@@ -62,8 +62,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				const stripeSub = await stripe.subscriptions.retrieve(
 					checkoutSession.subscription as string
 				);
-				const currentPeriodEnd = (stripeSub as any).current_period_end
-					? new Date((stripeSub as any).current_period_end * 1000)
+				const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
+					? new Date(stripeSub.items.data[0].current_period_end * 1000)
 					: null;
 
 				// Check if sub exists in DB
@@ -81,7 +81,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 							stripeCustomerId: checkoutSession.customer as string,
 							stripeSubscriptionId: stripeSub.id,
 							currentPeriodEnd,
-							cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end,
+							cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
 							updatedAt: new Date()
 						})
 						.where(eq(subscriptions.organizationId, orgId));
@@ -92,7 +92,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 						stripeCustomerId: checkoutSession.customer as string,
 						stripeSubscriptionId: stripeSub.id,
 						currentPeriodEnd,
-						cancelAtPeriodEnd: (stripeSub as any).cancel_at_period_end
+						cancelAtPeriodEnd: stripeSub.cancel_at_period_end
 					});
 				}
 

@@ -5,7 +5,8 @@ export type ActivityAction =
 	| 'evidence.upload'
 	| 'evidence.delete'
 	| 'policy.generate'
-	| 'policy.edit';
+	| 'policy.edit'
+	| 'policy.archive';
 
 export async function logActivity(opts: {
 	organizationId: string;

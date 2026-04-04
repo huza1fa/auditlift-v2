@@ -2,7 +2,7 @@
 import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { controls, evidence, policies } from '$lib/server/db/schema';
+import { controls, evidence, policies, organizationFrameworks } from '$lib/server/db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 
 export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) => {
@@ -15,6 +15,14 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
 		.where(eq(controls.id, params.controlId))
 		.limit(1);
 	if (!control) throw error(404, 'Control not found');
+
+	const orgFramework = await db.query.organizationFrameworks.findFirst({
+		where: and(
+			eq(organizationFrameworks.organizationId, orgId),
+			eq(organizationFrameworks.frameworkId, control.frameworkId)
+		)
+	});
+	if (!orgFramework) throw error(404, 'Control not found');
 
 	const evidenceList = await db
 		.select({
@@ -29,14 +37,21 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
 			and(
 				eq(evidence.organizationId, orgId),
 				eq(evidence.controlId, control.id),
-				eq(evidence.status, 'active')
+				eq(evidence.status, 'active'),
+				isNull(evidence.deletedAt)
 			)
 		);
 
 	const linkedPolicies = await db
 		.select()
 		.from(policies)
-		.where(and(eq(policies.organizationId, orgId), eq(policies.controlId, control.id)));
+		.where(
+			and(
+				eq(policies.organizationId, orgId),
+				eq(policies.controlId, control.id),
+				isNull(policies.archivedAt)
+			)
+		);
 
 	const allControlsWithStatus = await db
 		.select({
