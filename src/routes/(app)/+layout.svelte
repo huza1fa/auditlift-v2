@@ -1,6 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { House, CheckSquare, FileText, FolderOpen, DownloadSimple, Gear, SignOut } from 'phosphor-svelte';
+	import {
+		House,
+		CheckSquare,
+		FileText,
+		FolderOpen,
+		DownloadSimple,
+		Gear,
+		SignOut,
+		List
+	} from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import Toast from '$lib/components/ui/Toast.svelte';
@@ -14,6 +23,8 @@
 	}
 
 	let { data, children } = $props();
+
+	let sidebarOpen = $state(false);
 
 	const navLinks = [
 		{ href: '/dashboard', icon: House, label: 'Dashboard' },
@@ -44,9 +55,40 @@
 </script>
 
 <div class="flex min-h-screen">
+	<!-- Mobile top bar -->
+	<header
+		class="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--background-elevated)] px-4 md:hidden"
+	>
+		<div class="flex items-center gap-2.5">
+			<div
+				class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]"
+			>
+				<LogoMark size={14} />
+			</div>
+			<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">AuditLift</span>
+		</div>
+		<button
+			onclick={() => (sidebarOpen = !sidebarOpen)}
+			class="cursor-pointer rounded-[var(--radius)] p-2 text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-subtle)] hover:text-[var(--foreground)]"
+			aria-label="Toggle navigation"
+		>
+			<List size={20} />
+		</button>
+	</header>
+
+	<!-- Backdrop overlay (mobile only) -->
+	{#if sidebarOpen}
+		<div
+			class="fixed inset-0 z-30 bg-black/50 md:hidden"
+			onclick={() => (sidebarOpen = false)}
+			aria-hidden="true"
+		></div>
+	{/if}
+
 	<!-- Sidebar -->
 	<aside
-		class="fixed inset-y-0 left-0 flex w-56 flex-col border-r border-[var(--border)] bg-[var(--background-elevated)]"
+		class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-[var(--border)] bg-[var(--background-elevated)] transition-transform duration-200
+			{sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0"
 	>
 		<!-- Logo -->
 		<div class="flex items-center gap-2.5 border-b border-[var(--border)] px-4 py-3.5">
@@ -76,6 +118,7 @@
 							: page.url.pathname.startsWith(link.href)}
 					<a
 						href={link.href}
+						onclick={() => (sidebarOpen = false)}
 						class="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[13px] font-medium transition-all
 							{isActive
 							? 'bg-[var(--brand)] text-white shadow-sm'
@@ -94,6 +137,7 @@
 			{#if trialDays !== null}
 				<a
 					href="/settings/billing"
+					onclick={() => (sidebarOpen = false)}
 					class="mb-1.5 block rounded-[var(--radius-md)] bg-[var(--warning-light)] px-3 py-2 transition-opacity hover:opacity-80"
 				>
 					<div class="mb-1.5 flex items-center justify-between">
@@ -140,7 +184,7 @@
 	</aside>
 
 	<!-- Main -->
-	<main class="ml-56 min-h-screen flex-1 bg-[var(--background)]">
+	<main class="ml-0 min-h-screen flex-1 bg-[var(--background)] pt-14 md:ml-56 md:pt-0">
 		{#if data.isReadOnly}
 			<div
 				class="border-b border-[var(--warning)] bg-[var(--warning-light)] px-6 py-2.5 text-center"
