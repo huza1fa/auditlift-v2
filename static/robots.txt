@@ -10,5 +10,6 @@ Disallow: /api/
 Disallow: /login
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /invite/
 
 Sitemap: https://auditlift.app/sitemap.xml

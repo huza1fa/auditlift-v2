@@ -1,4 +1,5 @@
 import { json, error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import {
@@ -155,7 +156,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		})
 		.returning();
 
-	const origin = process.env.ORIGIN || 'http://localhost:5173';
+	const origin = env.ORIGIN || 'http://localhost:5173';
 	const inviteLink = `${origin}/invite/${token}`;
 
 	const inviterName = locals.session?.user?.name ?? locals.session?.user?.email ?? 'A team member';

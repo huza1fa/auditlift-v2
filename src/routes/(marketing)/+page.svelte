@@ -467,6 +467,7 @@
 				<button class="footer-link" onclick={() => scrollTo('#features')}>Features</button>
 				<button class="footer-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
 				<a href="/privacy" class="footer-link">Privacy</a>
+				<a href="/terms" class="footer-link">Terms</a>
 				<a href="/login" class="footer-link">Sign in</a>
 			</nav>
 			<ThemeToggle />
