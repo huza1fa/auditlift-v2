@@ -100,7 +100,7 @@
 			number: '02',
 			title: 'Fill gaps, generate policies',
 			description:
-				'See exactly what you can already answer and what needs work. Generate policies for the controls you're missing.'
+				"See exactly what you can already answer and what needs work. Generate policies for the controls you're missing."
 		},
 		{
 			number: '03',

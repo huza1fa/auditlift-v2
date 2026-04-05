@@ -8,7 +8,8 @@
 		FileCsv,
 		FileDoc,
 		FilePdf,
-		File as FileGeneric
+		File as FileGeneric,
+		Trash
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -107,6 +108,20 @@
 		if (pollTimer !== null) {
 			clearTimeout(pollTimer);
 			pollTimer = null;
+		}
+	}
+
+
+	// ── Delete ───────────────────────────────────────────────────────────────
+	async function deleteQuestionnaire(id: string) {
+		if (!confirm('Delete this questionnaire? This cannot be undone.')) return;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}`, { method: 'DELETE' });
+			if (!res.ok) throw new Error();
+			questionnaires = questionnaires.filter((q) => q.id !== id);
+			toastSuccess('Questionnaire deleted');
+		} catch {
+			toastError('Failed to delete questionnaire');
 		}
 	}
 
@@ -325,10 +340,18 @@
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{#each questionnaires as q (q.id)}
 				{@const FileIcon = getFileIcon(q.filename)}
-				<button
-					onclick={() => goto(`/questionnaires/${q.id}`)}
-					class="group w-full cursor-pointer text-left"
-				>
+				<div class="group relative">
+					<button
+						onclick={(e) => { e.stopPropagation(); deleteQuestionnaire(q.id); }}
+						class="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] opacity-0 transition-opacity hover:bg-[var(--danger-light)] group-hover:opacity-100"
+						title="Delete questionnaire"
+					>
+						<Trash size={14} color="var(--danger)" />
+					</button>
+					<button
+						onclick={() => goto(`/questionnaires/${q.id}`)}
+						class="w-full cursor-pointer text-left"
+					>
 					<Card class="flex h-full flex-col p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
 						<!-- Top row: icon + filename + status badge -->
 						<div class="mb-3 flex items-start justify-between gap-2">
@@ -383,8 +406,9 @@
 								<ArrowRight size={12} class="transition-transform group-hover:translate-x-0.5" />
 							</div>
 						</div>
-					</Card>
-				</button>
+						</Card>
+					</button>
+				</div>
 			{/each}
 		</div>
 	{/if}

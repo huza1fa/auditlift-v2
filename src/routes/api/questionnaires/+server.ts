@@ -31,5 +31,5 @@ export const GET: RequestHandler = async ({ locals }) => {
 		.where(eq(questionnaires.organizationId, orgId))
 		.orderBy(desc(questionnaires.createdAt));
 
-	return json(rows);
+	return json({ questionnaires: rows });
 };

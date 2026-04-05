@@ -64,29 +64,36 @@ async function classifyQuestion(
 		.map((c) => `- [${c.id}] ${c.code} ${c.title} (${c.category}): ${c.whatAuditorExpects}`)
 		.join('\n');
 
+	const hasOrgContext = policyContext.length > 0 || controlContext.length > 0;
+
 	const prompt = `You are helping answer a security questionnaire on behalf of ${orgName}.
-Only use the provided policies and controls as your source. Do not use general knowledge.
+
+${
+		hasOrgContext
+			? `Use the provided policies and controls as your primary source. You may supplement with general industry-standard security practices when the provided context is incomplete.
 
 Available policies:
 ${policiesList || '(none)'}
 
 Available controls:
-${controlsList || '(none)'}
+${controlsList || '(none)'}`
+			: `${orgName} has not yet generated policies or mapped controls. Draft a reasonable answer based on industry-standard security practices (SOC 2, ISO 27001, NIST) that a typical SaaS company would follow. The answer will be marked as low confidence so the user can review and customize it.`
+	}
 
 Question: "${questionText}"
 
 Instructions:
 - domain: classify this question into one of: access_control, data_security, incident_response, vendor_management, business_continuity, cryptography, physical_security, other
 - confidence:
-    high = answered directly from a specific policy with concrete detail
-    medium = answered from related policies/controls but inferred
-    low = some relevant content but significant gaps remain
-    gap = cannot answer from provided context
-- answer: draft answer using only the provided context. null if gap.
-- gapReason: why this cannot be answered (if gap/low). null otherwise.
-- gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium confidence.
-- mappedPolicyIds: array of policy IDs you used (from the list above)
-- mappedControlIds: array of control IDs you used (from the list above)`;
+    high = answered directly from a specific org policy with concrete detail
+    medium = answered from related org policies/controls but inferred
+    low = answered using general security best practices (no org-specific policy found)
+    gap = question requires org-specific data (e.g. specific vendor names, exact employee counts, custom SLAs) that cannot be drafted generically
+- answer: draft a helpful answer. Use "low" confidence for general-practice answers. Only return null for true gaps that need specific org data.
+- gapReason: why this cannot be answered even generically (only for gap). null otherwise.
+- gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium/low confidence.
+- mappedPolicyIds: array of policy IDs you used (from the list above, empty if none)
+- mappedControlIds: array of control IDs you used (from the list above, empty if none)`;
 
 	const result = await generateObject({
 		model: openrouter('openai/gpt-4o-mini'),
