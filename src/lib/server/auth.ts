@@ -9,6 +9,7 @@ import * as schema from '$lib/server/db/schema';
 export const auth = betterAuth({
 	baseURL: env.ORIGIN,
 	secret: env.BETTER_AUTH_SECRET,
+	trustedOrigins: [env.ORIGIN, 'https://auditlift-v2-production.up.railway.app'],
 	database: drizzleAdapter(db, {
 		provider: 'pg',
 		schema: { ...schema }
