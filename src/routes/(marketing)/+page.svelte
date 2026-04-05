@@ -47,40 +47,44 @@
 	const features = [
 		{
 			icon: CheckSquare,
-			title: 'Pre-mapped Controls',
-			description: 'All SOC 2, PCI-DSS, and ISO 27001 controls pre-loaded. Just fill in evidence.',
+			title: 'Framework Mapping',
+			description:
+				'Every SOC 2, PCI-DSS, and ISO 27001 requirement pre-loaded and mapped. Know exactly which controls a questionnaire is asking about.',
 			iconBg: 'feature-icon-brand'
 		},
 		{
 			icon: FileText,
 			title: 'Policy Generator',
 			description:
-				'Answer a few questions about your stack and get audit-grade policies in minutes. Edit in-browser.',
+				'Generate the policies buyers actually ask for — tailored to your stack in minutes, editable in-browser.',
 			iconBg: 'feature-icon-success'
 		},
 		{
 			icon: FolderOpen,
 			title: 'Evidence Locker',
-			description: 'Upload screenshots, logs, and certificates tagged directly to controls.',
+			description:
+				'Keep your proof organized and tagged to controls. Share instantly when a prospect asks for it.',
 			iconBg: 'feature-icon-info'
 		},
 		{
 			icon: ChartBar,
-			title: 'Readiness Score',
-			description: "Live dashboard shows exactly how close you are and what's blocking you.",
+			title: 'Gap Visibility',
+			description:
+				"See what's incomplete before a prospect asks. Prioritize the gaps that are most likely to block a deal.",
 			iconBg: 'feature-icon-warning'
 		},
 		{
 			icon: Users,
 			title: 'Team Collaboration',
-			description: "Invite your team and assign control owners. Track who's done what.",
+			description:
+				'Assign controls to the right owners — engineering, HR, legal. Everyone works from the same source of truth.',
 			iconBg: 'feature-icon-brand'
 		},
 		{
 			icon: DownloadSimple,
-			title: 'Auditor Export',
+			title: 'Security Package Export',
 			description:
-				'One-click ZIP with your policies, evidence, and control mapping. Auditor-ready.',
+				'One-click export of a clean, organized package — for auditors, prospects, or enterprise security reviews.',
 			iconBg: 'feature-icon-success'
 		}
 	];
@@ -88,18 +92,21 @@
 	const steps = [
 		{
 			number: '01',
-			title: 'Select your framework',
-			description: 'Choose SOC 2, PCI-DSS, ISO 27001, or all three. Controls are pre-loaded.'
+			title: 'Map your security posture',
+			description:
+				'Select the frameworks your prospects care about. Every requirement is pre-loaded — no setup from scratch.'
 		},
 		{
 			number: '02',
-			title: 'Upload evidence & generate policies',
-			description: 'Tag files to controls and generate AI-written policies tailored to your stack.'
+			title: 'Fill gaps, generate policies',
+			description:
+				'See exactly what you can already answer and what needs work. Generate policies for the controls you're missing.'
 		},
 		{
 			number: '03',
-			title: 'Export your audit package',
-			description: 'One-click export of a clean ZIP your auditor can open and immediately use.'
+			title: 'Respond with confidence',
+			description:
+				'Answer questionnaires knowing your exact posture. Export a clean package for auditors or enterprise security reviews.'
 		}
 	];
 
@@ -109,29 +116,29 @@
 </script>
 
 <svelte:head>
-	<title>AuditLift — SOC 2 &amp; Compliance Software for Startups</title>
+	<title>AuditLift — Win Deals Faster with Security Readiness</title>
 	<meta
 		name="description"
-		content="Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and an auditor-ready export package. No consultant needed. From $149/mo."
+		content="Stop losing deals to unanswered security questionnaires. AuditLift maps your policies to SOC 2, PCI-DSS, and ISO 27001, surfaces gaps, and gives you the confidence to respond. From $149/mo."
 	/>
 	<link rel="canonical" href="https://auditlift.app" />
 
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app" />
 	<meta property="og:site_name" content="AuditLift" />
-	<meta property="og:title" content="AuditLift — SOC 2 & Compliance Software for Startups" />
+	<meta property="og:title" content="AuditLift — Win Deals Faster with Security Readiness" />
 	<meta
 		property="og:description"
-		content="Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and an auditor-ready export. No consultant needed."
+		content="Stop losing deals to unanswered security questionnaires. Map your policies, surface gaps, and respond with confidence. No consultant needed."
 	/>
 	<meta property="og:image" content="https://auditlift.app/og.png" />
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@auditlift" />
-	<meta name="twitter:title" content="AuditLift — SOC 2 & Compliance Software for Startups" />
+	<meta name="twitter:title" content="AuditLift — Win Deals Faster with Security Readiness" />
 	<meta
 		name="twitter:description"
-		content="Get audit-ready in 30 days. Pre-mapped controls, generated policies, and auditor-ready exports. From $149/mo."
+		content="Stop losing deals to unanswered security questionnaires. Map policies, surface gaps, respond with confidence. From $149/mo."
 	/>
 	<meta name="twitter:image" content="https://auditlift.app/og.png" />
 
@@ -144,7 +151,7 @@
 				name: 'AuditLift',
 				url: 'https://auditlift.app',
 				email: 'hello@auditlift.app',
-				description: 'SOC 2, PCI-DSS, and ISO 27001 compliance software for startups and SMBs.'
+				description: 'Deal-enablement platform that helps teams respond to security questionnaires, map policies to frameworks, and surface gaps before they cost you a deal.'
 			},
 			{
 				'@type': 'WebSite',
@@ -160,7 +167,7 @@
 				operatingSystem: 'Web',
 				url: 'https://auditlift.app',
 				description:
-					'Get SOC 2, PCI-DSS, or ISO 27001 audit-ready in 30 days. Pre-mapped controls, generated policies, and auditor-ready exports.',
+					'Stop losing deals to unanswered security questionnaires. Map policies to frameworks, surface gaps, and respond with confidence.',
 				offers: [
 					{
 						'@type': 'Offer',
@@ -211,12 +218,13 @@
 			<div class="eyebrow-pill">SOC 2 · PCI-DSS · ISO 27001</div>
 
 			<!-- Headline -->
-			<h1 class="hero-headline">Get audit-ready<br />in 30 days</h1>
+			<h1 class="hero-headline">Stop losing deals to<br />security questions</h1>
 
 			<!-- Subheadline -->
 			<p class="hero-subheadline">
-				Skip the compliance consultant. Pre-mapped controls, generated policies tailored to your
-				stack, and a clean export your auditor can open on day one.
+				AuditLift maps your policies to the frameworks buyers care about, surfaces exactly where
+				you're ready and where you're not — so you can respond to security questionnaires with
+				confidence, not guesswork.
 			</p>
 
 			<!-- CTA row -->
@@ -326,7 +334,7 @@
 		<div class="section-inner">
 			<div class="section-header">
 				<p class="section-label">Everything you need</p>
-				<h2 class="section-headline">From zero to audit-ready</h2>
+				<h2 class="section-headline">80% audit-ready — without the vCISO</h2>
 			</div>
 			<div class="features-grid">
 				{#each features as feature (feature.title)}
@@ -445,8 +453,8 @@
 	<!-- Final CTA -->
 	<section class="final-cta-section">
 		<div class="final-cta-inner">
-			<h2 class="final-cta-headline">Ready to close that enterprise deal?</h2>
-			<p class="final-cta-sub">Start your 14-day free trial today. No credit card required.</p>
+			<h2 class="final-cta-headline">Don't let security questions kill another deal.</h2>
+			<p class="final-cta-sub">Know exactly where you stand. Respond with confidence. Close faster.</p>
 			<a href="/login" class="btn-primary btn-lg">
 				Get started free
 				<ArrowRight size={16} weight="bold" />

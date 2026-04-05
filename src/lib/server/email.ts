@@ -141,9 +141,9 @@ function buildWelcomeHtml(opts: {
       </p>
       <p style="margin:0 0 12px;color:#18181b;font-size:14px;font-weight:600;">Here's where to start:</p>
       <ul style="margin:0 0 24px;padding-left:20px;color:#71717a;font-size:14px;line-height:1.8;">
-        <li>Complete your compliance controls in the <strong style="color:#18181b;">Controls</strong> section</li>
-        <li>Upload evidence files to each control in the <strong style="color:#18181b;">Evidence Locker</strong></li>
-        <li>Generate AI-written policies in the <strong style="color:#18181b;">Policies</strong> section</li>
+        <li>Open <strong style="color:#18181b;">Controls</strong> to see every framework requirement mapped out</li>
+        <li>Check your <strong style="color:#18181b;">Readiness Score</strong> to see gaps before a prospect asks</li>
+        <li>Generate policies in the <strong style="color:#18181b;">Policies</strong> section for the controls you're missing</li>
       </ul>
       <a href="https://auditlift.app/dashboard"
          style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;">
