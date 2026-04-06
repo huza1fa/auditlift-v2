@@ -211,6 +211,17 @@ export async function processQuestionnaire(
 					controlContext
 				);
 
+				// Validate AI-returned IDs against known IDs — the model sometimes
+				// returns control codes (e.g. "5.2") instead of UUIDs.
+				const validPolicyIds = new Set(policyContext.map((p) => p.id));
+				const validControlIds = new Set(controlContext.map((c) => c.id));
+				const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
+					validPolicyIds.has(id)
+				);
+				const safeControlIds = classification.mappedControlIds.filter((id) =>
+					validControlIds.has(id)
+				);
+
 				await db
 					.update(questionnaireQuestions)
 					.set({
@@ -219,8 +230,8 @@ export async function processQuestionnaire(
 						generatedAnswer: classification.answer,
 						gapReason: classification.gapReason,
 						gapRemediation: classification.gapRemediation,
-						mappedPolicyIds: classification.mappedPolicyIds,
-						mappedControlIds: classification.mappedControlIds,
+						mappedPolicyIds: safePolicyIds,
+						mappedControlIds: safeControlIds,
 						updatedAt: new Date()
 					})
 					.where(eq(questionnaireQuestions.id, question.id));

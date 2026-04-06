@@ -9,7 +9,10 @@
 		CheckCircle,
 		XCircle,
 		FileText,
-		FolderOpen
+		FolderOpen,
+		Info,
+		ShieldCheck,
+		ListChecks
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -34,8 +37,8 @@
 
 	interface Question {
 		id: string;
-		sectionName: string;
-		questionNumber: number;
+		sectionName: string | null;
+		questionNumber: string | null;
 		questionText: string;
 		domain: string;
 		generatedAnswer: string | null;
@@ -43,12 +46,27 @@
 		gapReason: string | null;
 		gapRemediation: string | null;
 		userEditedAnswer: string | null;
+		mappedPolicyIds: string[] | null;
+		mappedControlIds: string[] | null;
 		order: number;
 	}
 
 	interface ApiResponse {
 		questionnaire: QuestionnaireData;
 		questions: Question[];
+		policyMap: Record<string, string>;
+		controlMap: Record<string, { code: string; title: string }>;
+	}
+
+	interface FrameworkCoverage {
+		frameworkId: string;
+		frameworkName: string;
+		frameworkSlug: string;
+		controlsCovered: number;
+		totalControls: number;
+		coveragePct: number;
+		coveredControls: { id: string; code: string; title: string; category: string }[];
+		orgHasFramework: boolean;
 	}
 
 	// ── Props ─────────────────────────────────────────────────────────────────
@@ -59,6 +77,9 @@
 
 	let questionnaire = $state<QuestionnaireData | null>(null);
 	let questions = $state<Question[]>([]);
+	let policyMap = $state<Record<string, string>>({});
+	let controlMap = $state<Record<string, { code: string; title: string }>>({});
+	let coverage = $state<FrameworkCoverage[]>([]);
 	let loading = $state(true);
 	let fetchError = $state('');
 	let selectedQuestionId = $state<string | null>(null);
@@ -69,6 +90,7 @@
 	let savedTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let pollTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let exporting = $state(false);
+	let showScoreTooltip = $state(false);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	const selectedQuestion = $derived(questions.find((q) => q.id === selectedQuestionId) ?? null);
@@ -86,12 +108,12 @@
 	});
 
 	const lockedCount = $derived(questions.filter((q) => q.confidence === null).length);
-	const answeredCount = $derived(
-		questions.filter(
-			(q) => q.confidence === 'high' || q.confidence === 'medium' || q.confidence === 'low'
-		).length
-	);
+	const highCount = $derived(questions.filter((q) => q.confidence === 'high').length);
+	const mediumCount = $derived(questions.filter((q) => q.confidence === 'medium').length);
+	const lowCount = $derived(questions.filter((q) => q.confidence === 'low').length);
+	const answeredCount = $derived(highCount + mediumCount + lowCount);
 	const gapCount = $derived(questions.filter((q) => q.confidence === 'gap').length);
+	const totalProcessed = $derived(questions.filter((q) => q.confidence !== null).length);
 
 	const isProcessing = $derived(questionnaire?.status === 'processing');
 	const isError = $derived(questionnaire?.status === 'error');
@@ -99,8 +121,8 @@
 	// Score ring math
 	const ringSize = 80;
 	const ringStroke = 7;
-	const ringRadius = $derived((ringSize - ringStroke) / 2);
-	const ringCircumference = $derived(2 * Math.PI * ringRadius);
+	const ringRadius = (ringSize - ringStroke) / 2;
+	const ringCircumference = 2 * Math.PI * ringRadius;
 	const score = $derived(questionnaire?.dealReadinessScore ?? 0);
 	const ringOffset = $derived(ringCircumference - (score / 100) * ringCircumference);
 
@@ -115,6 +137,13 @@
 		if (s >= 40) return 'text-[var(--warning)]';
 		return 'text-[var(--danger)]';
 	}
+
+	// Breakdown bar segment widths (% of total processed)
+	const breakdownTotal = $derived(Math.max(totalProcessed, 1));
+	const highPct = $derived(Math.round((highCount / breakdownTotal) * 100));
+	const mediumPct = $derived(Math.round((mediumCount / breakdownTotal) * 100));
+	const lowPct = $derived(Math.round((lowCount / breakdownTotal) * 100));
+	const gapPct = $derived(Math.round((gapCount / breakdownTotal) * 100));
 
 	// ── Confidence helpers ────────────────────────────────────────────────────
 	function confidenceLabel(c: Confidence): string {
@@ -158,6 +187,45 @@
 		return FolderOpen;
 	}
 
+	// ── Question label helpers ─────────────────────────────────────────────────
+	function questionLabel(q: Question): string {
+		if (q.questionNumber) return `#${q.questionNumber}`;
+		return `#${q.order + 1}`;
+	}
+
+	// Build an ordered list of [sectionName | null, questions[]] groups for the list
+	const groupedQuestions = $derived.by(() => {
+		const groups: Array<{ section: string | null; questions: Question[] }> = [];
+		let current: { section: string | null; questions: Question[] } | null = null;
+		for (const q of filteredQuestions) {
+			if (!current || current.section !== q.sectionName) {
+				current = { section: q.sectionName, questions: [] };
+				groups.push(current);
+			}
+			current.questions.push(q);
+		}
+		return groups;
+	});
+
+	// Source policies for selected question
+	const sourcePolicies = $derived.by(() => {
+		if (!selectedQuestion?.mappedPolicyIds?.length) return [];
+		return selectedQuestion.mappedPolicyIds
+			.map((policyId) => ({ id: policyId, title: policyMap[policyId] ?? null }))
+			.filter((p) => p.title !== null) as { id: string; title: string }[];
+	});
+
+	// Mapped controls for selected gap question
+	const gapControls = $derived.by(() => {
+		if (!selectedQuestion?.mappedControlIds?.length) return [];
+		return selectedQuestion.mappedControlIds
+			.map((controlId) => {
+				const c = controlMap[controlId];
+				return c ? { id: controlId, code: c.code, title: c.title } : null;
+			})
+			.filter((c): c is { id: string; code: string; title: string } => c !== null);
+	});
+
 	// ── Data fetching ─────────────────────────────────────────────────────────
 	async function fetchData() {
 		try {
@@ -169,14 +237,33 @@
 			const json: ApiResponse = await res.json();
 			questionnaire = json.questionnaire;
 			questions = json.questions ?? [];
+			policyMap = json.policyMap ?? {};
+			controlMap = json.controlMap ?? {};
 
 			// Auto-select first question
 			if (!selectedQuestionId && questions.length > 0) {
 				selectedQuestionId = questions[0].id;
 				answerDraft = questions[0].userEditedAnswer ?? questions[0].generatedAnswer ?? '';
 			}
+
+			// Fetch coverage data when questionnaire is ready
+			if (json.questionnaire.status === 'ready') {
+				fetchCoverage();
+			}
 		} catch {
 			fetchError = 'Failed to load questionnaire.';
+		}
+	}
+
+	async function fetchCoverage() {
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/coverage`);
+			if (res.ok) {
+				const json = await res.json();
+				coverage = json.coverageByFramework ?? [];
+			}
+		} catch {
+			// Coverage is optional — silently ignore errors
 		}
 	}
 
@@ -286,41 +373,119 @@
 	{:else if questionnaire}
 		<!-- Page header -->
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-			<div class="flex items-center gap-4">
-				<!-- Score ring -->
+			<div class="flex items-start gap-4">
+				<!-- Score ring with tooltip -->
 				{#if questionnaire.status === 'ready' && questionnaire.dealReadinessScore !== null}
 					<div class="relative shrink-0">
-						<svg
-							width={ringSize}
-							height={ringSize}
-							class="-rotate-90"
-							aria-label="Deal readiness score"
+						<button
+							onclick={() => (showScoreTooltip = !showScoreTooltip)}
+							class="relative focus:outline-none"
+							aria-label="Deal readiness score breakdown"
 						>
-							<circle
-								cx={ringSize / 2}
-								cy={ringSize / 2}
-								r={ringRadius}
-								fill="none"
-								stroke="var(--border)"
-								stroke-width={ringStroke}
-							/>
-							<circle
-								cx={ringSize / 2}
-								cy={ringSize / 2}
-								r={ringRadius}
-								fill="none"
-								stroke={scoreColor(score)}
-								stroke-width={ringStroke}
-								stroke-linecap="round"
-								stroke-dasharray={ringCircumference}
-								stroke-dashoffset={ringOffset}
-								class="transition-all duration-700"
-							/>
-						</svg>
-						<div class="absolute inset-0 flex flex-col items-center justify-center">
-							<span class="text-sm font-bold {scoreTextColor(score)}">{score}%</span>
-							<span class="text-[9px] leading-tight text-[var(--foreground-muted)]">ready</span>
-						</div>
+							<svg
+								width={ringSize}
+								height={ringSize}
+								class="-rotate-90"
+								aria-label="Deal readiness score"
+							>
+								<circle
+									cx={ringSize / 2}
+									cy={ringSize / 2}
+									r={ringRadius}
+									fill="none"
+									stroke="var(--border)"
+									stroke-width={ringStroke}
+								/>
+								<circle
+									cx={ringSize / 2}
+									cy={ringSize / 2}
+									r={ringRadius}
+									fill="none"
+									stroke={scoreColor(score)}
+									stroke-width={ringStroke}
+									stroke-linecap="round"
+									stroke-dasharray={ringCircumference}
+									stroke-dashoffset={ringOffset}
+									class="transition-all duration-700"
+								/>
+							</svg>
+							<div class="absolute inset-0 flex flex-col items-center justify-center">
+								<span class="text-sm font-bold {scoreTextColor(score)}">{score}%</span>
+								<span class="text-[9px] leading-tight text-[var(--foreground-muted)]">ready</span>
+							</div>
+						</button>
+
+						<!-- Score tooltip -->
+						{#if showScoreTooltip}
+							<div
+								class="absolute top-full left-0 z-20 mt-2 w-64 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background)] p-3 shadow-[var(--shadow-md)]"
+							>
+								<p class="mb-2 text-xs font-semibold text-[var(--foreground)]">
+									Deal Readiness Score
+								</p>
+								<p class="mb-3 text-xs leading-relaxed text-[var(--foreground-muted)]">
+									Weighted score across all processed questions: High = 100%, Medium = 70%, Low =
+									40%, Gap = 0%.
+								</p>
+								<div class="space-y-1.5">
+									<div class="flex items-center justify-between text-xs">
+										<span class="flex items-center gap-1.5">
+											<span class="h-2 w-2 rounded-full bg-[var(--success)]"></span>
+											High confidence
+										</span>
+										<span class="font-medium text-[var(--foreground)]">{highCount}</span>
+									</div>
+									<div class="flex items-center justify-between text-xs">
+										<span class="flex items-center gap-1.5">
+											<span class="h-2 w-2 rounded-full bg-[var(--info)]"></span>
+											Medium confidence
+										</span>
+										<span class="font-medium text-[var(--foreground)]">{mediumCount}</span>
+									</div>
+									<div class="flex items-center justify-between text-xs">
+										<span class="flex items-center gap-1.5">
+											<span class="h-2 w-2 rounded-full bg-[var(--warning)]"></span>
+											Low confidence
+										</span>
+										<span class="font-medium text-[var(--foreground)]">{lowCount}</span>
+									</div>
+									<div class="flex items-center justify-between text-xs">
+										<span class="flex items-center gap-1.5">
+											<span class="h-2 w-2 rounded-full bg-[var(--danger)]"></span>
+											Gaps (unanswered)
+										</span>
+										<span class="font-medium text-[var(--foreground)]">{gapCount}</span>
+									</div>
+									{#if lockedCount > 0}
+										<div class="flex items-center justify-between text-xs">
+											<span class="flex items-center gap-1.5">
+												<span class="h-2 w-2 rounded-full bg-[var(--border)]"></span>
+												Locked (upgrade)
+											</span>
+											<span class="font-medium text-[var(--foreground)]">{lockedCount}</span>
+										</div>
+									{/if}
+								</div>
+
+								<!-- Breakdown bar -->
+								{#if totalProcessed > 0}
+									<div class="mt-3 flex h-1.5 w-full overflow-hidden rounded-full">
+										{#if highPct > 0}
+											<div class="bg-[var(--success)]" style="width:{highPct}%"></div>
+										{/if}
+										{#if mediumPct > 0}
+											<div class="bg-[var(--info)]" style="width:{mediumPct}%"></div>
+										{/if}
+										{#if lowPct > 0}
+											<div class="bg-[var(--warning)]" style="width:{lowPct}%"></div>
+										{/if}
+										{#if gapPct > 0}
+											<div class="bg-[var(--danger)]" style="width:{gapPct}%"></div>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						{/if}
 					</div>
 				{/if}
 
@@ -331,12 +496,13 @@
 					>
 						{questionnaire.filename}
 					</h1>
+
 					<!-- Stats row -->
 					{#if questionnaire.status === 'ready'}
 						<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
 							<span class="flex items-center gap-1 text-xs text-[var(--foreground-muted)]">
 								<CheckCircle size={12} color="var(--success)" weight="fill" />
-								{m.questionnaires_stat_answered({ count: answeredCount })}
+								{m.questionnaires_stat_answered({ count: answeredCount })} of {questionnaire.totalQuestions}
 							</span>
 							<span class="flex items-center gap-1 text-xs text-[var(--foreground-muted)]">
 								<Warning size={12} color="var(--warning)" weight="fill" />
@@ -349,6 +515,45 @@
 								</span>
 							{/if}
 						</div>
+
+						<!-- Confidence breakdown bar -->
+						{#if totalProcessed > 0}
+							<div class="mt-2.5 flex items-center gap-2">
+								<div class="flex h-1.5 w-32 overflow-hidden rounded-full bg-[var(--border)]">
+									{#if highPct > 0}
+										<div
+											class="bg-[var(--success)] transition-all duration-500"
+											style="width:{highPct}%"
+										></div>
+									{/if}
+									{#if mediumPct > 0}
+										<div
+											class="bg-[var(--info)] transition-all duration-500"
+											style="width:{mediumPct}%"
+										></div>
+									{/if}
+									{#if lowPct > 0}
+										<div
+											class="bg-[var(--warning)] transition-all duration-500"
+											style="width:{lowPct}%"
+										></div>
+									{/if}
+									{#if gapPct > 0}
+										<div
+											class="bg-[var(--danger)] transition-all duration-500"
+											style="width:{gapPct}%"
+										></div>
+									{/if}
+								</div>
+								<button
+									onclick={() => (showScoreTooltip = !showScoreTooltip)}
+									class="flex items-center gap-1 text-xs text-[var(--foreground-subtle)] hover:text-[var(--foreground-muted)]"
+								>
+									<Info size={11} />
+									How this is calculated
+								</button>
+							</div>
+						{/if}
 					{/if}
 				</div>
 			</div>
@@ -384,6 +589,15 @@
 			</div>
 		</div>
 
+		<!-- Click-outside to close tooltip -->
+		{#if showScoreTooltip}
+			<button
+				class="fixed inset-0 z-10"
+				onclick={() => (showScoreTooltip = false)}
+				aria-label="Close tooltip"
+			></button>
+		{/if}
+
 		<!-- Processing state -->
 		{#if isProcessing}
 			<Card class="p-16 text-center">
@@ -397,6 +611,56 @@
 				<p class="font-medium text-[var(--foreground)]">{m.questionnaires_error_message()}</p>
 			</Card>
 		{:else}
+			<!-- Framework Coverage section (only when coverage data is available) -->
+			{#if coverage.length > 0}
+				<Card class="p-5">
+					<div class="mb-4 flex items-center gap-2">
+						<ShieldCheck size={18} color="var(--brand)" weight="fill" />
+						<h2 class="text-sm font-semibold text-[var(--foreground)]">
+							{m.questionnaires_coverage_title()}
+						</h2>
+					</div>
+
+					<div class="space-y-3">
+						{#each coverage as fw (fw.frameworkId)}
+							<div class="flex flex-col gap-1.5">
+								<div class="flex items-center justify-between gap-3">
+									<div class="flex min-w-0 items-center gap-2">
+										<Badge variant="default">{fw.frameworkName}</Badge>
+										<span class="truncate text-xs text-[var(--foreground-muted)]">
+											{m.questionnaires_coverage_row_label({
+												controlsCovered: fw.controlsCovered,
+												totalControls: fw.totalControls,
+												coveragePct: fw.coveragePct
+											})}
+										</span>
+									</div>
+									{#if !fw.orgHasFramework}
+										<a
+											href="/frameworks"
+											class="shrink-0 text-xs text-[var(--brand)] hover:underline"
+										>
+											{m.questionnaires_coverage_cta_add({ frameworkName: fw.frameworkName })}
+										</a>
+									{/if}
+								</div>
+								<!-- Progress bar -->
+								<div class="h-1.5 w-full overflow-hidden rounded-full bg-[var(--border)]">
+									<div
+										class="h-full rounded-full bg-[var(--brand)] transition-all duration-700"
+										style="width:{fw.coveragePct}%"
+									></div>
+								</div>
+							</div>
+						{/each}
+					</div>
+
+					<p class="mt-4 text-xs leading-relaxed text-[var(--foreground-muted)]">
+						{m.questionnaires_coverage_footer()}
+					</p>
+				</Card>
+			{/if}
+
 			<!-- Two-column review layout -->
 			<div class="flex flex-col gap-5 lg:flex-row lg:items-start">
 				<!-- Left panel: question list -->
@@ -419,43 +683,56 @@
 							{/each}
 						</div>
 
-						<!-- Question rows -->
+						<!-- Question rows grouped by section -->
 						<div class="max-h-[calc(100vh-260px)] divide-y divide-[var(--border)] overflow-y-auto">
-							{#each filteredQuestions as q (q.id)}
-								<button
-									onclick={() => (selectedQuestionId = q.id)}
-									class="w-full px-3.5 py-3 text-left transition-colors
-										{selectedQuestionId === q.id ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--background-alt)]'}"
-								>
-									<div class="flex items-start gap-2.5">
-										<!-- Badge column -->
-										<div class="mt-0.5 shrink-0">
-											{#if q.confidence === null}
-												<span
-													title="Upgrade to process"
-													class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--background-alt)]"
-												>
-													<Lock size={10} color="var(--foreground-subtle)" />
-												</span>
-											{:else}
-												<Badge variant={confidenceVariant(q.confidence)}>
-													{confidenceLabel(q.confidence)}
-												</Badge>
-											{/if}
-										</div>
-										<div class="min-w-0 flex-1">
-											<p class="text-xs font-medium text-[var(--foreground-muted)]">
-												#{q.questionNumber}
-												{#if q.sectionName}
-													· {q.sectionName}
-												{/if}
-											</p>
-											<p class="mt-0.5 line-clamp-2 text-sm text-[var(--foreground)]">
-												{q.questionText}
-											</p>
-										</div>
+							{#each groupedQuestions as group (group.section ?? '__none__')}
+								<!-- Section divider -->
+								{#if group.section}
+									<div
+										class="sticky top-0 z-[1] border-b border-[var(--border)] bg-[var(--background-elevated)] px-3.5 py-2"
+									>
+										<p
+											class="truncate text-[10px] font-semibold tracking-wider text-[var(--foreground-subtle)] uppercase"
+											title={group.section}
+										>
+											{group.section}
+										</p>
 									</div>
-								</button>
+								{/if}
+
+								{#each group.questions as q (q.id)}
+									<button
+										onclick={() => (selectedQuestionId = q.id)}
+										class="w-full px-3.5 py-3 text-left transition-colors
+											{selectedQuestionId === q.id ? 'bg-[var(--brand-light)]' : 'hover:bg-[var(--background-alt)]'}"
+									>
+										<div class="flex items-start gap-2.5">
+											<!-- Badge column -->
+											<div class="mt-0.5 shrink-0">
+												{#if q.confidence === null}
+													<span
+														title="Upgrade to process"
+														class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--background-alt)]"
+													>
+														<Lock size={10} color="var(--foreground-subtle)" />
+													</span>
+												{:else}
+													<Badge variant={confidenceVariant(q.confidence)}>
+														{confidenceLabel(q.confidence)}
+													</Badge>
+												{/if}
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="text-xs font-medium text-[var(--foreground-muted)]">
+													{questionLabel(q)}
+												</p>
+												<p class="mt-0.5 line-clamp-2 text-sm text-[var(--foreground)]">
+													{q.questionText}
+												</p>
+											</div>
+										</div>
+									</button>
+								{/each}
 							{/each}
 
 							{#if filteredQuestions.length === 0}
@@ -471,7 +748,16 @@
 				<div class="flex-1">
 					{#if selectedQuestion}
 						<Card class="p-6">
-							<!-- Question text + domain -->
+							<!-- Question number + section breadcrumb -->
+							<div class="mb-1 flex items-center gap-1.5 text-xs text-[var(--foreground-subtle)]">
+								<span>{questionLabel(selectedQuestion)}</span>
+								{#if selectedQuestion.sectionName}
+									<span>·</span>
+									<span class="truncate">{selectedQuestion.sectionName}</span>
+								{/if}
+							</div>
+
+							<!-- Question text + domain badges -->
 							<div class="mb-5">
 								<div class="mb-3 flex flex-wrap items-center gap-2">
 									<Badge variant="default">{selectedQuestion.domain}</Badge>
@@ -501,6 +787,28 @@
 										{confidenceExplanation(selectedQuestion.confidence)}
 									</p>
 								</div>
+
+								<!-- Source policies -->
+								{#if sourcePolicies.length > 0}
+									<div class="mb-4">
+										<p
+											class="mb-1.5 text-xs font-semibold tracking-wide text-[var(--foreground-subtle)] uppercase"
+										>
+											Sources
+										</p>
+										<div class="flex flex-wrap gap-1.5">
+											{#each sourcePolicies as policy (policy.id)}
+												<a
+													href="/policies"
+													class="inline-flex items-center gap-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-alt)] px-2 py-1 text-xs text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+												>
+													<FileText size={11} />
+													{policy.title}
+												</a>
+											{/each}
+										</div>
+									</div>
+								{/if}
 
 								<!-- Answer textarea -->
 								<div class="space-y-2">
@@ -542,7 +850,16 @@
 									class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] px-4 py-3"
 								>
 									<Warning size={16} color="var(--danger)" weight="fill" class="mt-0.5 shrink-0" />
-									<p class="text-sm text-[var(--danger)]">{m.questionnaires_gap_title()}</p>
+									<div>
+										<p class="text-sm font-medium text-[var(--danger)]">
+											{m.questionnaires_gap_title()}
+										</p>
+										{#if selectedQuestion.gapReason}
+											<p class="mt-0.5 text-xs text-[var(--danger)] opacity-80">
+												{selectedQuestion.gapReason}
+											</p>
+										{/if}
+									</div>
 								</div>
 
 								{#if selectedQuestion.gapRemediation}
@@ -564,6 +881,31 @@
 												</Button>
 											</a>
 										{/if}
+									</div>
+								{/if}
+
+								<!-- Controls satisfied by fixing this gap -->
+								{#if gapControls.length > 0}
+									<div
+										class="mt-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-alt)] p-4"
+									>
+										<p
+											class="mb-2 flex items-center gap-1.5 text-xs font-semibold text-[var(--foreground-muted)]"
+										>
+											<ListChecks size={13} />
+											{m.questionnaires_gap_controls_title()}
+										</p>
+										<ul class="space-y-1">
+											{#each gapControls as ctrl (ctrl.id)}
+												<li class="flex items-start gap-1.5 text-xs text-[var(--foreground-muted)]">
+													<span class="mt-px shrink-0 text-[var(--foreground-subtle)]">·</span>
+													<span>
+														<span class="font-medium text-[var(--foreground)]">{ctrl.code}</span>
+														{' — '}{ctrl.title}
+													</span>
+												</li>
+											{/each}
+										</ul>
 									</div>
 								{/if}
 

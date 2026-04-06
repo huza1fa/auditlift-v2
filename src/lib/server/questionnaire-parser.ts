@@ -138,10 +138,28 @@ async function parseDocx(buffer: Buffer): Promise<ParsedQuestion[]> {
 	return parseTextLines(result.value);
 }
 
+/**
+ * PDF text extraction merges pages into one blob, losing newlines between questions.
+ * This preprocessor re-inserts newlines before question number patterns so that
+ * parseTextLines() can detect individual questions.
+ */
+function preprocessPdfText(text: string): string {
+	return (
+		text
+			// Normalize multiple spaces/tabs to single space (preserve existing newlines)
+			.replace(/[ \t]+/g, ' ')
+			// Insert newline before question numbers (e.g. "policy? 2. How") when preceded
+			// by a non-digit, non-newline char — handles both "N." and "N)" formats
+			.replace(/([^0-9\n]) (\d{1,3}[.)]\s)/g, '$1\n$2')
+			// Insert newline before Section/Part headers appearing mid-line
+			.replace(/([a-z?!,]) ((?:Section|Part)\s+\d)/gi, '$1\n$2')
+	);
+}
+
 async function parsePdf(buffer: Buffer): Promise<ParsedQuestion[]> {
 	const pdf = await getDocumentProxy(new Uint8Array(buffer));
 	const { text } = await extractText(pdf, { mergePages: true });
-	return parseTextLines(text);
+	return parseTextLines(preprocessPdfText(text));
 }
 
 export async function parseQuestionnaire(

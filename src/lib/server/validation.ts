@@ -34,7 +34,17 @@ export const PresignEvidenceSchema = z.object({
 
 export const OrganizationSchema = z.object({
 	name: z.string().min(1).max(100).trim(),
-	website: z.string().url().max(500).optional().nullable(),
+	website: z
+		.string()
+		.max(500)
+		.optional()
+		.nullable()
+		.transform((v) => {
+			if (!v || v.trim() === '') return null;
+			const trimmed = v.trim();
+			// Auto-prepend https:// if no scheme present
+			return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+		}),
 	industry: z.string().max(100).optional().nullable()
 });
 

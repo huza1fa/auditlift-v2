@@ -398,7 +398,7 @@
 						<!-- Stats -->
 						<div class="mt-auto flex items-center justify-between">
 							<p class="text-xs text-[var(--foreground-muted)]">
-								{m.questionnaires_stat_answered({ count: q.answeredCount })} ·
+								{m.questionnaires_stat_answered({ count: q.answeredCount })} of {q.totalQuestions} ·
 								{m.questionnaires_stat_gaps({ count: q.gapCount })}
 							</p>
 							<div class="flex items-center gap-1 text-xs text-[var(--foreground-subtle)]">

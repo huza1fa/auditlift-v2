@@ -2,8 +2,16 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { organizationFrameworks, frameworks, readinessSnapshots } from '$lib/server/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import {
+	organizationFrameworks,
+	frameworks,
+	readinessSnapshots,
+	questionnaires,
+	questionnaireQuestions,
+	policies,
+	controls
+} from '$lib/server/db/schema';
+import { eq, and, desc, count, avg, isNull, inArray } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
 
 export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
@@ -120,11 +128,124 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 			? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000))
 			: null;
 
+	// ── Questionnaire stats ────────────────────────────────────────────────────
+
+	// Recent questionnaires (up to 3)
+	const recentQuestionnaires = await db
+		.select({
+			id: questionnaires.id,
+			dealReadinessScore: questionnaires.dealReadinessScore,
+			answeredCount: questionnaires.answeredCount,
+			totalQuestions: questionnaires.totalQuestions,
+			filename: questionnaires.filename,
+			status: questionnaires.status,
+			createdAt: questionnaires.createdAt
+		})
+		.from(questionnaires)
+		.where(eq(questionnaires.organizationId, orgId))
+		.orderBy(desc(questionnaires.createdAt))
+		.limit(3);
+
+	// Total questionnaire count
+	const [{ value: questionnaireTotal }] = await db
+		.select({ value: count() })
+		.from(questionnaires)
+		.where(eq(questionnaires.organizationId, orgId));
+
+	// Average deal readiness score across all "ready" questionnaires
+	const [avgRow] = await db
+		.select({ value: avg(questionnaires.dealReadinessScore) })
+		.from(questionnaires)
+		.where(and(eq(questionnaires.organizationId, orgId), eq(questionnaires.status, 'ready')));
+
+	const avgDealReadiness: number | null =
+		avgRow?.value != null ? Math.round(Number(avgRow.value)) : null;
+
+	// ── Policy count ───────────────────────────────────────────────────────────
+
+	const [{ value: policiesTotal }] = await db
+		.select({ value: count() })
+		.from(policies)
+		.where(and(eq(policies.organizationId, orgId), isNull(policies.archivedAt)));
+
+	// ── Aggregate framework coverage from questionnaire mappings ───────────────
+
+	// Collect all unique control IDs mapped across all processed questions for this org
+	const allMappedQuestions = await db
+		.select({ mappedControlIds: questionnaireQuestions.mappedControlIds })
+		.from(questionnaireQuestions)
+		.where(eq(questionnaireQuestions.organizationId, orgId));
+
+	const allMappedControlIds = [
+		...new Set(allMappedQuestions.flatMap((q) => (q.mappedControlIds as string[]) ?? []))
+	];
+
+	// Load all frameworks selected by this org
+	const orgFrameworkRows = await db
+		.select({
+			frameworkId: organizationFrameworks.frameworkId,
+			frameworkName: frameworks.name
+		})
+		.from(organizationFrameworks)
+		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
+		.where(eq(organizationFrameworks.organizationId, orgId));
+
+	type QuestionnaireCoverageEntry = {
+		frameworkId: string;
+		frameworkName: string;
+		controlsCoveredByQuestionnaires: number;
+		totalControls: number;
+	};
+
+	let questionnaireCoverage: QuestionnaireCoverageEntry[] = [];
+
+	if (orgFrameworkRows.length > 0) {
+		const orgFrameworkIds = orgFrameworkRows.map((f) => f.frameworkId);
+
+		// Fetch all controls for the org's selected frameworks in one query
+		const allFrameworkControls = await db
+			.select({ id: controls.id, frameworkId: controls.frameworkId })
+			.from(controls)
+			.where(inArray(controls.frameworkId, orgFrameworkIds));
+
+		// Build a map of frameworkId -> Set of control IDs
+		const controlsByFramework = new Map<string, Set<string>>();
+		for (const row of allFrameworkControls) {
+			if (!controlsByFramework.has(row.frameworkId)) {
+				controlsByFramework.set(row.frameworkId, new Set());
+			}
+			controlsByFramework.get(row.frameworkId)!.add(row.id);
+		}
+
+		// The set of mapped control IDs for fast intersection
+		const mappedSet = new Set(allMappedControlIds);
+
+		questionnaireCoverage = orgFrameworkRows.map((fw) => {
+			const frameworkControlSet = controlsByFramework.get(fw.frameworkId) ?? new Set<string>();
+			const totalControls = frameworkControlSet.size;
+			const controlsCoveredByQuestionnaires = [...frameworkControlSet].filter((cId) =>
+				mappedSet.has(cId)
+			).length;
+
+			return {
+				frameworkId: fw.frameworkId,
+				frameworkName: fw.frameworkName,
+				controlsCoveredByQuestionnaires,
+				totalControls
+			};
+		});
+	}
+
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
 		trialDaysRemaining,
 		justSubscribed,
-		scoreHistory
+		scoreHistory,
+		recentQuestionnaires,
+		questionnaireTotal,
+		avgDealReadiness,
+		policiesTotal,
+		questionnaireCoverage
 	};
 };
