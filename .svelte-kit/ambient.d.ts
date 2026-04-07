@@ -45,6 +45,8 @@ declare module '$env/static/private' {
 	export const GITHUB_CLIENT_ID: string;
 	export const GITHUB_CLIENT_SECRET: string;
 	export const OPEN_ROUTER_API_KEY: string;
+	export const GOOGLE_CLIENT_ID: string;
+	export const GOOGLE_CLIENT_SECRET: string;
 	export const BUCKET_ENDPOINT: string;
 	export const BUCKET_REGION: string;
 	export const BUCKET_NAME: string;
@@ -59,7 +61,6 @@ declare module '$env/static/private' {
 	export const RESEND_API_KEY: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
-	export const INIT_CWD: string;
 	export const TERM: string;
 	export const SHELL: string;
 	export const HOMEBREW_REPOSITORY: string;
@@ -73,15 +74,15 @@ declare module '$env/static/private' {
 	export const __CF_USER_TEXT_ENCODING: string;
 	export const npm_execpath: string;
 	export const TERM_FEATURES: string;
-	export const BUN_WHICH_IGNORE_CWD: string;
 	export const TERMINFO_DIRS: string;
 	export const PATH: string;
 	export const npm_package_json: string;
 	export const _: string;
 	export const LaunchInstanceID: string;
-	export const JOBS: string;
 	export const __CFBundleIdentifier: string;
+	export const npm_command: string;
 	export const PWD: string;
+	export const npm_lifecycle_event: string;
 	export const npm_package_name: string;
 	export const LANG: string;
 	export const ITERM_PROFILE: string;
@@ -95,6 +96,7 @@ declare module '$env/static/private' {
 	export const HOMEBREW_PREFIX: string;
 	export const ITERM_SESSION_ID: string;
 	export const LOGNAME: string;
+	export const npm_lifecycle_script: string;
 	export const BUN_INSTALL: string;
 	export const npm_config_user_agent: string;
 	export const INFOPATH: string;
@@ -104,6 +106,7 @@ declare module '$env/static/private' {
 	export const SECURITYSESSIONID: string;
 	export const npm_node_execpath: string;
 	export const COLORTERM: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -197,6 +200,8 @@ declare module '$env/dynamic/private' {
 		GITHUB_CLIENT_ID: string;
 		GITHUB_CLIENT_SECRET: string;
 		OPEN_ROUTER_API_KEY: string;
+		GOOGLE_CLIENT_ID: string;
+		GOOGLE_CLIENT_SECRET: string;
 		BUCKET_ENDPOINT: string;
 		BUCKET_REGION: string;
 		BUCKET_NAME: string;
@@ -211,7 +216,6 @@ declare module '$env/dynamic/private' {
 		RESEND_API_KEY: string;
 		TERM_PROGRAM: string;
 		NODE: string;
-		INIT_CWD: string;
 		TERM: string;
 		SHELL: string;
 		HOMEBREW_REPOSITORY: string;
@@ -225,15 +229,15 @@ declare module '$env/dynamic/private' {
 		__CF_USER_TEXT_ENCODING: string;
 		npm_execpath: string;
 		TERM_FEATURES: string;
-		BUN_WHICH_IGNORE_CWD: string;
 		TERMINFO_DIRS: string;
 		PATH: string;
 		npm_package_json: string;
 		_: string;
 		LaunchInstanceID: string;
-		JOBS: string;
 		__CFBundleIdentifier: string;
+		npm_command: string;
 		PWD: string;
+		npm_lifecycle_event: string;
 		npm_package_name: string;
 		LANG: string;
 		ITERM_PROFILE: string;
@@ -247,6 +251,7 @@ declare module '$env/dynamic/private' {
 		HOMEBREW_PREFIX: string;
 		ITERM_SESSION_ID: string;
 		LOGNAME: string;
+		npm_lifecycle_script: string;
 		BUN_INSTALL: string;
 		npm_config_user_agent: string;
 		INFOPATH: string;
@@ -256,6 +261,7 @@ declare module '$env/dynamic/private' {
 		SECURITYSESSIONID: string;
 		npm_node_execpath: string;
 		COLORTERM: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}

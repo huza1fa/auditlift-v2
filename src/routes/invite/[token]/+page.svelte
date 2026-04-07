@@ -117,16 +117,18 @@
 				</p>
 
 				{#if !isLoggedIn}
-					<div class="mb-6 rounded-[var(--radius)] bg-[var(--warning-light)] p-4">
-						<p class="text-sm text-[var(--warning)]">
-							Please sign in with GitHub to accept this invitation.
+					<div class="mb-6 rounded-[var(--radius)] bg-[var(--background-alt)] p-4">
+						<p class="text-sm text-[var(--foreground-muted)]">
+							Sign in or create an account to accept this invitation.
 						</p>
-						<p class="mt-1 text-xs text-[var(--foreground-muted)]">
-							Invitation sent to: {invitation.email}
+						<p class="mt-2 text-xs text-[var(--foreground-subtle)]">
+							Invitation sent to: <strong class="text-[var(--foreground)]"
+								>{invitation.email}</strong
+							>
 						</p>
 					</div>
-					<a href="/login" class="block">
-						<Button class="w-full">Sign in with GitHub</Button>
+					<a href="/login?redirectTo=/invite/{data.token}" class="block">
+						<Button class="w-full">Sign in to accept</Button>
 					</a>
 				{:else if !matchingEmail}
 					<div class="mb-6 rounded-[var(--radius)] bg-[var(--danger-light)] p-4">

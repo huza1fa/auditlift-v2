@@ -10,18 +10,22 @@
 		ArrowRight,
 		ArrowLeft,
 		Cloud,
-		DeviceMobile
+		FileText,
+		Shield
 	} from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import * as m from '$lib/paraglide/messages';
 	import type { PageData } from './$types';
 
+	// 1. Props
 	let { data }: { data: PageData } = $props();
 
+	// 2. Local state
 	let step = $state(1);
-	const totalSteps = 5;
+	let intent = $state<'questionnaire' | 'compliance' | null>(null);
 
 	// Step 1 state
 	let companyName = $state('');
@@ -37,21 +41,48 @@
 		{ value: '50+', label: '50+ people', sub: 'Enterprise', icon: Buildings }
 	];
 
-	// Step 3 state — slug of selected framework, default to first recommended or first available
+	// Step 3 state — tech stack (shared, moved up)
+	let stack = $state<string[]>([]);
+	const stackOptions = ['AWS', 'GCP', 'Azure', 'GitHub', 'GitLab', 'Vercel', 'Cloudflare', 'Other'];
+
+	// Step 5 state — framework (Path B only)
 	let framework = $state(
 		data.frameworks.find((f) => f.recommended)?.slug ?? data.frameworks[0]?.slug ?? ''
 	);
 
-	// Step 4 state
-	let stack = $state<string[]>([]);
-	const stackOptions = ['AWS', 'GCP', 'Azure', 'GitHub', 'GitLab', 'Vercel', 'Cloudflare', 'Other'];
-
 	let loading = $state(false);
 	let errorMsg = $state('');
-	// Domain block: set when check-domain returns hasExistingOrg && !isMember
 	let domainBlocked = $state(false);
 	let domainBlockMsg = $state('');
 
+	// 3. Derived values
+	// Path A (questionnaire): steps 1-2-3-4-done (4 visible steps)
+	// Path B (compliance):    steps 1-2-3-4-5-done (5 visible steps)
+	// Before intent is chosen, show 4 as default (will update on step 4 selection)
+	const totalSteps = $derived(intent === 'compliance' ? 5 : 4);
+
+	// The completion step number depends on path
+	const completionStep = $derived(intent === 'compliance' ? 6 : 5);
+
+	const frameworkLabel = $derived(
+		data.frameworks.find((f) => f.slug === framework)?.name ?? framework
+	);
+	const teamLabel = $derived(teamOptions.find((t) => t.value === teamSize)?.label ?? teamSize);
+
+	const intentLabel = $derived(
+		intent === 'questionnaire'
+			? m.onboarding_intent_questionnaire_title()
+			: intent === 'compliance'
+				? m.onboarding_intent_compliance_title()
+				: ''
+	);
+
+	// Is the current step the completion summary step?
+	const isCompletionStep = $derived(step === completionStep);
+
+	// 4. Effects — none needed
+
+	// 5. Event handlers
 	function toggleStack(item: string) {
 		if (stack.includes(item)) {
 			stack = stack.filter((s) => s !== item);
@@ -60,50 +91,40 @@
 		}
 	}
 
-	const frameworkLabel = $derived(
-		data.frameworks.find((f) => f.slug === framework)?.name ?? framework
-	);
-	const teamLabel = $derived(teamOptions.find((t) => t.value === teamSize)?.label ?? teamSize);
-
 	async function next() {
 		errorMsg = '';
 		domainBlocked = false;
 		domainBlockMsg = '';
 		loading = true;
+
 		try {
 			if (step === 1) {
 				if (!companyName.trim()) {
-					errorMsg = 'Company name is required';
+					errorMsg = m.onboarding_error_company_required();
 					loading = false;
 					return;
 				}
 
-				// Check domain BEFORE creating the org — catches cases where another
-				// company on the same domain already exists and this user isn't a member.
 				const domainRes = await fetch('/api/onboarding/check-domain');
 				if (domainRes.ok) {
 					const domainData = await domainRes.json();
 					if (domainData.hasExistingOrg && !domainData.isMember) {
-						// A different org owns this domain — block with invite prompt
 						domainBlocked = true;
 						domainBlockMsg = `An organization for ${domainData.domain} already exists on AuditLift. Ask your team admin to send you an invite.`;
 						loading = false;
 						return;
 					}
-					// isMember: true means they already have an org (e.g. refreshed mid-onboarding).
-					// Just fall through and update the org name — the server handles this safely.
 				}
 
-				// Create or update the organization
 				const res = await fetch('/api/onboarding/organization', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: companyName, website, industry })
+					body: JSON.stringify({ name: companyName, website: website.trim() || null, industry })
 				});
 				if (!res.ok) throw new Error('Failed to save');
 			} else if (step === 2) {
 				if (!teamSize) {
-					errorMsg = 'Please select a team size';
+					errorMsg = m.onboarding_error_team_required();
 					loading = false;
 					return;
 				}
@@ -113,32 +134,65 @@
 					body: JSON.stringify({ teamSize })
 				});
 			} else if (step === 3) {
-				await fetch('/api/onboarding/framework', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ frameworkSlug: framework })
-				});
-			} else if (step === 4) {
+				// Tech stack — optional, just save and proceed
 				await fetch('/api/onboarding/stack', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ stack })
 				});
-			} else if (step === 5) {
-				await fetch('/api/onboarding/complete', { method: 'POST' });
-				goto('/dashboard');
+			} else if (step === 4) {
+				// Intent choice step
+				if (!intent) {
+					errorMsg = m.onboarding_error_intent_required();
+					loading = false;
+					return;
+				}
+				if (intent === 'questionnaire') {
+					// Path A: skip framework, go straight to completion
+					step = completionStep;
+					loading = false;
+					return;
+				}
+				// Path B: continue to framework step
+			} else if (step === 5 && intent === 'compliance') {
+				// Framework step (Path B only)
+				await fetch('/api/onboarding/framework', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ frameworkSlug: framework })
+				});
+			} else if (isCompletionStep) {
+				// Completion — call complete endpoint and redirect
+				const res = await fetch('/api/onboarding/complete', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ intent })
+				});
+				if (!res.ok) throw new Error('Failed to complete');
+				const data = await res.json();
+				goto(data.redirectTo ?? '/dashboard');
 				return;
 			}
+
 			step++;
 		} catch {
-			errorMsg = 'Something went wrong. Please try again.';
+			errorMsg = m.onboarding_error_generic();
 		} finally {
 			loading = false;
 		}
 	}
 
 	function back() {
-		if (step > 1) step--;
+		errorMsg = '';
+		if (step <= 1) return;
+
+		// If we're on the completion step and chose questionnaire, go back to intent (step 4)
+		if (isCompletionStep && intent === 'questionnaire') {
+			step = 4;
+			return;
+		}
+
+		step--;
 	}
 </script>
 
@@ -147,7 +201,7 @@
 	<header class="flex items-center px-6 py-4">
 		<div class="flex items-center gap-2">
 			<ShieldCheck size={28} color="var(--brand)" weight="fill" />
-			<span class="text-xl font-bold text-[var(--brand)]">AuditLift</span>
+			<span class="text-xl font-bold text-[var(--brand)]">{m.onboarding_brand_name()}</span>
 		</div>
 	</header>
 
@@ -155,15 +209,16 @@
 	<div class="flex items-center justify-center py-6">
 		<div class="flex items-center gap-0">
 			{#each Array.from({ length: totalSteps }, (_, i) => i + 1) as s}
+				{@const displayStep = isCompletionStep ? totalSteps + 1 : step}
 				<div
 					class="z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200
-					{s < step
+					{s < displayStep
 						? 'border-[var(--brand)] bg-[var(--brand)] text-white'
-						: s === step
+						: s === displayStep
 							? 'border-[var(--brand)] bg-[var(--brand)] text-white'
-							: 'border-[var(--border)] bg-white text-[var(--foreground-muted)]'}"
+							: 'border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)]'}"
 				>
-					{#if s < step}
+					{#if s < displayStep}
 						<Check size={14} weight="bold" />
 					{:else}
 						{s}
@@ -172,7 +227,7 @@
 				{#if s < totalSteps}
 					<div
 						class="h-0.5 w-12 transition-all duration-300
-						{s < step ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}"
+						{s < displayStep ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}"
 					></div>
 				{/if}
 			{/each}
@@ -194,35 +249,35 @@
 									<Buildings size={24} color="var(--brand)" weight="fill" />
 								</div>
 								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-									Let's set up your workspace
+									{m.onboarding_step1_title()}
 								</h1>
 								<p class="text-sm text-[var(--foreground-muted)]">
-									Tell us a bit about your company to get started.
+									{m.onboarding_step1_subtitle()}
 								</p>
 							</div>
 
 							<div class="space-y-4">
 								<Input
-									label="Company name"
-									placeholder="Acme Corp"
+									label={m.onboarding_company_name_label()}
+									placeholder={m.onboarding_company_name_placeholder()}
 									bind:value={companyName}
 									required
 									error={errorMsg && !companyName.trim() ? errorMsg : ''}
 								/>
 								<Input
-									label="Website"
-									placeholder="https://acme.com"
+									label={m.onboarding_website_label()}
+									placeholder={m.onboarding_website_placeholder()}
 									bind:value={website}
 									type="url"
 								/>
 								<div class="flex flex-col gap-1">
-									<label for="industry" class="text-sm font-medium text-[var(--foreground)]"
-										>Industry</label
-									>
+									<label for="industry" class="text-sm font-medium text-[var(--foreground)]">
+										{m.onboarding_industry_label()}
+									</label>
 									<select
 										id="industry"
 										bind:value={industry}
-										class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--foreground)] transition-colors focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+										class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 py-2 text-sm text-[var(--foreground)] transition-colors focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
 									>
 										<option value="SaaS">SaaS</option>
 										<option value="Fintech">Fintech</option>
@@ -248,10 +303,10 @@
 									<Users size={24} color="var(--brand)" weight="fill" />
 								</div>
 								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-									How big is your team?
+									{m.onboarding_step2_title()}
 								</h1>
 								<p class="text-sm text-[var(--foreground-muted)]">
-									We'll tailor the experience based on your team size.
+									{m.onboarding_step2_subtitle()}
 								</p>
 							</div>
 
@@ -263,7 +318,7 @@
 										class="flex cursor-pointer flex-col items-start gap-1 rounded-[var(--radius-lg)] border-2 p-4 text-left transition-all duration-150
 										{teamSize === option.value
 											? 'border-[var(--brand)] bg-[var(--brand-light)]'
-											: 'border-[var(--border)] bg-white hover:border-[var(--foreground-subtle)]'}"
+											: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
 									>
 										<div
 											class="mb-1 flex h-8 w-8 items-center justify-center rounded-[var(--radius)]
@@ -287,8 +342,39 @@
 								<p class="mt-3 text-xs text-[var(--danger)]">{errorMsg}</p>
 							{/if}
 
-							<!-- Step 3: Choose Framework -->
+							<!-- Step 3: Tech Stack (shared) -->
 						{:else if step === 3}
+							<div class="mb-6">
+								<div
+									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
+								>
+									<Cloud size={24} color="var(--brand)" weight="fill" />
+								</div>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
+									{m.onboarding_step3_title()}
+								</h1>
+								<p class="text-sm text-[var(--foreground-muted)]">
+									{m.onboarding_step3_subtitle()}
+								</p>
+							</div>
+
+							<div class="flex flex-wrap gap-2">
+								{#each stackOptions as item}
+									<button
+										type="button"
+										onclick={() => toggleStack(item)}
+										class="cursor-pointer rounded-[var(--radius-full)] border-2 px-4 py-2 text-sm font-medium transition-all duration-150
+										{stack.includes(item)
+											? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
+											: 'border-[var(--border)] bg-[var(--background-elevated)] text-[var(--foreground-muted)] hover:border-[var(--foreground-subtle)]'}"
+									>
+										{item}
+									</button>
+								{/each}
+							</div>
+
+							<!-- Step 4: Intent Choice (NEW) -->
+						{:else if step === 4}
 							<div class="mb-6">
 								<div
 									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
@@ -296,10 +382,106 @@
 									<ShieldCheck size={24} color="var(--brand)" weight="fill" />
 								</div>
 								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-									Which compliance framework?
+									{m.onboarding_step4_title()}
 								</h1>
 								<p class="text-sm text-[var(--foreground-muted)]">
-									You can add more frameworks later.
+									{m.onboarding_step4_subtitle()}
+								</p>
+							</div>
+
+							<div class="flex flex-col gap-4 sm:flex-row">
+								<!-- Option A: Questionnaire -->
+								<button
+									type="button"
+									onclick={() => (intent = 'questionnaire')}
+									class="relative flex flex-1 cursor-pointer flex-col items-start gap-3 rounded-[var(--radius-lg)] border-2 p-5 text-left transition-all duration-150
+									{intent === 'questionnaire'
+										? 'border-[var(--brand)] bg-[var(--brand-light)]'
+										: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+								>
+									<div
+										class="flex h-10 w-10 items-center justify-center rounded-[var(--radius)]
+										{intent === 'questionnaire'
+											? 'bg-[var(--brand)] text-white'
+											: 'bg-[var(--background-alt)] text-[var(--foreground-muted)]'}"
+									>
+										<FileText size={20} weight="fill" />
+									</div>
+									<div>
+										<p
+											class="mb-1 text-sm leading-snug font-semibold
+											{intent === 'questionnaire' ? 'text-[var(--brand)]' : 'text-[var(--foreground)]'}"
+										>
+											{m.onboarding_intent_questionnaire_title()}
+										</p>
+										<p class="text-xs leading-relaxed text-[var(--foreground-muted)]">
+											{m.onboarding_intent_questionnaire_description()}
+										</p>
+									</div>
+									{#if intent === 'questionnaire'}
+										<div
+											class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand)]"
+										>
+											<Check size={11} weight="bold" color="white" />
+										</div>
+									{/if}
+								</button>
+
+								<!-- Option B: Compliance -->
+								<button
+									type="button"
+									onclick={() => (intent = 'compliance')}
+									class="relative flex flex-1 cursor-pointer flex-col items-start gap-3 rounded-[var(--radius-lg)] border-2 p-5 text-left transition-all duration-150
+									{intent === 'compliance'
+										? 'border-[var(--brand)] bg-[var(--brand-light)]'
+										: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+								>
+									<div
+										class="flex h-10 w-10 items-center justify-center rounded-[var(--radius)]
+										{intent === 'compliance'
+											? 'bg-[var(--brand)] text-white'
+											: 'bg-[var(--background-alt)] text-[var(--foreground-muted)]'}"
+									>
+										<Shield size={20} weight="fill" />
+									</div>
+									<div>
+										<p
+											class="mb-1 text-sm leading-snug font-semibold
+											{intent === 'compliance' ? 'text-[var(--brand)]' : 'text-[var(--foreground)]'}"
+										>
+											{m.onboarding_intent_compliance_title()}
+										</p>
+										<p class="text-xs leading-relaxed text-[var(--foreground-muted)]">
+											{m.onboarding_intent_compliance_description()}
+										</p>
+									</div>
+									{#if intent === 'compliance'}
+										<div
+											class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand)]"
+										>
+											<Check size={11} weight="bold" color="white" />
+										</div>
+									{/if}
+								</button>
+							</div>
+
+							{#if errorMsg}
+								<p class="mt-3 text-xs text-[var(--danger)]">{errorMsg}</p>
+							{/if}
+
+							<!-- Step 5: Framework (Path B only) -->
+						{:else if step === 5 && intent === 'compliance'}
+							<div class="mb-6">
+								<div
+									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
+								>
+									<ShieldCheck size={24} color="var(--brand)" weight="fill" />
+								</div>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
+									{m.onboarding_step5_title()}
+								</h1>
+								<p class="text-sm text-[var(--foreground-muted)]">
+									{m.onboarding_step5_subtitle()}
 								</p>
 							</div>
 
@@ -311,7 +493,7 @@
 										class="flex w-full cursor-pointer items-start gap-4 rounded-[var(--radius-lg)] border-2 p-4 text-left transition-all duration-150
 										{framework === option.slug
 											? 'border-[var(--brand)] bg-[var(--brand-light)]'
-											: 'border-[var(--border)] bg-white hover:border-[var(--foreground-subtle)]'}"
+											: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
 									>
 										<div
 											class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors
@@ -330,7 +512,7 @@
 													{option.name}
 												</span>
 												{#if option.recommended}
-													<Badge variant="info">Recommended</Badge>
+													<Badge variant="info">{m.onboarding_recommended_badge()}</Badge>
 												{/if}
 											</div>
 											<p class="text-xs text-[var(--foreground-muted)]">{option.description}</p>
@@ -339,39 +521,8 @@
 								{/each}
 							</div>
 
-							<!-- Step 4: Tech Stack -->
-						{:else if step === 4}
-							<div class="mb-6">
-								<div
-									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
-								>
-									<Cloud size={24} color="var(--brand)" weight="fill" />
-								</div>
-								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-									What tools do you use?
-								</h1>
-								<p class="text-sm text-[var(--foreground-muted)]">
-									We'll use this to personalize your policies. Select all that apply.
-								</p>
-							</div>
-
-							<div class="flex flex-wrap gap-2">
-								{#each stackOptions as item}
-									<button
-										type="button"
-										onclick={() => toggleStack(item)}
-										class="cursor-pointer rounded-[var(--radius-full)] border-2 px-4 py-2 text-sm font-medium transition-all duration-150
-										{stack.includes(item)
-											? 'border-[var(--brand)] bg-[var(--brand-light)] text-[var(--brand)]'
-											: 'border-[var(--border)] bg-white text-[var(--foreground-muted)] hover:border-[var(--foreground-subtle)]'}"
-									>
-										{item}
-									</button>
-								{/each}
-							</div>
-
-							<!-- Step 5: Done -->
-						{:else if step === 5}
+							<!-- Completion Step -->
+						{:else if isCompletionStep}
 							<div class="py-4 text-center">
 								<div
 									class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--success-light)]"
@@ -379,13 +530,17 @@
 									<Check size={32} color="var(--success)" weight="bold" />
 								</div>
 
-								<h1 class="mb-2 text-2xl font-bold text-[var(--foreground)]">You're all set! 🎉</h1>
+								<h1 class="mb-2 text-2xl font-bold text-[var(--foreground)]">
+									{m.onboarding_done_title()}
+								</h1>
 								<p class="mb-6 text-sm text-[var(--foreground-muted)]">
-									Your workspace is ready. Here's a summary of your setup.
+									{intent === 'questionnaire'
+										? m.onboarding_done_subtitle_questionnaire()
+										: m.onboarding_done_subtitle_compliance()}
 								</p>
 
 								<div class="mb-6 flex justify-center">
-									<Badge variant="success">10 days free trial started</Badge>
+									<Badge variant="success">{m.onboarding_done_trial_badge()}</Badge>
 								</div>
 
 								<!-- Summary card -->
@@ -393,63 +548,86 @@
 									class="mb-6 space-y-3 rounded-[var(--radius-lg)] bg-[var(--background-alt)] p-4 text-left"
 								>
 									<div class="flex items-center justify-between text-sm">
-										<span class="text-[var(--foreground-muted)]">Company</span>
+										<span class="text-[var(--foreground-muted)]"
+											>{m.onboarding_done_summary_company()}</span
+										>
 										<span class="font-medium text-[var(--foreground)]">{companyName}</span>
 									</div>
 									<div class="h-px bg-[var(--border)]"></div>
 									<div class="flex items-center justify-between text-sm">
-										<span class="text-[var(--foreground-muted)]">Industry</span>
+										<span class="text-[var(--foreground-muted)]"
+											>{m.onboarding_done_summary_industry()}</span
+										>
 										<span class="font-medium text-[var(--foreground)]">{industry}</span>
 									</div>
 									<div class="h-px bg-[var(--border)]"></div>
 									<div class="flex items-center justify-between text-sm">
-										<span class="text-[var(--foreground-muted)]">Team size</span>
+										<span class="text-[var(--foreground-muted)]"
+											>{m.onboarding_done_summary_team_size()}</span
+										>
 										<span class="font-medium text-[var(--foreground)]">{teamLabel}</span>
 									</div>
-									<div class="h-px bg-[var(--border)]"></div>
-									<div class="flex items-center justify-between text-sm">
-										<span class="text-[var(--foreground-muted)]">Framework</span>
-										<span class="font-medium text-[var(--foreground)]">{frameworkLabel}</span>
-									</div>
+									{#if intent === 'compliance' && frameworkLabel}
+										<div class="h-px bg-[var(--border)]"></div>
+										<div class="flex items-center justify-between text-sm">
+											<span class="text-[var(--foreground-muted)]"
+												>{m.onboarding_done_summary_framework()}</span
+											>
+											<span class="font-medium text-[var(--foreground)]">{frameworkLabel}</span>
+										</div>
+									{/if}
 									{#if stack.length > 0}
 										<div class="h-px bg-[var(--border)]"></div>
 										<div class="flex items-start justify-between gap-4 text-sm">
-											<span class="flex-shrink-0 text-[var(--foreground-muted)]">Tech stack</span>
+											<span class="flex-shrink-0 text-[var(--foreground-muted)]"
+												>{m.onboarding_done_summary_tech_stack()}</span
+											>
 											<span class="text-right font-medium text-[var(--foreground)]"
 												>{stack.join(', ')}</span
 											>
 										</div>
 									{/if}
+									<div class="h-px bg-[var(--border)]"></div>
+									<div class="flex items-center justify-between text-sm">
+										<span class="text-[var(--foreground-muted)]"
+											>{m.onboarding_done_summary_path()}</span
+										>
+										<span class="font-medium text-[var(--foreground)]">{intentLabel}</span>
+									</div>
 								</div>
 
 								<Button onclick={next} size="lg" class="w-full" disabled={loading}>
-									{loading ? 'Setting up...' : 'Go to my dashboard'}
+									{loading
+										? m.onboarding_nav_setting_up()
+										: intent === 'questionnaire'
+											? m.onboarding_done_cta_questionnaire()
+											: m.onboarding_done_cta_compliance()}
 									<ArrowRight size={18} />
 								</Button>
 							</div>
 						{/if}
 
-						<!-- Error message -->
-						{#if errorMsg && step !== 2}
+						<!-- Error message (shown above nav for non-step-2/4 steps) -->
+						{#if errorMsg && step !== 2 && step !== 4}
 							<p class="mt-4 text-xs text-[var(--danger)]">{errorMsg}</p>
 						{/if}
 
-						<!-- Navigation buttons (not shown on step 5 which has its own CTA) -->
-						{#if step < 5}
+						<!-- Navigation buttons (not shown on completion step which has its own CTA) -->
+						{#if !isCompletionStep}
 							<div
 								class="mt-8 flex items-center justify-between border-t border-[var(--border)] pt-6"
 							>
 								{#if step > 1}
 									<Button variant="ghost" onclick={back} disabled={loading}>
 										<ArrowLeft size={16} />
-										Back
+										{m.onboarding_nav_back()}
 									</Button>
 								{:else}
 									<div></div>
 								{/if}
 
 								<Button onclick={next} disabled={loading}>
-									{loading ? 'Saving...' : 'Continue'}
+									{loading ? m.onboarding_nav_saving() : m.onboarding_nav_continue()}
 									<ArrowRight size={16} />
 								</Button>
 							</div>
@@ -458,7 +636,11 @@
 
 					<!-- Step counter text -->
 					<p class="mt-4 text-center text-xs text-[var(--foreground-subtle)]">
-						Step {step} of {totalSteps}
+						{#if isCompletionStep}
+							Step {totalSteps} of {totalSteps}
+						{:else}
+							Step {step} of {totalSteps}
+						{/if}
 					</p>
 				</div>
 			{/key}

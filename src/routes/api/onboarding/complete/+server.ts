@@ -5,8 +5,11 @@ import { organizations, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendWelcomeEmail } from '$lib/server/email';
 
-export const POST: RequestHandler = async ({ locals }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
+
+	const body = await request.json().catch(() => ({}));
+	const intent = body?.intent === 'questionnaire' ? 'questionnaire' : 'compliance';
 
 	const [userOrg] = await db
 		.select()
@@ -38,5 +41,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 		}).catch(console.error);
 	}
 
-	return json({ ok: true });
+	const redirectTo = intent === 'questionnaire' ? '/questionnaires' : '/dashboard';
+
+	return json({ ok: true, redirectTo });
 };
