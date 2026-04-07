@@ -45,6 +45,8 @@ declare module '$env/static/private' {
 	export const GITHUB_CLIENT_ID: string;
 	export const GITHUB_CLIENT_SECRET: string;
 	export const OPEN_ROUTER_API_KEY: string;
+	export const GOOGLE_CLIENT_ID: string;
+	export const GOOGLE_CLIENT_SECRET: string;
 	export const BUCKET_ENDPOINT: string;
 	export const BUCKET_REGION: string;
 	export const BUCKET_NAME: string;
@@ -198,6 +200,8 @@ declare module '$env/dynamic/private' {
 		GITHUB_CLIENT_ID: string;
 		GITHUB_CLIENT_SECRET: string;
 		OPEN_ROUTER_API_KEY: string;
+		GOOGLE_CLIENT_ID: string;
+		GOOGLE_CLIENT_SECRET: string;
 		BUCKET_ENDPOINT: string;
 		BUCKET_REGION: string;
 		BUCKET_NAME: string;
