@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { hasActiveAccess } from '$lib/server/billing';
+import { checkRateLimit } from '$lib/server/rate-limit';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { db } from '$lib/server/db';
@@ -421,6 +422,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
 		throw error(402, 'Trial expired. Upgrade to generate policies.');
+	}
+
+	if (!checkRateLimit(`policy-gen:${orgId}`, 10, 60 * 60 * 1000)) {
+		throw error(429, 'Too many policy generations. Please wait before generating more.');
 	}
 
 	const org = locals.organization;

@@ -6,6 +6,7 @@ import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
 import { eq, count } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
+import { checkRateLimit } from '$lib/server/rate-limit';
 import { parseQuestionnaire } from '$lib/server/questionnaire-parser';
 import { processQuestionnaire } from '$lib/server/questionnaire-processor';
 
@@ -32,6 +33,25 @@ const EXT_FORMAT: Record<string, QuestionnaireFormat> = {
 function detectFormat(filename: string, mimeType: string): QuestionnaireFormat | null {
 	const ext = filename.split('.').pop()?.toLowerCase() ?? '';
 	return EXT_FORMAT[ext] ?? FORMAT_MIME[mimeType] ?? null;
+}
+
+const MAGIC_NUMBERS: Record<string, number[][]> = {
+	pdf: [[0x25, 0x50, 0x44, 0x46]], // %PDF
+	xlsx: [
+		[0x50, 0x4b, 0x03, 0x04],
+		[0x50, 0x4b, 0x05, 0x06]
+	], // ZIP (xlsx is a zip)
+	csv: [], // no magic bytes — text format, skip
+	docx: [
+		[0x50, 0x4b, 0x03, 0x04],
+		[0x50, 0x4b, 0x05, 0x06]
+	] // ZIP (docx is a zip)
+};
+
+function validateMagicNumbers(buffer: Buffer, format: string): boolean {
+	const signatures = MAGIC_NUMBERS[format];
+	if (!signatures || signatures.length === 0) return true; // csv — no check needed
+	return signatures.some((sig) => sig.every((byte, i) => buffer[i] === byte));
 }
 
 function getS3Client(): { client: S3Client; bucket: string } {
@@ -61,7 +81,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 	const orgId = locals.organizationId;
 
-	// 2. Trial questionnaire limit — paid users get unlimited, trial users get 1
+	// 2. Rate limit — 20 uploads per org per hour
+	if (!checkRateLimit(`q-upload:${orgId}`, 20, 60 * 60 * 1000)) {
+		throw error(429, 'Too many uploads. Please wait before uploading more questionnaires.');
+	}
+
+	// 3. Trial questionnaire limit — paid users get unlimited, trial users get 1
 	if (!hasActivePaidAccess(locals.subscription)) {
 		const [{ value: existingCount }] = await db
 			.select({ value: count() })
@@ -73,7 +98,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 	}
 
-	// 3. Parse multipart form data
+	// 4. Parse multipart form data
 	let formData: FormData;
 	try {
 		formData = await request.formData();
@@ -105,6 +130,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// 5. Parse file into questions
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);
+
+	if (!validateMagicNumbers(buffer, format)) {
+		throw error(400, 'File content does not match the declared format');
+	}
 
 	let parsedQuestions: Awaited<ReturnType<typeof parseQuestionnaire>>;
 	try {

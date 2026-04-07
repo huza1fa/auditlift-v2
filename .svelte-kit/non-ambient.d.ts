@@ -29,7 +29,7 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/billing" | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence" | "/api/evidence/presign" | "/api/evidence/[id]" | "/api/evidence/[id]/confirm" | "/api/export" | "/api/invites" | "/api/invites/[token]" | "/api/onboarding" | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/api/policies/[id]" | "/api/policies/[id]/download" | "/api/questionnaires" | "/api/questionnaires/upload" | "/api/questionnaires/[id]" | "/api/questionnaires/[id]/coverage" | "/api/questionnaires/[id]/export" | "/api/questionnaires/[id]/questions" | "/api/questionnaires/[id]/questions/[qid]" | "/api/settings" | "/api/settings/organization" | "/api/settings/team" | "/api/settings/team/[userId]" | "/api/webhooks" | "/api/webhooks/stripe" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(marketing)/forgot-password" | "/(app)/frameworks" | "/invite" | "/invite/[token]" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(marketing)/pricing" | "/(marketing)/privacy" | "/(app)/questionnaires" | "/(app)/questionnaires/[id]" | "/(marketing)/reset-password" | "/(app)/settings" | "/(app)/settings/activity" | "/(app)/settings/billing" | "/(app)/settings/team" | "/sitemap.xml" | "/(marketing)/terms";
+		RouteId(): "/(marketing)" | "/(app)" | "/" | "/api" | "/api/auth" | "/api/auth/[...all]" | "/api/billing" | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence" | "/api/evidence/presign" | "/api/evidence/[id]" | "/api/evidence/[id]/confirm" | "/api/export" | "/api/invites" | "/api/invites/[token]" | "/api/onboarding" | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies" | "/api/policies/generate" | "/api/policies/[id]" | "/api/policies/[id]/download" | "/api/policies/[id]/restore" | "/api/questionnaires" | "/api/questionnaires/upload" | "/api/questionnaires/[id]" | "/api/questionnaires/[id]/coverage" | "/api/questionnaires/[id]/export" | "/api/questionnaires/[id]/questions" | "/api/questionnaires/[id]/questions/[qid]" | "/api/questionnaires/[id]/questions/[qid]/improve" | "/api/questionnaires/[id]/stream" | "/api/settings" | "/api/settings/organization" | "/api/settings/team" | "/api/settings/team/[userId]" | "/api/webhooks" | "/api/webhooks/stripe" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(marketing)/forgot-password" | "/(app)/frameworks" | "/invite" | "/invite/[token]" | "/(marketing)/login" | "/onboarding" | "/(app)/policies" | "/(marketing)/pricing" | "/(marketing)/privacy" | "/(app)/questionnaires" | "/(app)/questionnaires/[id]" | "/(marketing)/reset-password" | "/(app)/settings" | "/(app)/settings/activity" | "/(app)/settings/billing" | "/(app)/settings/team" | "/sitemap.xml" | "/(marketing)/terms";
 		RouteParams(): {
 			"/api/auth/[...all]": { all: string };
 			"/api/evidence/[id]": { id: string };
@@ -37,11 +37,14 @@ declare module "$app/types" {
 			"/api/invites/[token]": { token: string };
 			"/api/policies/[id]": { id: string };
 			"/api/policies/[id]/download": { id: string };
+			"/api/policies/[id]/restore": { id: string };
 			"/api/questionnaires/[id]": { id: string };
 			"/api/questionnaires/[id]/coverage": { id: string };
 			"/api/questionnaires/[id]/export": { id: string };
 			"/api/questionnaires/[id]/questions": { id: string };
 			"/api/questionnaires/[id]/questions/[qid]": { id: string; qid: string };
+			"/api/questionnaires/[id]/questions/[qid]/improve": { id: string; qid: string };
+			"/api/questionnaires/[id]/stream": { id: string };
 			"/api/settings/team/[userId]": { userId: string };
 			"/(app)/controls/[controlId]": { controlId: string };
 			"/invite/[token]": { token: string };
@@ -77,6 +80,7 @@ declare module "$app/types" {
 			"/api/policies/generate": Record<string, never>;
 			"/api/policies/[id]": { id: string };
 			"/api/policies/[id]/download": { id: string };
+			"/api/policies/[id]/restore": { id: string };
 			"/api/questionnaires": { id?: string; qid?: string };
 			"/api/questionnaires/upload": Record<string, never>;
 			"/api/questionnaires/[id]": { id: string; qid?: string };
@@ -84,6 +88,8 @@ declare module "$app/types" {
 			"/api/questionnaires/[id]/export": { id: string };
 			"/api/questionnaires/[id]/questions": { id: string; qid?: string };
 			"/api/questionnaires/[id]/questions/[qid]": { id: string; qid: string };
+			"/api/questionnaires/[id]/questions/[qid]/improve": { id: string; qid: string };
+			"/api/questionnaires/[id]/stream": { id: string };
 			"/api/settings": { userId?: string };
 			"/api/settings/organization": Record<string, never>;
 			"/api/settings/team": { userId?: string };
@@ -114,7 +120,7 @@ declare module "$app/types" {
 			"/sitemap.xml": Record<string, never>;
 			"/(marketing)/terms": Record<string, never>
 		};
-		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence/presign" | `/api/evidence/${string}` & {} | `/api/evidence/${string}/confirm` & {} | "/api/export" | `/api/invites/${string}` & {} | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | `/api/policies/${string}` & {} | `/api/policies/${string}/download` & {} | "/api/questionnaires" | "/api/questionnaires/upload" | `/api/questionnaires/${string}` & {} | `/api/questionnaires/${string}/coverage` & {} | `/api/questionnaires/${string}/export` & {} | `/api/questionnaires/${string}/questions/${string}` & {} | "/api/settings/organization" | "/api/settings/team" | `/api/settings/team/${string}` & {} | "/api/webhooks/stripe" | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/forgot-password" | "/frameworks" | `/invite/${string}` & {} | "/login" | "/onboarding" | "/policies" | "/pricing" | "/privacy" | "/questionnaires" | `/questionnaires/${string}` & {} | "/reset-password" | "/settings" | "/settings/activity" | "/settings/billing" | "/settings/team" | "/sitemap.xml" | "/terms";
+		Pathname(): "/" | `/api/auth/${string}` & {} | "/api/billing/checkout" | "/api/billing/portal" | "/api/billing/status" | "/api/billing/sync" | "/api/evidence/presign" | `/api/evidence/${string}` & {} | `/api/evidence/${string}/confirm` & {} | "/api/export" | `/api/invites/${string}` & {} | "/api/onboarding/check-domain" | "/api/onboarding/complete" | "/api/onboarding/framework" | "/api/onboarding/organization" | "/api/onboarding/stack" | "/api/onboarding/team" | "/api/policies/generate" | `/api/policies/${string}` & {} | `/api/policies/${string}/download` & {} | `/api/policies/${string}/restore` & {} | "/api/questionnaires" | "/api/questionnaires/upload" | `/api/questionnaires/${string}` & {} | `/api/questionnaires/${string}/coverage` & {} | `/api/questionnaires/${string}/export` & {} | `/api/questionnaires/${string}/questions/${string}` & {} | `/api/questionnaires/${string}/questions/${string}/improve` & {} | `/api/questionnaires/${string}/stream` & {} | "/api/settings/organization" | "/api/settings/team" | `/api/settings/team/${string}` & {} | "/api/webhooks/stripe" | "/controls" | `/controls/${string}` & {} | "/dashboard" | "/evidence" | "/export" | "/forgot-password" | "/frameworks" | `/invite/${string}` & {} | "/login" | "/onboarding" | "/policies" | "/pricing" | "/privacy" | "/questionnaires" | `/questionnaires/${string}` & {} | "/reset-password" | "/settings" | "/settings/activity" | "/settings/billing" | "/settings/team" | "/sitemap.xml" | "/terms";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/favicon.svg" | "/robots.txt" | string & {};
 	}

@@ -14,6 +14,7 @@
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import Toast from '$lib/components/ui/Toast.svelte';
+	import GuidedTour from '$lib/components/ui/GuidedTour.svelte';
 	import { createAuthClient } from 'better-auth/svelte';
 
 	const authClient = createAuthClient();
@@ -26,6 +27,35 @@
 	let { data, children } = $props();
 
 	let sidebarOpen = $state(false);
+	let showTour = $state(false);
+
+	const tourSteps = [
+		{
+			target: '[data-tour="nav-questionnaires"]',
+			title: 'Upload questionnaires',
+			body: 'Start here — upload a security questionnaire and get AI-generated answers in minutes.'
+		},
+		{
+			target: '[data-tour="nav-policies"]',
+			title: 'Generate policies',
+			body: 'Create compliance policies tailored to your company. Each one satisfies real framework controls.'
+		},
+		{
+			target: '[data-tour="nav-evidence"]',
+			title: 'Store evidence',
+			body: 'Upload screenshots, configs, and documents as evidence for your controls.'
+		}
+	];
+
+	$effect(() => {
+		if (typeof localStorage === 'undefined') return;
+		const tourDone = localStorage.getItem('auditlift-tour-done');
+		if (tourDone) return;
+		const url = new URL(window.location.href);
+		if (url.searchParams.get('tour') === '1') {
+			showTour = true;
+		}
+	});
 
 	const navLinks = [
 		{ href: '/dashboard', icon: House, label: 'Dashboard' },
@@ -121,6 +151,13 @@
 					<a
 						href={link.href}
 						onclick={() => (sidebarOpen = false)}
+						data-tour={link.href === '/questionnaires'
+							? 'nav-questionnaires'
+							: link.href === '/policies'
+								? 'nav-policies'
+								: link.href === '/evidence'
+									? 'nav-evidence'
+									: undefined}
 						class="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[13px] font-medium transition-all
 							{isActive
 							? 'bg-[var(--brand)] text-white shadow-sm'
@@ -206,4 +243,15 @@
 
 	<!-- Toast notifications -->
 	<Toast />
+
+	<!-- Guided tour -->
+	{#if showTour}
+		<GuidedTour
+			steps={tourSteps}
+			onComplete={() => {
+				localStorage.setItem('auditlift-tour-done', '1');
+				showTour = false;
+			}}
+		/>
+	{/if}
 </div>

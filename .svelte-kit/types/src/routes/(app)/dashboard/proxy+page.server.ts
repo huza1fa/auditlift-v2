@@ -9,9 +9,10 @@ import {
 	questionnaires,
 	questionnaireQuestions,
 	policies,
-	controls
+	controls,
+	evidence
 } from '$lib/server/db/schema';
-import { eq, and, desc, count, avg, isNull, inArray } from 'drizzle-orm';
+import { eq, and, desc, count, avg, isNull, inArray, lt } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
 
 export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
@@ -137,6 +138,7 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 			dealReadinessScore: questionnaires.dealReadinessScore,
 			answeredCount: questionnaires.answeredCount,
 			totalQuestions: questionnaires.totalQuestions,
+			gapCount: questionnaires.gapCount,
 			filename: questionnaires.filename,
 			status: questionnaires.status,
 			createdAt: questionnaires.createdAt
@@ -236,6 +238,49 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		});
 	}
 
+	// ── Stale evidence count (older than 90 days, not deleted, active) ─────────
+
+	const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+	const staleResult = await db
+		.select({ value: count() })
+		.from(evidence)
+		.where(
+			and(
+				eq(evidence.organizationId, orgId),
+				lt(evidence.createdAt, ninetyDaysAgo),
+				isNull(evidence.deletedAt),
+				eq(evidence.status, 'active')
+			)
+		);
+	const staleEvidenceCount = staleResult[0]?.value ?? 0;
+
+	// ── Next action recommendation ───────────────────────────────────────────
+
+	type NextAction =
+		| { type: 'fix-gaps'; gapCount: number; questionnaireId: string }
+		| { type: 'upload-questionnaire' }
+		| { type: 'generate-policy' }
+		| { type: 'stale-evidence' };
+
+	let nextAction: NextAction | null = null;
+
+	const questionnaireWithGaps = recentQuestionnaires.find((q) => (q.gapCount ?? 0) > 0);
+	const totalGaps = recentQuestionnaires.reduce((sum, q) => sum + (q.gapCount ?? 0), 0);
+
+	if (questionnaireWithGaps && totalGaps > 0) {
+		nextAction = {
+			type: 'fix-gaps',
+			gapCount: totalGaps,
+			questionnaireId: questionnaireWithGaps.id
+		};
+	} else if (questionnaireTotal === 0) {
+		nextAction = { type: 'upload-questionnaire' };
+	} else if (policiesTotal === 0) {
+		nextAction = { type: 'generate-policy' };
+	} else if (staleEvidenceCount > 0) {
+		nextAction = { type: 'stale-evidence' };
+	}
+
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
@@ -246,6 +291,8 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		questionnaireTotal,
 		avgDealReadiness,
 		policiesTotal,
-		questionnaireCoverage
+		questionnaireCoverage,
+		staleEvidenceCount,
+		nextAction
 	};
 };

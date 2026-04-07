@@ -23,6 +23,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 			totalQuestions: questionnaires.totalQuestions,
 			answeredCount: questionnaires.answeredCount,
 			gapCount: questionnaires.gapCount,
+			highCount: questionnaires.highCount,
+			mediumCount: questionnaires.mediumCount,
+			lowCount: questionnaires.lowCount,
 			dealReadinessScore: questionnaires.dealReadinessScore,
 			sourceFormat: questionnaires.sourceFormat,
 			createdAt: questionnaires.createdAt

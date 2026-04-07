@@ -235,6 +235,9 @@ export const questionnaires = pgTable('questionnaires', {
 	answeredCount: integer('answered_count').notNull().default(0),
 	gapCount: integer('gap_count').notNull().default(0),
 	dealReadinessScore: integer('deal_readiness_score').notNull().default(0),
+	highCount: integer('high_count').notNull().default(0),
+	mediumCount: integer('medium_count').notNull().default(0),
+	lowCount: integer('low_count').notNull().default(0),
 	errorMessage: text('error_message'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
@@ -264,6 +267,21 @@ export const questionnaireQuestions = pgTable('questionnaire_questions', {
 	order: integer('order').notNull().default(0),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ─── Policy Versions ──────────────────────────────────────────────────────────
+
+export const policyVersions = pgTable('policy_versions', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	policyId: uuid('policy_id')
+		.notNull()
+		.references(() => policies.id, { onDelete: 'cascade' }),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id, { onDelete: 'cascade' }),
+	content: text('content').notNull(),
+	savedAt: timestamp('saved_at').notNull().defaultNow(),
+	savedBy: text('saved_by').notNull()
 });
 
 // ─── Re-export auth schema ────────────────────────────────────────────────────

@@ -12,7 +12,8 @@
 		FolderOpen,
 		Info,
 		ShieldCheck,
-		ListChecks
+		ListChecks,
+		Sparkle
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -88,9 +89,13 @@
 	let savingAnswer = $state(false);
 	let savedIndicator = $state(false);
 	let savedTimer = $state<ReturnType<typeof setTimeout> | null>(null);
-	let pollTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+	let sse: EventSource | null = null;
 	let exporting = $state(false);
 	let showScoreTooltip = $state(false);
+	let showImproveInput = $state(false);
+	let refinementPrompt = $state('');
+	let improving = $state(false);
+	let improveError = $state('');
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	const selectedQuestion = $derived(questions.find((q) => q.id === selectedQuestionId) ?? null);
@@ -267,18 +272,35 @@
 		}
 	}
 
-	function startPolling() {
-		stopPolling();
-		pollTimer = setTimeout(async () => {
-			await fetchData();
-			if (isProcessing) startPolling();
-		}, 3000);
+	// ── SSE ───────────────────────────────────────────────────────────────────
+	function openSSE(questionnaireId: string) {
+		closeSSE();
+		sse = new EventSource(`/api/questionnaires/${questionnaireId}/stream`);
+
+		sse.onmessage = async (event) => {
+			let payload: { status: string };
+			try {
+				payload = JSON.parse(event.data);
+			} catch {
+				return;
+			}
+
+			if (payload.status === 'ready' || payload.status === 'error') {
+				closeSSE();
+				// Reload full data — questions + coverage are now available
+				await fetchData();
+			}
+		};
+
+		sse.onerror = () => {
+			closeSSE();
+		};
 	}
 
-	function stopPolling() {
-		if (pollTimer !== null) {
-			clearTimeout(pollTimer);
-			pollTimer = null;
+	function closeSSE() {
+		if (sse !== null) {
+			sse.close();
+			sse = null;
 		}
 	}
 
@@ -312,6 +334,40 @@
 		}, 2000);
 	}
 
+	// ── Improve answer ────────────────────────────────────────────────────────
+	async function improveAnswer() {
+		if (!selectedQuestion || !refinementPrompt.trim()) return;
+		improving = true;
+		improveError = '';
+		try {
+			const res = await fetch(
+				`/api/questionnaires/${id}/questions/${selectedQuestion.id}/improve`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ refinementPrompt: refinementPrompt.trim() })
+				}
+			);
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				improveError = (body as { message?: string }).message ?? 'Failed to improve answer';
+				return;
+			}
+			const result: { answer: string } = await res.json();
+			answerDraft = result.answer;
+			questions = questions.map((q) =>
+				q.id === selectedQuestion.id ? { ...q, userEditedAnswer: result.answer } : q
+			);
+			refinementPrompt = '';
+			showImproveInput = false;
+			toastSuccess('Answer improved');
+		} catch {
+			improveError = 'Something went wrong. Please try again.';
+		} finally {
+			improving = false;
+		}
+	}
+
 	// ── Export ────────────────────────────────────────────────────────────────
 	async function handleExport() {
 		if (!data.hasActivePaidAccess) return;
@@ -327,26 +383,21 @@
 	$effect(() => {
 		fetchData().then(() => {
 			loading = false;
-			if (isProcessing) startPolling();
+			if (isProcessing) openSSE(id);
 		});
 		return () => {
-			stopPolling();
+			closeSSE();
 			if (savedTimer !== null) clearTimeout(savedTimer);
 		};
-	});
-
-	$effect(() => {
-		if (isProcessing) {
-			startPolling();
-		} else {
-			stopPolling();
-		}
 	});
 
 	// Sync answer draft when selected question changes
 	$effect(() => {
 		if (selectedQuestion) {
 			answerDraft = selectedQuestion.userEditedAnswer ?? selectedQuestion.generatedAnswer ?? '';
+			showImproveInput = false;
+			refinementPrompt = '';
+			improveError = '';
 		}
 	});
 </script>
@@ -414,6 +465,32 @@
 								<span class="text-[9px] leading-tight text-[var(--foreground-muted)]">ready</span>
 							</div>
 						</button>
+
+						<!-- Permanent breakdown row (always visible) -->
+						{#if totalProcessed > 0}
+							<div class="mt-1.5 flex flex-wrap justify-center gap-x-2 gap-y-0.5">
+								<span class="flex items-center gap-1 text-[10px]">
+									<span class="h-1.5 w-1.5 rounded-full bg-[var(--success)]"></span>
+									<span class="font-medium text-[var(--success)]">{highCount}</span>
+									<span class="text-[var(--foreground-subtle)]">high</span>
+								</span>
+								<span class="flex items-center gap-1 text-[10px]">
+									<span class="h-1.5 w-1.5 rounded-full bg-[var(--info)]"></span>
+									<span class="font-medium text-[var(--info)]">{mediumCount}</span>
+									<span class="text-[var(--foreground-subtle)]">med</span>
+								</span>
+								<span class="flex items-center gap-1 text-[10px]">
+									<span class="h-1.5 w-1.5 rounded-full bg-[var(--warning)]"></span>
+									<span class="font-medium text-[var(--warning)]">{lowCount}</span>
+									<span class="text-[var(--foreground-subtle)]">low</span>
+								</span>
+								<span class="flex items-center gap-1 text-[10px]">
+									<span class="h-1.5 w-1.5 rounded-full bg-[var(--danger)]"></span>
+									<span class="font-medium text-[var(--danger)]">{gapCount}</span>
+									<span class="text-[var(--foreground-subtle)]">gaps</span>
+								</span>
+							</div>
+						{/if}
 
 						<!-- Score tooltip -->
 						{#if showScoreTooltip}
@@ -834,7 +911,24 @@
 										class="w-full resize-none rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 text-sm leading-relaxed text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
 										placeholder="Edit the generated answer..."
 									></textarea>
-									<div class="flex justify-end">
+									<div class="flex flex-wrap items-center justify-between gap-2">
+										<div class="flex items-center gap-2">
+											{#if questionnaire?.status === 'ready' && selectedQuestion.generatedAnswer && data.hasActivePaidAccess}
+												<button
+													onclick={() => {
+														showImproveInput = !showImproveInput;
+														if (!showImproveInput) {
+															refinementPrompt = '';
+															improveError = '';
+														}
+													}}
+													class="inline-flex items-center gap-1.5 rounded-[var(--radius)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-alt)] hover:text-[var(--foreground)]"
+												>
+													<Sparkle size={13} weight="fill" />
+													Improve with AI
+												</button>
+											{/if}
+										</div>
 										<Button size="sm" onclick={saveAnswer} disabled={savingAnswer}>
 											{#if savingAnswer}
 												<Spinner size={13} class="animate-spin" />
@@ -842,6 +936,54 @@
 											Save
 										</Button>
 									</div>
+
+									{#if showImproveInput}
+										<div
+											class="mt-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-alt)] p-3.5"
+										>
+											<p
+												class="mb-2 text-xs font-semibold tracking-wide text-[var(--foreground-subtle)] uppercase"
+											>
+												Refine this answer
+											</p>
+											<input
+												type="text"
+												bind:value={refinementPrompt}
+												onkeydown={(e) => {
+													if (e.key === 'Enter' && !improving) improveAnswer();
+												}}
+												placeholder="e.g. make this more formal, add more detail..."
+												class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+											/>
+											{#if improveError}
+												<p class="mt-1.5 text-xs text-[var(--danger)]">{improveError}</p>
+											{/if}
+											<div class="mt-2.5 flex items-center justify-between gap-2">
+												<button
+													onclick={() => {
+														showImproveInput = false;
+														refinementPrompt = '';
+														improveError = '';
+													}}
+													class="text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+												>
+													Cancel
+												</button>
+												<Button
+													size="sm"
+													onclick={improveAnswer}
+													disabled={improving || !refinementPrompt.trim()}
+												>
+													{#if improving}
+														<Spinner size={13} class="animate-spin" />
+													{:else}
+														<Sparkle size={13} weight="fill" />
+													{/if}
+													Apply
+												</Button>
+											</div>
+										</div>
+									{/if}
 								</div>
 
 								<!-- Gap state -->

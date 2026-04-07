@@ -9,10 +9,32 @@
 		Users,
 		ChartBar
 	} from 'phosphor-svelte';
+	import { onMount } from 'svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
+
+	const headlines = [
+		{ line1: 'Stop losing deals to', line2: 'security questions' },
+		{ line1: 'Answer questionnaires', line2: 'in minutes, not weeks' },
+		{ line1: 'Build SOC 2 readiness', line2: 'while closing deals' },
+		{ line1: 'Turn compliance into', line2: 'a competitive edge' }
+	];
+
+	let headlineIndex = $state(0);
+	let headlineVisible = $state(true);
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			headlineVisible = false;
+			setTimeout(() => {
+				headlineIndex = (headlineIndex + 1) % headlines.length;
+				headlineVisible = true;
+			}, 400);
+		}, 3500);
+		return () => clearInterval(interval);
+	});
 
 	const pricingPlans = [
 		{
@@ -218,7 +240,9 @@
 			<div class="eyebrow-pill">SOC 2 · PCI-DSS · ISO 27001</div>
 
 			<!-- Headline -->
-			<h1 class="hero-headline">Stop losing deals to<br />security questions</h1>
+			<h1 class="hero-headline" class:headline-visible={headlineVisible} class:headline-hidden={!headlineVisible}>
+				{headlines[headlineIndex].line1}<br />{headlines[headlineIndex].line2}
+			</h1>
 
 			<!-- Subheadline -->
 			<p class="hero-subheadline">
@@ -334,7 +358,7 @@
 		<div class="section-inner">
 			<div class="section-header">
 				<p class="section-label">Everything you need</p>
-				<h2 class="section-headline">80% audit-ready — without the vCISO</h2>
+				<h2 class="section-headline">Everything you need to get audit-ready</h2>
 			</div>
 			<div class="features-grid">
 				{#each features as feature (feature.title)}
@@ -708,6 +732,15 @@
 		line-height: 1.08;
 		color: var(--foreground);
 		margin: 0 0 1.25rem;
+		transition: opacity 0.4s ease, transform 0.4s ease;
+	}
+	.headline-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	.headline-hidden {
+		opacity: 0;
+		transform: translateY(8px);
 	}
 
 	.hero-subheadline {

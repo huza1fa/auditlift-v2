@@ -1,10 +1,55 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { policies } from '$lib/server/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { policies, policyVersions } from '$lib/server/db/schema';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
 import { PatchPolicySchema } from '$lib/server/validation';
+
+export const GET: RequestHandler = async ({ locals, params, request }) => {
+	if (!locals.session || !locals.organizationId) {
+		throw error(401, 'Unauthorized');
+	}
+
+	const policyId = params.id;
+	if (!policyId) {
+		throw error(400, 'Missing policy ID');
+	}
+
+	const url = new URL(request.url);
+	if (url.searchParams.get('versions') === 'true') {
+		const versions = await db
+			.select()
+			.from(policyVersions)
+			.where(
+				and(
+					eq(policyVersions.policyId, policyId),
+					eq(policyVersions.organizationId, locals.organizationId)
+				)
+			)
+			.orderBy(desc(policyVersions.savedAt))
+			.limit(3);
+		return json({ versions });
+	}
+
+	const [policy] = await db
+		.select()
+		.from(policies)
+		.where(
+			and(
+				eq(policies.id, policyId),
+				eq(policies.organizationId, locals.organizationId),
+				isNull(policies.archivedAt)
+			)
+		)
+		.limit(1);
+
+	if (!policy) {
+		throw error(404, 'Policy not found');
+	}
+
+	return json({ policy });
+};
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -73,6 +118,16 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 
 	if (!existing) {
 		throw error(404, 'Policy not found');
+	}
+
+	// Save current content as a version before overwriting
+	if (existing.content) {
+		await db.insert(policyVersions).values({
+			policyId: policyId,
+			organizationId: locals.organizationId,
+			content: existing.content,
+			savedBy: locals.session.user.id
+		});
 	}
 
 	const updates: Record<string, unknown> = {

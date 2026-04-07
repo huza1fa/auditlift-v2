@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}).catch(console.error);
 	}
 
-	const redirectTo = intent === 'questionnaire' ? '/questionnaires' : '/dashboard';
+	const redirectTo = intent === 'questionnaire' ? '/questionnaires?tour=1' : '/dashboard?tour=1';
 
 	return json({ ok: true, redirectTo });
 };

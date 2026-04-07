@@ -52,3 +52,7 @@ export const ExportSchema = z.object({
 	policyIds: z.array(z.string().uuid()).optional(),
 	evidenceIds: z.array(z.string().uuid()).optional()
 });
+
+export const ImproveAnswerSchema = z.object({
+	refinementPrompt: z.string().min(1).max(500)
+});
