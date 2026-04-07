@@ -69,18 +69,18 @@ async function classifyQuestion(
 	const prompt = `You are helping answer a security questionnaire on behalf of ${orgName}.
 
 ${
-		hasOrgContext
-			? `Use the provided policies and controls as your primary source. You may supplement with general industry-standard security practices when the provided context is incomplete.
+	hasOrgContext
+		? `Use the provided policies and controls as your primary source. You may supplement with general industry-standard security practices when the provided context is incomplete.
 
 Available policies:
 ${policiesList || '(none)'}
 
 Available controls:
 ${controlsList || '(none)'}`
-			: `${orgName} has not yet generated policies or mapped controls. Draft a reasonable answer based on industry-standard security practices (SOC 2, ISO 27001, NIST) that a typical SaaS company would follow. The answer will be marked as low confidence so the user can review and customize it.`
-	}
+		: `${orgName} has not yet generated policies or mapped controls. Draft a reasonable answer based on industry-standard security practices (SOC 2, ISO 27001, NIST) that a typical SaaS company would follow. The answer will be marked as low confidence so the user can review and customize it.`
+}
 
-Question: "${questionText}"
+<question>${questionText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</question>
 
 Instructions:
 - domain: classify this question into one of: access_control, data_security, incident_response, vendor_management, business_continuity, cryptography, physical_security, other
@@ -215,9 +215,7 @@ export async function processQuestionnaire(
 				// returns control codes (e.g. "5.2") instead of UUIDs.
 				const validPolicyIds = new Set(policyContext.map((p) => p.id));
 				const validControlIds = new Set(controlContext.map((c) => c.id));
-				const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
-					validPolicyIds.has(id)
-				);
+				const safePolicyIds = classification.mappedPolicyIds.filter((id) => validPolicyIds.has(id));
 				const safeControlIds = classification.mappedControlIds.filter((id) =>
 					validControlIds.has(id)
 				);
@@ -296,6 +294,9 @@ export async function processQuestionnaire(
 				totalQuestions,
 				answeredCount,
 				gapCount,
+				highCount,
+				mediumCount,
+				lowCount,
 				dealReadinessScore,
 				errorMessage: null,
 				updatedAt: new Date()

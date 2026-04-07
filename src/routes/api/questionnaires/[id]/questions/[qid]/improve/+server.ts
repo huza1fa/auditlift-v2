@@ -1,0 +1,124 @@
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
+import { hasActiveAccess } from '$lib/server/billing';
+import { checkRateLimit } from '$lib/server/rate-limit';
+import { ImproveAnswerSchema } from '$lib/server/validation';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+import { env } from '$env/dynamic/private';
+
+function getOpenRouterClient() {
+	const apiKey = env.OPEN_ROUTER_API_KEY;
+	if (!apiKey) throw error(503, 'AI improvement is not configured');
+	return createOpenAI({
+		baseURL: 'https://openrouter.ai/api/v1',
+		apiKey,
+		headers: {
+			'HTTP-Referer': 'https://auditlift.app',
+			'X-Title': 'AuditLift'
+		}
+	});
+}
+
+export const POST: RequestHandler = async ({ locals, params, request }) => {
+	// Auth check first
+	if (!locals.session || !locals.organizationId) {
+		throw error(401, 'Unauthorized');
+	}
+	const orgId = locals.organizationId;
+
+	// Billing check
+	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
+		throw error(402, 'Trial expired. Upgrade to improve answers with AI.');
+	}
+
+	if (!checkRateLimit(`improve:${orgId}`, 30, 60 * 60 * 1000)) {
+		throw error(429, 'Too many answer improvements. Please wait before trying again.');
+	}
+
+	const { id, qid } = params;
+
+	// Validate input
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		throw error(400, 'Invalid JSON body');
+	}
+
+	const parsed = ImproveAnswerSchema.safeParse(body);
+	if (!parsed.success) {
+		throw error(400, 'Invalid input: refinementPrompt must be between 1 and 500 characters');
+	}
+
+	const { refinementPrompt } = parsed.data;
+
+	// Verify the questionnaire belongs to this org
+	const [questionnaire] = await db
+		.select({ id: questionnaires.id })
+		.from(questionnaires)
+		.where(and(eq(questionnaires.id, id), eq(questionnaires.organizationId, orgId)))
+		.limit(1);
+
+	if (!questionnaire) {
+		throw error(404, 'Questionnaire not found');
+	}
+
+	// Verify the question belongs to this questionnaire + org
+	const [existing] = await db
+		.select()
+		.from(questionnaireQuestions)
+		.where(
+			and(
+				eq(questionnaireQuestions.id, qid),
+				eq(questionnaireQuestions.questionnaireId, id),
+				eq(questionnaireQuestions.organizationId, orgId)
+			)
+		)
+		.limit(1);
+
+	if (!existing) {
+		throw error(404, 'Question not found');
+	}
+
+	// Determine the current answer to refine
+	const currentAnswer = existing.userEditedAnswer ?? existing.generatedAnswer;
+	if (!currentAnswer) {
+		throw error(422, 'No answer to improve — this question has not been answered yet');
+	}
+
+	// Call OpenRouter AI
+	const openrouter = getOpenRouterClient();
+	let improvedAnswer: string;
+	try {
+		const result = await generateText({
+			model: openrouter('openai/gpt-4o-mini'),
+			prompt: `You are refining a security questionnaire answer.
+
+<current_answer>
+${currentAnswer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+</current_answer>
+
+<instruction>${refinementPrompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</instruction>
+
+Rewrite the answer applying the instruction. Preserve factual accuracy. Return only the revised answer text with no preamble, no explanation, and no markdown formatting.`
+		});
+		improvedAnswer = result.text.trim();
+	} catch {
+		throw error(502, 'AI improvement failed. Please try again.');
+	}
+
+	// Persist the improved answer as userEditedAnswer
+	await db
+		.update(questionnaireQuestions)
+		.set({
+			userEditedAnswer: improvedAnswer,
+			updatedAt: new Date()
+		})
+		.where(eq(questionnaireQuestions.id, qid));
+
+	return json({ answer: improvedAnswer });
+};

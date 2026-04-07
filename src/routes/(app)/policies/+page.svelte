@@ -9,7 +9,9 @@
 		PencilSimple,
 		FloppyDisk,
 		X,
-		Trash
+		Trash,
+		ClockCounterClockwise,
+		ArrowCounterClockwise
 	} from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -20,9 +22,19 @@
 
 	// ── Types ────────────────────────────────────────────────────────────────
 	type Policy = (typeof data.policies)[0];
+	type Version = { id: string; content: string; savedAt: string; savedBy: string };
 
 	// ── Props ────────────────────────────────────────────────────────────────
 	let { data } = $props();
+
+	// ── Generation steps ─────────────────────────────────────────────────────
+	const generationSteps = [
+		m.policies_step_analysing(),
+		m.policies_step_reviewing(),
+		m.policies_step_drafting(),
+		m.policies_step_tailoring(),
+		m.policies_step_finalising()
+	];
 
 	// ── Local state ──────────────────────────────────────────────────────────
 	let activeTab = $state<'standard' | 'custom'>('standard');
@@ -30,6 +42,8 @@
 	let customTitle = $state('');
 	let customPrompt = $state('');
 	let generating = $state(false);
+	let generationStepIndex = $state(0);
+	let progressWidth = $state('0%');
 	let errorMessage = $state('');
 	let policyList = $state<Policy[]>(data.policies);
 	let expandedId = $state<string | null>(null);
@@ -37,6 +51,9 @@
 	let editContent = $state('');
 	let saving = $state(false);
 	let archivingId = $state<string | null>(null);
+	let versionsByPolicy = $state<Record<string, Version[]>>({});
+	let versionsOpenId = $state<string | null>(null);
+	let restoringVersionId = $state<string | null>(null);
 
 	// ── Policy groups ────────────────────────────────────────────────────────
 	const policyGroups = [
@@ -102,12 +119,96 @@
 	}
 
 	function toggleExpand(id: string) {
-		expandedId = expandedId === id ? null : id;
+		const closing = expandedId === id;
+		expandedId = closing ? null : id;
+		if (!closing && !(id in versionsByPolicy)) {
+			fetch(`/api/policies/${id}?versions=true`)
+				.then((r) => r.json())
+				.then((body: { versions: Version[] }) => {
+					versionsByPolicy = { ...versionsByPolicy, [id]: body.versions };
+				})
+				.catch(() => {
+					versionsByPolicy = { ...versionsByPolicy, [id]: [] };
+				});
+		}
+	}
+
+	function toggleVersionHistory(id: string) {
+		versionsOpenId = versionsOpenId === id ? null : id;
+	}
+
+	async function restoreVersion(policy: Policy, versionId: string) {
+		restoringVersionId = versionId;
+		try {
+			const res = await fetch(`/api/policies/${policy.id}/restore`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ versionId })
+			});
+			if (!res.ok) throw new Error('Failed to restore');
+			const body: { content: string } = await res.json();
+			policyList = policyList.map((p) =>
+				p.id === policy.id ? { ...p, content: body.content, editedAt: new Date() } : p
+			);
+			// Refresh versions for this policy
+			const versionsRes = await fetch(`/api/policies/${policy.id}?versions=true`);
+			const versionsBody: { versions: Version[] } = await versionsRes.json();
+			versionsByPolicy = { ...versionsByPolicy, [policy.id]: versionsBody.versions };
+			versionsOpenId = null;
+			toastSuccess('Policy restored');
+		} catch {
+			toastError('Failed to restore version');
+		} finally {
+			restoringVersionId = null;
+		}
+	}
+
+	function formatVersionDate(date: string): string {
+		const d = new Date(date);
+		const now = new Date();
+		const diffMs = now.getTime() - d.getTime();
+		const diffMins = Math.floor(diffMs / (1000 * 60));
+		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+		const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+		if (diffMins < 1) return 'just now';
+		if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+		if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+		if (diffDays === 1) return '1 day ago';
+		if (diffDays < 30) return `${diffDays} days ago`;
+		return d.toLocaleDateString();
+	}
+
+	let stepInterval: ReturnType<typeof setInterval> | null = null;
+
+	function startGenerationProgress() {
+		generationStepIndex = 0;
+		progressWidth = '0%';
+		// Defer the transition trigger to the next frame so the DOM renders at 0% first
+		requestAnimationFrame(() => {
+			progressWidth = '90%';
+		});
+		stepInterval = setInterval(() => {
+			if (generationStepIndex < generationSteps.length - 1) {
+				generationStepIndex += 1;
+			}
+		}, 2200);
+	}
+
+	function stopGenerationProgress(success: boolean) {
+		if (stepInterval !== null) {
+			clearInterval(stepInterval);
+			stepInterval = null;
+		}
+		if (success) {
+			progressWidth = '100%';
+		}
+		generationStepIndex = 0;
 	}
 
 	async function callGenerate(body: Record<string, string>) {
 		generating = true;
 		errorMessage = '';
+		startGenerationProgress();
 		try {
 			const res = await fetch('/api/policies/generate', {
 				method: 'POST',
@@ -117,12 +218,15 @@
 			if (!res.ok) {
 				const json = await res.json().catch(() => ({}));
 				errorMessage = (json as { message?: string }).message ?? m.policies_error_generic();
+				stopGenerationProgress(false);
 				return;
 			}
 			const newPolicy: Policy = await res.json();
 			policyList = [newPolicy, ...policyList];
+			stopGenerationProgress(true);
 		} catch {
 			errorMessage = m.policies_error_generic();
+			stopGenerationProgress(false);
 		} finally {
 			generating = false;
 		}
@@ -320,13 +424,24 @@
 			</div>
 		{/if}
 
-		<!-- Generating spinner state -->
+		<!-- Generating progress state -->
 		{#if generating}
-			<div
-				class="mt-4 flex items-center gap-2 rounded-[var(--radius)] bg-[var(--info-light)] px-4 py-3"
-			>
-				<Spinner size={16} class="animate-spin text-[var(--info)]" />
-				<p class="text-sm font-medium text-[var(--info)]">{m.policies_generating()}</p>
+			<div class="mt-4 rounded-[var(--radius)] bg-[var(--info-light)] px-4 py-3">
+				<div class="flex items-center gap-2">
+					<Spinner size={16} class="shrink-0 animate-spin text-[var(--info)]" />
+					<p class="text-sm font-medium text-[var(--info)]">
+						{generationSteps[generationStepIndex]}
+					</p>
+				</div>
+				<div
+					class="mt-3 h-1 w-full overflow-hidden rounded-full"
+					style="background-color: color-mix(in srgb, var(--info) 20%, transparent);"
+				>
+					<div
+						class="h-full rounded-full bg-[var(--info)]"
+						style="width: {progressWidth}; transition: width 12s ease-out;"
+					></div>
+				</div>
 			</div>
 		{/if}
 
@@ -420,6 +535,59 @@
 							{:else}
 								<pre
 									class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{policy.content}</pre>
+							{/if}
+
+							{#if versionsByPolicy[policy.id]?.length > 0}
+								<div class="mt-4 border-t border-[var(--border)] pt-4">
+									<button
+										onclick={() => toggleVersionHistory(policy.id)}
+										class="flex items-center gap-1.5 text-xs font-medium text-[var(--foreground-muted)] transition-colors hover:text-[var(--foreground)]"
+									>
+										<ClockCounterClockwise size={14} />
+										Version history
+										{#if versionsOpenId === policy.id}
+											<CaretUp size={11} />
+										{:else}
+											<CaretDown size={11} />
+										{/if}
+									</button>
+
+									{#if versionsOpenId === policy.id}
+										<div class="mt-3 space-y-2">
+											{#each versionsByPolicy[policy.id] as version (version.id)}
+												<div
+													class="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2.5"
+												>
+													<div class="flex items-center justify-between gap-3">
+														<p class="text-xs font-medium text-[var(--foreground-muted)]">
+															{formatVersionDate(version.savedAt)}
+														</p>
+														<button
+															onclick={() => restoreVersion(policy, version.id)}
+															disabled={restoringVersionId === version.id}
+															class="flex shrink-0 items-center gap-1 rounded-[var(--radius)] border border-[var(--border)] px-2 py-1 text-xs font-medium text-[var(--foreground-muted)] transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] disabled:opacity-50"
+														>
+															{#if restoringVersionId === version.id}
+																<Spinner size={11} class="animate-spin" />
+																Restoring...
+															{:else}
+																<ArrowCounterClockwise size={11} />
+																Restore
+															{/if}
+														</button>
+													</div>
+													<p
+														class="mt-1.5 line-clamp-2 font-mono text-xs leading-relaxed text-[var(--foreground-subtle)]"
+													>
+														{version.content.slice(0, 120)}{version.content.length > 120
+															? '...'
+															: ''}
+													</p>
+												</div>
+											{/each}
+										</div>
+									{/if}
+								</div>
 							{/if}
 						</div>
 					{/if}

@@ -63,6 +63,9 @@
 	"/api/policies/[id]/download": [
 		"src/routes/api/policies/[id]/download/+server.ts"
 	],
+	"/api/policies/[id]/restore": [
+		"src/routes/api/policies/[id]/restore/+server.ts"
+	],
 	"/api/questionnaires": [
 		"src/routes/api/questionnaires/+server.ts"
 	],
@@ -80,6 +83,12 @@
 	],
 	"/api/questionnaires/[id]/questions/[qid]": [
 		"src/routes/api/questionnaires/[id]/questions/[qid]/+server.ts"
+	],
+	"/api/questionnaires/[id]/questions/[qid]/improve": [
+		"src/routes/api/questionnaires/[id]/questions/[qid]/improve/+server.ts"
+	],
+	"/api/questionnaires/[id]/stream": [
+		"src/routes/api/questionnaires/[id]/stream/+server.ts"
 	],
 	"/api/settings/organization": [
 		"src/routes/api/settings/organization/+server.ts"

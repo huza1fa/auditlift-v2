@@ -32,6 +32,12 @@
 		controlsCoveredByQuestionnaires: number;
 	};
 
+	type NextAction =
+		| { type: 'fix-gaps'; gapCount: number; questionnaireId: string }
+		| { type: 'upload-questionnaire' }
+		| { type: 'generate-policy' }
+		| { type: 'stale-evidence' };
+
 	type PageData = {
 		user?: { name?: string };
 		readiness: {
@@ -51,6 +57,8 @@
 		policiesTotal?: number;
 		recentQuestionnaires?: RecentQuestionnaire[];
 		questionnaireCoverage?: QuestionnaireCoverageEntry[];
+		staleEvidenceCount?: number;
+		nextAction?: NextAction | null;
 	};
 
 	let { data }: { data: PageData } = $props();
@@ -59,7 +67,9 @@
 	// Banner state
 	// ---------------------------------------------------------------------------
 	let showBanner = $state(false);
-	$effect(() => { showBanner = data.justSubscribed; });
+	$effect(() => {
+		showBanner = data.justSubscribed;
+	});
 	const isTrialUrgent = $derived(data.trialDaysRemaining !== null && data.trialDaysRemaining <= 3);
 
 	// ---------------------------------------------------------------------------
@@ -172,6 +182,91 @@
 			<a href="/settings/billing">
 				<Button size="sm">{m.dashboard_upgrade_now()}</Button>
 			</a>
+		</div>
+	{/if}
+
+	<!-- Stale evidence warning -->
+	{#if (data.staleEvidenceCount ?? 0) > 0}
+		<div
+			class="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--warning)] bg-[var(--warning-light)] p-4"
+		>
+			<div class="flex items-center gap-3">
+				<Warning size={16} color="var(--warning)" weight="fill" />
+				<p class="text-sm text-[var(--warning)]">
+					<span class="font-semibold">{data.staleEvidenceCount}</span>
+					{(data.staleEvidenceCount ?? 0) === 1 ? 'evidence file' : 'evidence files'} uploaded more than
+					90 days ago — auditors may question outdated evidence.
+				</p>
+			</div>
+			<a
+				href="/evidence"
+				class="shrink-0 text-sm font-medium text-[var(--warning)] underline hover:opacity-70"
+			>
+				Review evidence →
+			</a>
+		</div>
+	{/if}
+
+	<!-- Next action recommendation -->
+	{#if data.nextAction}
+		<div
+			class="flex items-start justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--brand)] bg-[var(--brand-light)] p-4"
+		>
+			<div class="flex items-start gap-3">
+				<div class="mt-0.5 shrink-0 rounded-full bg-[var(--brand)] p-1.5">
+					<ArrowRight size={14} color="white" weight="bold" />
+				</div>
+				<div>
+					<p class="mb-0.5 text-xs font-semibold tracking-wide text-[var(--brand)] uppercase">
+						Recommended next action
+					</p>
+					{#if data.nextAction.type === 'fix-gaps'}
+						<p class="text-sm text-[var(--foreground)]">
+							You have <span class="font-semibold">{data.nextAction.gapCount}</span> unanswered
+							{data.nextAction.gapCount === 1 ? 'gap' : 'gaps'} from recent questionnaires — generate
+							the missing policies to close them.
+						</p>
+						<a
+							href="/policies"
+							class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:underline"
+						>
+							Generate policies <ArrowRight size={12} />
+						</a>
+					{:else if data.nextAction.type === 'upload-questionnaire'}
+						<p class="text-sm text-[var(--foreground)]">
+							Upload your first security questionnaire to get AI-generated answers in minutes.
+						</p>
+						<a
+							href="/questionnaires"
+							class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:underline"
+						>
+							Upload questionnaire <ArrowRight size={12} />
+						</a>
+					{:else if data.nextAction.type === 'generate-policy'}
+						<p class="text-sm text-[var(--foreground)]">
+							No policies yet — generate your first to improve your readiness score.
+						</p>
+						<a
+							href="/policies"
+							class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:underline"
+						>
+							Generate a policy <ArrowRight size={12} />
+						</a>
+					{:else if data.nextAction.type === 'stale-evidence'}
+						<p class="text-sm text-[var(--foreground)]">
+							<span class="font-semibold">{data.staleEvidenceCount}</span>
+							{(data.staleEvidenceCount ?? 0) === 1 ? 'evidence file is' : 'evidence files are'} over
+							90 days old — review and refresh them.
+						</p>
+						<a
+							href="/evidence"
+							class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:underline"
+						>
+							Review evidence <ArrowRight size={12} />
+						</a>
+					{/if}
+				</div>
+			</div>
 		</div>
 	{/if}
 
