@@ -220,6 +220,52 @@ export const readinessSnapshots = pgTable('readiness_snapshots', {
 	snapshotAt: timestamp('snapshot_at').defaultNow().notNull()
 });
 
+// ─── Questionnaires ───────────────────────────────────────────────────────────
+
+export const questionnaires = pgTable('questionnaires', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id),
+	filename: text('filename').notNull(),
+	storageKey: text('storage_key').notNull(),
+	sourceFormat: text('source_format').notNull(), // 'xlsx' | 'csv' | 'pdf' | 'docx'
+	status: text('status').notNull().default('processing'), // 'processing' | 'ready' | 'error'
+	totalQuestions: integer('total_questions').notNull().default(0),
+	answeredCount: integer('answered_count').notNull().default(0),
+	gapCount: integer('gap_count').notNull().default(0),
+	dealReadinessScore: integer('deal_readiness_score').notNull().default(0),
+	errorMessage: text('error_message'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// ─── Questionnaire Questions ──────────────────────────────────────────────────
+
+export const questionnaireQuestions = pgTable('questionnaire_questions', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	questionnaireId: uuid('questionnaire_id')
+		.notNull()
+		.references(() => questionnaires.id),
+	organizationId: uuid('organization_id')
+		.notNull()
+		.references(() => organizations.id),
+	sectionName: text('section_name'),
+	questionNumber: text('question_number'),
+	questionText: text('question_text').notNull(),
+	domain: text('domain'),
+	mappedControlIds: jsonb('mapped_control_ids').$type<string[]>().default([]),
+	mappedPolicyIds: jsonb('mapped_policy_ids').$type<string[]>().default([]),
+	generatedAnswer: text('generated_answer'),
+	confidence: text('confidence'), // 'high' | 'medium' | 'low' | 'gap' | null = unprocessed
+	gapReason: text('gap_reason'),
+	gapRemediation: text('gap_remediation'),
+	userEditedAnswer: text('user_edited_answer'),
+	order: integer('order').notNull().default(0),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // ─── Re-export auth schema ────────────────────────────────────────────────────
 
 export * from './auth.schema';

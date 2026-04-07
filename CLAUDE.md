@@ -33,8 +33,9 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 # Project: AuditLift
 
-> Day 0→30 Compliance tool for early-stage startups and SMBs.
-> Get SOC2/PCI/ISO27001 audit-ready in 30 days — without the $20K consultant.
+> Deal enablement and compliance foundation tool for pre-compliance startups.
+> Close enterprise deals faster by answering security questionnaires intelligently.
+> Build SOC2/ISO27001 readiness as a natural byproduct of winning those deals.
 
 ## Stack
 
@@ -51,18 +52,33 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## Product Context
 
-AuditLift helps SaaS startups go from zero compliance posture to audit-ready.
-The target user is a non-compliance technical founder or ops lead who needs to
-pass a SOC2 audit to close enterprise deals, but can't afford Vanta/Drata yet.
+AuditLift targets founders and ops leads at early-stage / MVP-phase startups who
+are trying to close enterprise deals with larger organisations that require
+security questionnaires, compliance frameworks (SOC2, ISO27001), and formal
+policies — but who have no compliance budget, no dedicated security team, and
+no time to do this from scratch.
 
-Core value props:
+**The core insight: the work is shared.**
+Answering a security questionnaire, generating a policy, and satisfying a SOC2
+control are often the same underlying work, done once, expressed differently.
+AuditLift makes that connection visible and automatic.
 
-- "Get audit-ready without wasting money or time"
-- Pre-mapped controls for SOC2 (primary), PCI-DSS, ISO27001
-- AI-generated policies (company name + stack + team size → policy docs)
-- Evidence locker (manual uploads tagged to controls)
-- Audit Readiness Score (% complete with blockers called out)
-- Auditor Export (clean folder/PDF an auditor can actually use)
+**User journey:**
+1. Founder receives a security questionnaire from an enterprise prospect
+2. Uploads it → AI drafts answers from existing policies + controls in minutes
+3. Gaps trigger policy generation — each policy also satisfies framework controls
+4. After the deal closes: "You're now 45% SOC2 ready as a side effect of winning this deal"
+5. When the time is right, they formalise toward full certification
+
+**Core value props:**
+- "Close this deal" — answer any security questionnaire in minutes with AI
+- "Build as you sell" — every questionnaire + policy = real SOC2/ISO27001 progress
+- "Know where you stand" — Deal Readiness Score per questionnaire + framework coverage %
+- "Graduate when ready" — full SOC2/ISO27001 path when the business needs it
+- vCISO review as premium upsell — human sign-off for high-stakes deals
+
+**Positioning:** Not Vanta/Drata (those start from the audit). AuditLift starts from
+the deal in front of the founder today, and compliance accumulates as a byproduct.
 
 Pricing: 10-day free trial → monthly subscription.
 
@@ -135,9 +151,12 @@ src/
 │   ├── (marketing)/          # Public landing, pricing, login — no auth needed
 │   │   ├── +page.svelte
 │   │   └── pricing/
+│   ├── onboarding/           # Two-path onboarding wizard (see Onboarding Rules)
 │   ├── (app)/                # Auth-gated app shell
 │   │   ├── +layout.server.ts # Session + subscription gate for entire app
-│   │   ├── dashboard/        # Readiness Score overview
+│   │   ├── dashboard/        # Deal + compliance overview (see Dashboard Rules)
+│   │   ├── questionnaires/   # Security questionnaire upload + AI answering
+│   │   │   └── [id]/         # Detail: questions, answers, gap remediation, coverage
 │   │   ├── frameworks/       # Framework selector (SOC2, PCI, ISO27001)
 │   │   ├── controls/         # Control checklist per framework
 │   │   │   └── [controlId]/  # Control detail: explanation + evidence + policy
@@ -222,6 +241,93 @@ src/
 - Export endpoint: `src/routes/api/export/+server.ts`
 - Use `archiver` npm package for ZIP generation
 - Gate export behind active subscription (no export on trial)
+
+---
+
+## Onboarding Rules
+
+The onboarding wizard is two-path and **questionnaire-first**. Steps 1–3 are shared;
+step 4 branches based on the user's intent.
+
+**Shared steps (all users):**
+1. Company setup — name, website, industry → `POST /api/onboarding/organization`
+2. Team size → `POST /api/onboarding/team`
+3. Tech stack (multi-select) → `POST /api/onboarding/stack`
+
+**Step 4 — Path choice:**
+- **"I have a security questionnaire to answer"** (Path A — deal-first)
+  - Complete onboarding immediately, no framework required
+  - `POST /api/onboarding/complete` with `{ intent: 'questionnaire' }`
+  - Redirect to `/questionnaires`
+- **"I want to build my compliance foundation"** (Path B — compliance-first)
+  - Show framework selection step → `POST /api/onboarding/framework`
+  - Then completion → `POST /api/onboarding/complete` with `{ intent: 'compliance' }`
+  - Redirect to `/dashboard`
+
+Framework is **optional** for questionnaire-first users — they can add one later from the
+Frameworks page. The questionnaire processor already handles zero-framework orgs gracefully.
+
+After questionnaire processing, always show: *"This questionnaire covered X SOC2 controls
+— want to continue toward SOC2 certification?"* as a nudge toward framework adoption.
+
+---
+
+## Dashboard Rules
+
+The dashboard leads with **deal enablement**, not compliance configuration.
+
+**Layout (top to bottom):**
+1. Header — "Welcome back, {name}"
+2. Deal stats row — questionnaires answered, avg deal readiness %, policies generated
+3. Active questionnaires — most recent 2–3 with deal readiness scores + links
+4. Compliance coverage — framework coverage % computed from ALL work done
+   (questionnaire mappedControlIds + policies + evidence combined)
+5. Blockers — controls still needed for framework completion
+6. Quick actions — Upload questionnaire, Generate policy, Add evidence
+
+**The "coverage from all work" calculation:**
+- For each org framework, count controls that have EITHER:
+  - At least 1 evidence upload, OR
+  - An attached policy, OR
+  - Appeared as `mappedControlId` in any processed questionnaire question
+- Show as: "X of Y SOC2 controls covered across all your work"
+
+**Empty state (new user, no questionnaires, no policies):**
+Show the two-option quick-start card:
+- "I have a questionnaire to answer right now" → link to /questionnaires
+- "I want to start building policies" → link to /policies
+
+---
+
+## Coverage Bridge Rules
+
+Every questionnaire answer that maps to a framework control is compliance work done.
+This connection must be surfaced everywhere:
+
+- **Questionnaire detail page:** After processing, show a "Framework Coverage" section
+  listing which frameworks were touched and how many controls were covered.
+  Call `GET /api/questionnaires/[id]/coverage` — returns coverage grouped by framework.
+
+- **Gap remediation CTAs:** When generating a policy to fix a gap, show:
+  *"This also satisfies CC6.1, CC6.2 for SOC2"* — so founders understand the dual value.
+
+- **Policy page:** Show which framework controls each policy is linked to.
+
+- **Coverage API shape:**
+  ```ts
+  // GET /api/questionnaires/[id]/coverage
+  {
+    coverageByFramework: [{
+      frameworkId: string,
+      frameworkName: string,
+      frameworkSlug: string,
+      controlsCovered: number,
+      totalControls: number,
+      coveragePct: number,
+      coveredControls: [{ id, code, title, category }]
+    }]
+  }
+  ```
 
 ---
 

@@ -1,5 +1,7 @@
 {
-	"/(marketing)": [],
+	"/(marketing)": [
+		"src/routes/(marketing)/+page.server.ts"
+	],
 	"/(app)": [
 		"src/routes/(app)/+layout.server.ts"
 	],
@@ -61,6 +63,24 @@
 	"/api/policies/[id]/download": [
 		"src/routes/api/policies/[id]/download/+server.ts"
 	],
+	"/api/questionnaires": [
+		"src/routes/api/questionnaires/+server.ts"
+	],
+	"/api/questionnaires/upload": [
+		"src/routes/api/questionnaires/upload/+server.ts"
+	],
+	"/api/questionnaires/[id]": [
+		"src/routes/api/questionnaires/[id]/+server.ts"
+	],
+	"/api/questionnaires/[id]/coverage": [
+		"src/routes/api/questionnaires/[id]/coverage/+server.ts"
+	],
+	"/api/questionnaires/[id]/export": [
+		"src/routes/api/questionnaires/[id]/export/+server.ts"
+	],
+	"/api/questionnaires/[id]/questions/[qid]": [
+		"src/routes/api/questionnaires/[id]/questions/[qid]/+server.ts"
+	],
 	"/api/settings/organization": [
 		"src/routes/api/settings/organization/+server.ts"
 	],
@@ -111,6 +131,14 @@
 	],
 	"/(marketing)/pricing": [],
 	"/(marketing)/privacy": [],
+	"/(app)/questionnaires": [
+		"src/routes/(app)/questionnaires/+page.server.ts",
+		"src/routes/(app)/+layout.server.ts"
+	],
+	"/(app)/questionnaires/[id]": [
+		"src/routes/(app)/questionnaires/[id]/+page.server.ts",
+		"src/routes/(app)/+layout.server.ts"
+	],
 	"/(marketing)/reset-password": [],
 	"/(app)/settings": [
 		"src/routes/(app)/settings/+page.server.ts",
@@ -131,5 +159,6 @@
 	],
 	"/sitemap.xml": [
 		"src/routes/sitemap.xml/+server.ts"
-	]
+	],
+	"/(marketing)/terms": []
 }

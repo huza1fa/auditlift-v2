@@ -11,7 +11,7 @@
 		{
 			id: 'starter',
 			name: 'Starter',
-			description: 'Perfect for founders getting audit-ready for the first time.',
+			description: 'For founders who need to answer security questionnaires and close their first enterprise deals.',
 			monthlyPrice: 149,
 			yearlyPrice: 1431,
 			highlighted: false,
@@ -31,7 +31,7 @@
 		{
 			id: 'growth',
 			name: 'Growth',
-			description: 'For teams scaling compliance across multiple frameworks.',
+			description: 'For teams responding to multiple frameworks across a growing pipeline of enterprise deals.',
 			monthlyPrice: 299,
 			yearlyPrice: 2870,
 			highlighted: true,
@@ -52,10 +52,10 @@
 </script>
 
 <svelte:head>
-	<title>Pricing — AuditLift | SOC 2 Compliance Software</title>
+	<title>Pricing — AuditLift | Security Readiness for Closing Deals</title>
 	<meta
 		name="description"
-		content="Simple, flat-rate pricing for SOC 2, PCI-DSS, and ISO 27001 compliance. Starter from $149/mo. No per-seat pricing. Cancel anytime. 14-day free trial included."
+		content="Simple, flat-rate pricing to get deal-ready for SOC 2, PCI-DSS, and ISO 27001. Starter from $149/mo. No per-seat pricing. Cancel anytime. 14-day free trial."
 	/>
 	<link rel="canonical" href="https://auditlift.app/pricing" />
 
@@ -214,7 +214,7 @@
 						<span class="text-2xl font-bold text-[var(--foreground)]">Custom</span>
 					</div>
 					<p class="mt-3 text-[13px] text-[var(--foreground-muted)]">
-						For larger teams with advanced security, SSO, and dedicated onboarding needs.
+						For larger teams with complex security review requirements, SSO, and dedicated onboarding.
 					</p>
 				</div>
 
@@ -243,8 +243,8 @@
 
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
-			Enterprise compliance tools start at $7,500/yr or more. AuditLift gets you audit-ready from
-			<strong>$149/mo</strong>.
+			Vanta and Drata start at $7,500/yr and are built for post-audit maintenance.
+			AuditLift gets you <strong>deal-ready from $149/mo</strong> — focused on helping you respond and close.
 		</p>
 	</section>
 

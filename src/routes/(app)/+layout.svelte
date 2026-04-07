@@ -8,7 +8,8 @@
 		DownloadSimple,
 		Gear,
 		SignOut,
-		List
+		List,
+		ChatDots
 	} from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
@@ -30,6 +31,7 @@
 		{ href: '/dashboard', icon: House, label: 'Dashboard' },
 		{ href: '/controls', icon: CheckSquare, label: 'Controls' },
 		{ href: '/policies', icon: FileText, label: 'Policies' },
+		{ href: '/questionnaires', icon: ChatDots, label: 'Questionnaires' },
 		{ href: '/evidence', icon: FolderOpen, label: 'Evidence' },
 		{ href: '/export', icon: DownloadSimple, label: 'Export' },
 		{ href: '/settings', icon: Gear, label: 'Settings' }
