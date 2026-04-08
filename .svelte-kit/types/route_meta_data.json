@@ -48,6 +48,12 @@
 	"/api/onboarding/organization": [
 		"src/routes/api/onboarding/organization/+server.ts"
 	],
+	"/api/onboarding/posture": [
+		"src/routes/api/onboarding/posture/+server.ts"
+	],
+	"/api/onboarding/profile": [
+		"src/routes/api/onboarding/profile/+server.ts"
+	],
 	"/api/onboarding/stack": [
 		"src/routes/api/onboarding/stack/+server.ts"
 	],

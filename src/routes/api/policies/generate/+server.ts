@@ -16,6 +16,7 @@ import {
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
 import { GeneratePolicySchema } from '$lib/server/validation';
+import { buildSystemPrompt, buildRichContext } from '$lib/server/policy-context';
 
 // ─── Template fallback ────────────────────────────────────────────────────────
 
@@ -25,7 +26,10 @@ const templateFiles = import.meta.glob('/src/lib/server/policy-templates/*.md', 
 	import: 'default'
 }) as Record<string, string>;
 
-function getTemplateContent(policyType: string, ctx: PolicyContext): string | null {
+function getTemplateContent(
+	ctx: { companyName: string; stack: string; teamSize: string; framework: string },
+	policyType: string
+): string | null {
 	const key = `/src/lib/server/policy-templates/${policyType}.md`;
 	const raw = templateFiles[key];
 	if (!raw) return null;
@@ -70,18 +74,14 @@ interface GenerateRequest {
 
 // ─── Per-policy-type prompt builders ─────────────────────────────────────────
 
-type PolicyContext = {
-	companyName: string;
-	stack: string;
-	teamSize: string;
-	framework: string;
-};
-
 function buildSectionsPrompt(sections: string[]): string {
 	return `Include the following sections (use ## for section headers):\n${sections.map((s) => `- ${s}`).join('\n')}`;
 }
 
-function buildBasePrompt(ctx: PolicyContext, extra: string): string {
+function buildBasePrompt(
+	ctx: { companyName: string; stack: string; teamSize: string; framework: string },
+	extra: string
+): string {
 	return `You are a compliance expert writing an auditor-ready policy document for a software company.
 
 Company context:
@@ -101,7 +101,10 @@ Requirements:
 - Do not include any commentary outside the policy document itself`;
 }
 
-const POLICY_PROMPTS: Record<StandardPolicyType, (ctx: PolicyContext) => string> = {
+const POLICY_PROMPTS: Record<
+	StandardPolicyType,
+	(ctx: { companyName: string; stack: string; teamSize: string; framework: string }) => string
+> = {
 	'security-policy': (ctx) =>
 		buildBasePrompt(
 			ctx,
@@ -400,7 +403,11 @@ ${buildSectionsPrompt([
 
 // ─── Custom policy prompt ─────────────────────────────────────────────────────
 
-function buildCustomPrompt(ctx: PolicyContext, customTitle: string, customPrompt: string): string {
+function buildCustomPrompt(
+	ctx: { companyName: string; stack: string; teamSize: string; framework: string },
+	customTitle: string,
+	customPrompt: string
+): string {
 	return buildBasePrompt(
 		ctx,
 		`This is the "${customTitle}" policy for ${ctx.companyName}, targeting ${ctx.framework} compliance.
@@ -465,16 +472,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const frameworkName = orgFramework?.framework.name ?? 'SOC 2';
 	const frameworkId = orgFramework?.framework.id ?? null;
 
-	const stack = Array.isArray(org.stack)
-		? org.stack.join(', ')
-		: ((org.stack as string | null | undefined) ?? 'various tools');
-
-	const ctx: PolicyContext = {
-		companyName: org.name,
-		stack,
-		teamSize: org.teamSize ?? 'n/a',
-		framework: frameworkName
-	};
+	const ctx = buildRichContext(org, frameworkName);
 
 	// Build prompt
 	const prompt = isCustom
@@ -487,6 +485,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const openrouter = getOpenRouterClient();
 		const result = await generateText({
 			model: openrouter('openai/gpt-4o-mini'),
+			system: buildSystemPrompt(ctx),
 			prompt,
 			maxOutputTokens: 4096
 		});
@@ -494,7 +493,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	} catch (err) {
 		console.error('[policy-generate] AI generation failed, trying template fallback:', err);
 		if (!isCustom) {
-			content = getTemplateContent(policyType, ctx) ?? '';
+			content = getTemplateContent(ctx, policyType) ?? '';
 		}
 		if (!content) {
 			throw error(500, { message: 'Policy generation failed. Please try again.' });
