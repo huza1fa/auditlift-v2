@@ -8,18 +8,21 @@
 
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
+	let deleteError = $state('');
 
 	async function deleteOrganization() {
+		deleteError = '';
 		deleting = true;
 		try {
 			const res = await fetch('/api/settings/organization', { method: 'DELETE' });
 			if (res.ok) {
-				window.location.href = '/';
+				window.location.href = '/login';
 			} else {
-				alert('Failed to delete organization');
+				const json = await res.json();
+				deleteError = json.message || 'Failed to delete organization';
 			}
 		} catch {
-			alert('Failed to delete organization');
+			deleteError = 'An unexpected error occurred. Please try again.';
 		} finally {
 			deleting = false;
 			showDeleteConfirm = false;
@@ -94,6 +97,17 @@
 			</Button>
 		{:else}
 			<div class="rounded-[var(--radius)] bg-[var(--danger-light)] p-4">
+				{#if data.userRole === 'owner'}
+					<div
+						class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] p-3"
+					>
+						<Warning size={16} class="mt-0.5 shrink-0 text-[var(--danger)]" />
+						<p class="text-sm text-[var(--danger)]">
+							<strong>Your account will also be deleted.</strong> As the organization owner, removing
+							this organization permanently deletes your AuditLift account. You will be signed out.
+						</p>
+					</div>
+				{/if}
 				<p class="mb-3 text-sm font-medium text-[var(--danger)]">
 					Are you sure? This action cannot be undone.
 				</p>
@@ -106,6 +120,9 @@
 					class="mb-3 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)]"
 					id="confirmDelete"
 				/>
+				{#if deleteError}
+					<p class="text-sm text-[var(--danger)]">{deleteError}</p>
+				{/if}
 				<div class="flex gap-2">
 					<Button variant="secondary" onclick={() => (showDeleteConfirm = false)}>Cancel</Button>
 					<Button
