@@ -13,6 +13,7 @@ import {
 	activityLogs,
 	subscriptions
 } from '$lib/server/db/schema';
+import { user } from '$lib/server/db/auth.schema';
 import { eq, and } from 'drizzle-orm';
 import { requireOrgDeletionPermission } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
@@ -23,17 +24,13 @@ export const DELETE: RequestHandler = async ({ locals }) => {
 	}
 
 	const orgId = locals.organizationId;
+	const userId = locals.session.user.id;
 
 	// Get user's role
 	const [membership] = await db
 		.select({ role: userOrganizations.role })
 		.from(userOrganizations)
-		.where(
-			and(
-				eq(userOrganizations.organizationId, orgId),
-				eq(userOrganizations.userId, locals.session.user.id)
-			)
-		)
+		.where(and(eq(userOrganizations.organizationId, orgId), eq(userOrganizations.userId, userId)))
 		.limit(1);
 
 	if (!membership) {
@@ -58,6 +55,9 @@ export const DELETE: RequestHandler = async ({ locals }) => {
 		// Organization row must be last — all FK children are deleted above
 		await tx.delete(organizations).where(eq(organizations.id, orgId));
 	});
+
+	// Delete the owner's user account — sessions/accounts cascade automatically via FK
+	await db.delete(user).where(eq(user.id, userId));
 
 	return json({ success: true });
 };

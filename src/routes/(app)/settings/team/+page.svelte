@@ -32,6 +32,7 @@
 	let copied = $state(false);
 	let inviting = $state(false);
 	let inviteError = $state('');
+	let memberError = $state('');
 	let removingId = $state<string | null>(null);
 	let updatingRoleId = $state<string | null>(null);
 
@@ -86,18 +87,20 @@
 	}
 
 	async function removeMember(userId: string) {
+		memberError = '';
 		removingId = userId;
 		try {
 			await fetch(`/api/settings/team/${userId}`, { method: 'DELETE' });
 			data.members = data.members.filter((m) => m.userId !== userId);
 		} catch {
-			alert('Failed to remove member');
+			memberError = 'Failed to remove member. Please try again.';
 		} finally {
 			removingId = null;
 		}
 	}
 
 	async function updateRole(userId: string, newRole: string) {
+		memberError = '';
 		updatingRoleId = userId;
 		try {
 			await fetch(`/api/settings/team/${userId}`, {
@@ -107,7 +110,7 @@
 			});
 			data.members = data.members.map((m) => (m.userId === userId ? { ...m, role: newRole } : m));
 		} catch {
-			alert('Failed to update role');
+			memberError = 'Failed to update role. Please try again.';
 		} finally {
 			updatingRoleId = null;
 		}
@@ -221,6 +224,14 @@
 		{/if}
 	</Card>
 
+	{#if memberError}
+		<div
+			class="rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] p-3 text-sm text-[var(--danger)]"
+		>
+			{memberError}
+		</div>
+	{/if}
+
 	{#if data.pendingInvites.length > 0}
 		<Card class="p-6">
 			<h2 class="mb-4 font-semibold text-[var(--foreground)]">
@@ -310,27 +321,43 @@
 					</div>
 				{:else}
 					<div class="space-y-4">
-						<p class="text-sm text-[var(--foreground-muted)]">
-							Share this link with your team member. They can click it to join your organization.
-						</p>
-
-						<div class="flex items-center gap-2">
-							<input
-								type="text"
-								readonly
-								value={inviteLink}
-								class="flex-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-alt)] px-3 py-2 text-sm text-[var(--foreground)]"
-							/>
-							<Button variant="secondary" onclick={copyInviteLink}>
-								{#if copied}
-									<Check size={16} />
-								{:else}
-									<Copy size={16} />
-								{/if}
-							</Button>
+						<div
+							class="flex items-start gap-3 rounded-[var(--radius)] bg-[var(--success-light,#f0fdf4)] p-3"
+						>
+							<Check size={18} class="mt-0.5 shrink-0 text-[var(--success,#16a34a)]" />
+							<div>
+								<p class="text-sm font-medium text-[var(--foreground)]">Invitation sent</p>
+								<p class="text-sm text-[var(--foreground-muted)]">
+									An email has been sent to <strong>{inviteEmail}</strong> with a link to join your organization.
+								</p>
+							</div>
 						</div>
 
-						<p class="text-xs text-[var(--foreground-muted)]">Invitation expires in 7 days</p>
+						<div>
+							<p
+								class="mb-2 text-xs font-medium tracking-wide text-[var(--foreground-muted)] uppercase"
+							>
+								Backup invite link
+							</p>
+							<div class="flex items-center gap-2">
+								<input
+									type="text"
+									readonly
+									value={inviteLink}
+									class="flex-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-alt)] px-3 py-2 text-sm text-[var(--foreground)]"
+								/>
+								<Button variant="secondary" onclick={copyInviteLink}>
+									{#if copied}
+										<Check size={16} />
+									{:else}
+										<Copy size={16} />
+									{/if}
+								</Button>
+							</div>
+							<p class="mt-1 text-xs text-[var(--foreground-muted)]">
+								Share this if the email doesn't arrive. Expires in 7 days.
+							</p>
+						</div>
 
 						<Button
 							variant="secondary"
