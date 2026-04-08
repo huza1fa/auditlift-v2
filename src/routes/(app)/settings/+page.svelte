@@ -29,7 +29,7 @@
 		}
 	}
 
-	const org = data.organization as { domain?: string | null } | undefined;
+	const org = data.organization!;
 </script>
 
 <div class="space-y-4">
@@ -41,19 +41,19 @@
 		<div class="grid grid-cols-2 gap-4 text-sm">
 			<div>
 				<p class="text-[var(--foreground-muted)]">Name</p>
-				<p class="font-medium text-[var(--foreground)]">{data.organization.name}</p>
+				<p class="font-medium text-[var(--foreground)]">{org.name}</p>
 			</div>
 			<div>
 				<p class="text-[var(--foreground-muted)]">Slug</p>
-				<p class="font-medium text-[var(--foreground)]">{data.organization.slug}</p>
+				<p class="font-medium text-[var(--foreground)]">{org.slug}</p>
 			</div>
 			<div>
 				<p class="text-[var(--foreground-muted)]">Industry</p>
-				<p class="font-medium text-[var(--foreground)]">{data.organization.industry ?? '—'}</p>
+				<p class="font-medium text-[var(--foreground)]">{org.industry ?? '—'}</p>
 			</div>
 			<div>
 				<p class="text-[var(--foreground-muted)]">Team size</p>
-				<p class="font-medium text-[var(--foreground)]">{data.organization.teamSize ?? '—'}</p>
+				<p class="font-medium text-[var(--foreground)]">{org.teamSize ?? '—'}</p>
 			</div>
 		</div>
 	</Card>
@@ -67,9 +67,9 @@
 			<Badge variant={data.subscription?.status === 'active' ? 'success' : 'warning'}>
 				{data.subscription?.status ?? 'No subscription'}
 			</Badge>
-			{#if data.organization.trialEndsAt}
+			{#if org.trialEndsAt}
 				<span class="text-sm text-[var(--foreground-muted)]">
-					Trial ends {new Date(data.organization.trialEndsAt).toLocaleDateString()}
+					Trial ends {new Date(org.trialEndsAt).toLocaleDateString()}
 				</span>
 			{/if}
 		</div>
@@ -112,7 +112,7 @@
 					Are you sure? This action cannot be undone.
 				</p>
 				<p class="mb-4 text-sm text-[var(--foreground-muted)]">
-					Type <strong>{data.organization.name}</strong> to confirm deletion.
+					Type <strong>{org.name}</strong> to confirm deletion.
 				</p>
 				<input
 					type="text"
@@ -129,7 +129,7 @@
 						variant="danger"
 						onclick={() => {
 							const input = document.getElementById('confirmDelete') as HTMLInputElement;
-							if (input.value === data.organization.name) {
+							if (input.value === org.name) {
 								deleteOrganization();
 							}
 						}}
