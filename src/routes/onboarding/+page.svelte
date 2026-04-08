@@ -10,6 +10,7 @@
 		ArrowRight,
 		ArrowLeft,
 		Cloud,
+		Database,
 		FileText,
 		Shield
 	} from 'phosphor-svelte';
@@ -45,7 +46,55 @@
 	let stack = $state<string[]>([]);
 	const stackOptions = ['AWS', 'GCP', 'Azure', 'GitHub', 'GitLab', 'Vercel', 'Cloudflare', 'Other'];
 
-	// Step 5 state — framework (Path B only)
+	// Step 4 state — data & customers
+	let dataTypes = $state<string[]>([]);
+	let customerType = $state('');
+	let geoReach = $state('');
+	let productType = $state('');
+
+	const dataTypeOptions = [
+		{ value: 'pii', label: 'Personal data (PII)', sub: 'Names, emails, addresses of users' },
+		{ value: 'phi', label: 'Health data (PHI)', sub: 'Medical records, diagnoses' },
+		{ value: 'financial', label: 'Financial data', sub: 'Payment cards, bank details' },
+		{ value: 'business', label: 'Business data only', sub: 'No personal or sensitive data' }
+	];
+
+	const customerTypeOptions = [
+		{ value: 'b2b', label: 'B2B', sub: 'Businesses & teams' },
+		{ value: 'b2c', label: 'B2C', sub: 'Individual consumers' },
+		{ value: 'enterprise', label: 'Enterprise / Gov', sub: 'Large orgs & government' },
+		{ value: 'internal', label: 'Internal tool', sub: 'Used by your team only' }
+	];
+
+	const geoReachOptions = [
+		{ value: 'us', label: 'US only', sub: 'No international users' },
+		{ value: 'eu', label: 'Europe / UK', sub: 'GDPR applies' },
+		{ value: 'global', label: 'Global', sub: 'Users worldwide' }
+	];
+
+	const productTypeOptions = [
+		{ value: 'saas', label: 'SaaS web app', sub: 'Browser-based product' },
+		{ value: 'api', label: 'API / platform', sub: 'Developer-facing service' },
+		{ value: 'mobile', label: 'Mobile app', sub: 'iOS or Android' },
+		{ value: 'internal', label: 'Internal tool', sub: 'Used only within the company' }
+	];
+
+	// Step 5 state — security posture
+	let securityTools = $state<string[]>([]);
+
+	const securityToolOptions = [
+		{
+			value: 'sso',
+			label: 'SSO / Identity provider',
+			sub: 'e.g. Okta, Google Workspace, Azure AD'
+		},
+		{ value: 'mdm', label: 'MDM', sub: 'Mobile/device management' },
+		{ value: 'password_manager', label: 'Password manager', sub: 'e.g. 1Password, Bitwarden' },
+		{ value: 'ci_cd', label: 'CI/CD pipeline', sub: 'Automated deployments' },
+		{ value: 'code_review', label: 'Code review process', sub: 'PR reviews before merge' }
+	];
+
+	// Step 7 state — framework (Path B only)
 	let framework = $state(
 		data.frameworks.find((f) => f.recommended)?.slug ?? data.frameworks[0]?.slug ?? ''
 	);
@@ -56,13 +105,13 @@
 	let domainBlockMsg = $state('');
 
 	// 3. Derived values
-	// Path A (questionnaire): steps 1-2-3-4-done (4 visible steps)
-	// Path B (compliance):    steps 1-2-3-4-5-done (5 visible steps)
-	// Before intent is chosen, show 4 as default (will update on step 4 selection)
-	const totalSteps = $derived(intent === 'compliance' ? 5 : 4);
+	// Path A (questionnaire): steps 1-2-3-4-5-6-done (6 visible steps)
+	// Path B (compliance):    steps 1-2-3-4-5-6-7-done (7 visible steps)
+	// Before intent is chosen, show 6 as default (will update on step 6 selection)
+	const totalSteps = $derived(intent === 'compliance' ? 7 : 6);
 
 	// The completion step number depends on path
-	const completionStep = $derived(intent === 'compliance' ? 6 : 5);
+	const completionStep = $derived(intent === 'compliance' ? 8 : 7);
 
 	const frameworkLabel = $derived(
 		data.frameworks.find((f) => f.slug === framework)?.name ?? framework
@@ -88,6 +137,22 @@
 			stack = stack.filter((s) => s !== item);
 		} else {
 			stack = [...stack, item];
+		}
+	}
+
+	function toggleDataType(value: string) {
+		if (dataTypes.includes(value)) {
+			dataTypes = dataTypes.filter((d) => d !== value);
+		} else {
+			dataTypes = [...dataTypes, value];
+		}
+	}
+
+	function toggleSecurityTool(value: string) {
+		if (securityTools.includes(value)) {
+			securityTools = securityTools.filter((t) => t !== value);
+		} else {
+			securityTools = [...securityTools, value];
 		}
 	}
 
@@ -141,7 +206,26 @@
 					body: JSON.stringify({ stack })
 				});
 			} else if (step === 4) {
-				// Intent choice step
+				// NEW: Data & Customers — validate and save
+				if (!customerType || !geoReach || !productType) {
+					errorMsg = 'Please complete all selections before continuing.';
+					loading = false;
+					return;
+				}
+				await fetch('/api/onboarding/profile', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ dataTypes, customerType, geoReach, productType })
+				});
+			} else if (step === 5) {
+				// NEW: Security posture — optional, just save
+				await fetch('/api/onboarding/posture', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ securityTools })
+				});
+			} else if (step === 6) {
+				// Intent choice (was step 4)
 				if (!intent) {
 					errorMsg = m.onboarding_error_intent_required();
 					loading = false;
@@ -154,8 +238,8 @@
 					return;
 				}
 				// Path B: continue to framework step
-			} else if (step === 5 && intent === 'compliance') {
-				// Framework step (Path B only)
+			} else if (step === 7 && intent === 'compliance') {
+				// Framework step (was step 5)
 				await fetch('/api/onboarding/framework', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -169,8 +253,8 @@
 					body: JSON.stringify({ intent })
 				});
 				if (!res.ok) throw new Error('Failed to complete');
-				const data = await res.json();
-				goto(data.redirectTo ?? '/dashboard');
+				const completionData = await res.json();
+				goto(completionData.redirectTo ?? '/dashboard');
 				return;
 			}
 
@@ -186,9 +270,9 @@
 		errorMsg = '';
 		if (step <= 1) return;
 
-		// If we're on the completion step and chose questionnaire, go back to intent (step 4)
+		// If we're on the completion step and chose questionnaire, go back to intent (step 6)
 		if (isCompletionStep && intent === 'questionnaire') {
-			step = 4;
+			step = 6;
 			return;
 		}
 
@@ -373,8 +457,184 @@
 								{/each}
 							</div>
 
-							<!-- Step 4: Intent Choice (NEW) -->
+							<!-- Step 4: Data & Customers (NEW) -->
 						{:else if step === 4}
+							<div class="mb-6">
+								<div
+									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
+								>
+									<Database size={24} color="var(--brand)" weight="fill" />
+								</div>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Data & customers</h1>
+								<p class="text-sm text-[var(--foreground-muted)]">
+									This helps us tailor your policies to the right regulations and customer
+									expectations.
+								</p>
+							</div>
+
+							<div class="space-y-5">
+								<!-- Data types -->
+								<div>
+									<p class="mb-2 text-sm font-medium text-[var(--foreground)]">
+										What data do you handle?
+									</p>
+									<div class="grid grid-cols-2 gap-2">
+										{#each dataTypeOptions as opt}
+											<button
+												type="button"
+												onclick={() => toggleDataType(opt.value)}
+												class="flex cursor-pointer flex-col items-start rounded-[var(--radius)] border-2 p-3 text-left text-sm transition-all duration-150
+												{dataTypes.includes(opt.value)
+													? 'border-[var(--brand)] bg-[var(--brand-light)]'
+													: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+											>
+												<span
+													class="font-medium {dataTypes.includes(opt.value)
+														? 'text-[var(--brand)]'
+														: 'text-[var(--foreground)]'}">{opt.label}</span
+												>
+												<span class="text-xs text-[var(--foreground-muted)]">{opt.sub}</span>
+											</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Customer type -->
+								<div>
+									<p class="mb-2 text-sm font-medium text-[var(--foreground)]">
+										Who are your customers?
+									</p>
+									<div class="grid grid-cols-2 gap-2">
+										{#each customerTypeOptions as opt}
+											<button
+												type="button"
+												onclick={() => (customerType = opt.value)}
+												class="flex cursor-pointer flex-col items-start rounded-[var(--radius)] border-2 p-3 text-left text-sm transition-all duration-150
+												{customerType === opt.value
+													? 'border-[var(--brand)] bg-[var(--brand-light)]'
+													: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+											>
+												<span
+													class="font-medium {customerType === opt.value
+														? 'text-[var(--brand)]'
+														: 'text-[var(--foreground)]'}">{opt.label}</span
+												>
+												<span class="text-xs text-[var(--foreground-muted)]">{opt.sub}</span>
+											</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Geographic reach -->
+								<div>
+									<p class="mb-2 text-sm font-medium text-[var(--foreground)]">
+										Where do you operate?
+									</p>
+									<div class="grid grid-cols-3 gap-2">
+										{#each geoReachOptions as opt}
+											<button
+												type="button"
+												onclick={() => (geoReach = opt.value)}
+												class="flex cursor-pointer flex-col items-start rounded-[var(--radius)] border-2 p-3 text-left text-sm transition-all duration-150
+												{geoReach === opt.value
+													? 'border-[var(--brand)] bg-[var(--brand-light)]'
+													: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+											>
+												<span
+													class="font-medium {geoReach === opt.value
+														? 'text-[var(--brand)]'
+														: 'text-[var(--foreground)]'}">{opt.label}</span
+												>
+												<span class="text-xs text-[var(--foreground-muted)]">{opt.sub}</span>
+											</button>
+										{/each}
+									</div>
+								</div>
+
+								<!-- Product type -->
+								<div>
+									<p class="mb-2 text-sm font-medium text-[var(--foreground)]">What do you ship?</p>
+									<div class="grid grid-cols-2 gap-2">
+										{#each productTypeOptions as opt}
+											<button
+												type="button"
+												onclick={() => (productType = opt.value)}
+												class="flex cursor-pointer flex-col items-start rounded-[var(--radius)] border-2 p-3 text-left text-sm transition-all duration-150
+												{productType === opt.value
+													? 'border-[var(--brand)] bg-[var(--brand-light)]'
+													: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+											>
+												<span
+													class="font-medium {productType === opt.value
+														? 'text-[var(--brand)]'
+														: 'text-[var(--foreground)]'}">{opt.label}</span
+												>
+												<span class="text-xs text-[var(--foreground-muted)]">{opt.sub}</span>
+											</button>
+										{/each}
+									</div>
+								</div>
+
+								{#if errorMsg}
+									<p class="text-xs text-[var(--danger)]">{errorMsg}</p>
+								{/if}
+							</div>
+
+							<!-- Step 5: Security Posture (NEW) -->
+						{:else if step === 5}
+							<div class="mb-6">
+								<div
+									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
+								>
+									<Shield size={24} color="var(--brand)" weight="fill" />
+								</div>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Security posture</h1>
+								<p class="text-sm text-[var(--foreground-muted)]">
+									What do you already have in place? We'll use this to make your policies reference
+									your real tools instead of generic placeholders.
+								</p>
+							</div>
+
+							<div class="space-y-2">
+								{#each securityToolOptions as opt}
+									<button
+										type="button"
+										onclick={() => toggleSecurityTool(opt.value)}
+										class="flex w-full cursor-pointer items-center gap-4 rounded-[var(--radius)] border-2 p-4 text-left transition-all duration-150
+										{securityTools.includes(opt.value)
+											? 'border-[var(--brand)] bg-[var(--brand-light)]'
+											: 'border-[var(--border)] bg-[var(--background-elevated)] hover:border-[var(--foreground-subtle)]'}"
+									>
+										<div
+											class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 transition-colors
+											{securityTools.includes(opt.value)
+												? 'border-[var(--brand)] bg-[var(--brand)]'
+												: 'border-[var(--border)]'}"
+										>
+											{#if securityTools.includes(opt.value)}
+												<Check size={11} weight="bold" color="white" />
+											{/if}
+										</div>
+										<div>
+											<p
+												class="text-sm font-medium {securityTools.includes(opt.value)
+													? 'text-[var(--brand)]'
+													: 'text-[var(--foreground)]'}"
+											>
+												{opt.label}
+											</p>
+											<p class="text-xs text-[var(--foreground-muted)]">{opt.sub}</p>
+										</div>
+									</button>
+								{/each}
+							</div>
+
+							<p class="mt-3 text-xs text-[var(--foreground-muted)]">
+								Nothing selected yet? No problem — skip ahead and add this later.
+							</p>
+
+							<!-- Step 6: Intent Choice -->
+						{:else if step === 6}
 							<div class="mb-6">
 								<div
 									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
@@ -469,8 +729,8 @@
 								<p class="mt-3 text-xs text-[var(--danger)]">{errorMsg}</p>
 							{/if}
 
-							<!-- Step 5: Framework (Path B only) -->
-						{:else if step === 5 && intent === 'compliance'}
+							<!-- Step 7: Framework (Path B only) -->
+						{:else if step === 7 && intent === 'compliance'}
 							<div class="mb-6">
 								<div
 									class="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--brand-light)]"
@@ -607,8 +867,8 @@
 							</div>
 						{/if}
 
-						<!-- Error message (shown above nav for non-step-2/4 steps) -->
-						{#if errorMsg && step !== 2 && step !== 4}
+						<!-- Error message (shown above nav for non-step-2/4/6 steps) -->
+						{#if errorMsg && step !== 2 && step !== 4 && step !== 6}
 							<p class="mt-4 text-xs text-[var(--danger)]">{errorMsg}</p>
 						{/if}
 

@@ -59,8 +59,6 @@ declare module '$env/static/private' {
 	export const STRIPE_GROWTH_MONTHLY_PRICE_ID: string;
 	export const STRIPE_GROWTH_YEARLY_PRICE_ID: string;
 	export const RESEND_API_KEY: string;
-	export const NoDefaultCurrentDirectoryInExePath: string;
-	export const CLAUDE_CODE_ENTRYPOINT: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
 	export const TERM: string;
@@ -70,7 +68,6 @@ declare module '$env/static/private' {
 	export const TERM_PROGRAM_VERSION: string;
 	export const TERM_SESSION_ID: string;
 	export const npm_config_local_prefix: string;
-	export const GIT_EDITOR: string;
 	export const USER: string;
 	export const COMMAND_MODE: string;
 	export const SSH_AUTH_SOCK: string;
@@ -86,7 +83,6 @@ declare module '$env/static/private' {
 	export const npm_command: string;
 	export const PWD: string;
 	export const npm_lifecycle_event: string;
-	export const OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: string;
 	export const npm_package_name: string;
 	export const LANG: string;
 	export const ITERM_PROFILE: string;
@@ -101,17 +97,16 @@ declare module '$env/static/private' {
 	export const ITERM_SESSION_ID: string;
 	export const LOGNAME: string;
 	export const npm_lifecycle_script: string;
-	export const COREPACK_ENABLE_AUTO_PIN: string;
 	export const BUN_INSTALL: string;
 	export const npm_config_user_agent: string;
 	export const INFOPATH: string;
 	export const HOMEBREW_CELLAR: string;
 	export const LC_TERMINAL: string;
 	export const OSLogRateLimit: string;
-	export const CLAUDECODE: string;
 	export const SECURITYSESSIONID: string;
 	export const npm_node_execpath: string;
 	export const COLORTERM: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -219,8 +214,6 @@ declare module '$env/dynamic/private' {
 		STRIPE_GROWTH_MONTHLY_PRICE_ID: string;
 		STRIPE_GROWTH_YEARLY_PRICE_ID: string;
 		RESEND_API_KEY: string;
-		NoDefaultCurrentDirectoryInExePath: string;
-		CLAUDE_CODE_ENTRYPOINT: string;
 		TERM_PROGRAM: string;
 		NODE: string;
 		TERM: string;
@@ -230,7 +223,6 @@ declare module '$env/dynamic/private' {
 		TERM_PROGRAM_VERSION: string;
 		TERM_SESSION_ID: string;
 		npm_config_local_prefix: string;
-		GIT_EDITOR: string;
 		USER: string;
 		COMMAND_MODE: string;
 		SSH_AUTH_SOCK: string;
@@ -246,7 +238,6 @@ declare module '$env/dynamic/private' {
 		npm_command: string;
 		PWD: string;
 		npm_lifecycle_event: string;
-		OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: string;
 		npm_package_name: string;
 		LANG: string;
 		ITERM_PROFILE: string;
@@ -261,17 +252,16 @@ declare module '$env/dynamic/private' {
 		ITERM_SESSION_ID: string;
 		LOGNAME: string;
 		npm_lifecycle_script: string;
-		COREPACK_ENABLE_AUTO_PIN: string;
 		BUN_INSTALL: string;
 		npm_config_user_agent: string;
 		INFOPATH: string;
 		HOMEBREW_CELLAR: string;
 		LC_TERMINAL: string;
 		OSLogRateLimit: string;
-		CLAUDECODE: string;
 		SECURITYSESSIONID: string;
 		npm_node_execpath: string;
 		COLORTERM: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
