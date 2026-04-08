@@ -5,6 +5,7 @@ import { db } from '$lib/server/db';
 import { userOrganizations, organizations, subscriptions } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
+import { dev } from '$app/environment';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
 const authHandle: Handle = async ({ event, resolve }) => {
@@ -63,10 +64,23 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set(
-		'Content-Security-Policy',
-		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openrouter.ai https://api.stripe.com; frame-ancestors 'none';"
-	);
+
+	// Only enforce CSP in production — Vite's module system in dev doesn't
+	// play well with script-src restrictions (dynamic imports, HMR, eval for source maps)
+	if (!dev) {
+		response.headers.set(
+			'Content-Security-Policy',
+			[
+				"default-src 'self'",
+				"script-src 'self' 'unsafe-inline'",
+				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+				"font-src 'self' https://fonts.gstatic.com",
+				"img-src 'self' data: https:",
+				"connect-src 'self' https://api.openrouter.ai https://api.stripe.com",
+				"frame-ancestors 'none'"
+			].join('; ')
+		);
+	}
 	return response;
 };
 

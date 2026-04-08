@@ -43,6 +43,13 @@
       "when": 1775162802480,
       "tag": "0005_even_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775680646115,
+      "tag": "0006_white_swarm",
+      "breakpoints": true
     }
   ]
 }
