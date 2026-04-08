@@ -93,11 +93,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = result.data;
 	const { email, role } = body;
 
-	// Validate role - can't invite as owner
-	if (role === 'owner') {
-		throw error(400, 'Cannot invite someone as owner');
-	}
-
 	// Check if user is already a member by first resolving the email to a userId
 	const [existingUser] = await db
 		.select({ id: user.id })
