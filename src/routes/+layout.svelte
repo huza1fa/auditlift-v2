@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { locales, localizeHref } from '$lib/paraglide/runtime';
-	import { onMount } from 'svelte';
-	import { theme } from '$lib/stores/theme.svelte';
-	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+  import { page } from '$app/state';
+  import { locales, localizeHref } from '$lib/paraglide/runtime';
+  import { onMount } from 'svelte';
+  import { theme } from '$lib/stores/theme.svelte';
+  import './layout.css';
+  import favicon from '/favicon.ico';
 
-	let { children } = $props();
+  let { children } = $props();
 
-	onMount(() => {
-		theme.init();
-	});
+  onMount(() => {
+    theme.init();
+  });
 </script>
 
 <svelte:head>
