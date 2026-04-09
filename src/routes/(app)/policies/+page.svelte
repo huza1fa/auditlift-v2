@@ -11,8 +11,11 @@
 		X,
 		Trash,
 		ClockCounterClockwise,
-		ArrowCounterClockwise
+		ArrowCounterClockwise,
+		Eye,
+		Code
 	} from 'phosphor-svelte';
+	import { marked } from 'marked';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
@@ -54,6 +57,7 @@
 	let versionsByPolicy = $state<Record<string, Version[]>>({});
 	let versionsOpenId = $state<string | null>(null);
 	let restoringVersionId = $state<string | null>(null);
+	let previewingId = $state<string | null>(null);
 
 	// ── Policy groups ────────────────────────────────────────────────────────
 	const policyGroups = [
@@ -533,8 +537,32 @@
 									</Button>
 								</div>
 							{:else}
-								<pre
-									class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{policy.content}</pre>
+								<div class="mb-3 flex items-center gap-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] p-0.5 w-fit">
+									<button
+										onclick={() => (previewingId = previewingId === policy.id ? null : null)}
+										class="rounded-[var(--radius)] px-2.5 py-1 text-xs font-medium transition-colors {previewingId !== policy.id
+											? 'bg-[var(--background-alt)] text-[var(--foreground)] shadow-sm'
+											: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
+									>
+										<span class="inline-flex items-center gap-1"><Code size={12} /> {m.policies_view_raw()}</span>
+									</button>
+									<button
+										onclick={() => (previewingId = policy.id)}
+										class="rounded-[var(--radius)] px-2.5 py-1 text-xs font-medium transition-colors {previewingId === policy.id
+											? 'bg-[var(--background-alt)] text-[var(--foreground)] shadow-sm'
+											: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
+									>
+										<span class="inline-flex items-center gap-1"><Eye size={12} /> {m.policies_view_preview()}</span>
+									</button>
+								</div>
+								{#if previewingId === policy.id}
+									<div class="prose prose-sm max-w-none text-[var(--foreground)] [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_ul]:text-sm [&_ul]:ml-4 [&_ul]:list-disc [&_ol]:text-sm [&_ol]:ml-4 [&_ol]:list-decimal [&_li]:mb-1 [&_strong]:font-semibold [&_hr]:border-[var(--border)] [&_hr]:my-4">
+										{@html marked(policy.content)}
+									</div>
+								{:else}
+									<pre
+										class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{policy.content}</pre>
+								{/if}
 							{/if}
 
 							{#if versionsByPolicy[policy.id]?.length > 0}

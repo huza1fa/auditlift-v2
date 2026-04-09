@@ -13,7 +13,8 @@
 		Info,
 		ShieldCheck,
 		ListChecks,
-		Sparkle
+		Sparkle,
+		Copy
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -929,12 +930,26 @@
 												</button>
 											{/if}
 										</div>
-										<Button size="sm" onclick={saveAnswer} disabled={savingAnswer}>
-											{#if savingAnswer}
-												<Spinner size={13} class="animate-spin" />
-											{/if}
-											Save
-										</Button>
+										<div class="flex items-center gap-2">
+											<Button
+												size="sm"
+												variant="ghost"
+												onclick={async () => {
+													await navigator.clipboard.writeText(answerDraft);
+													toastSuccess(m.questionnaires_copied());
+												}}
+												disabled={!answerDraft}
+											>
+												<Copy size={13} />
+												{m.questionnaires_copy_answer()}
+											</Button>
+											<Button size="sm" onclick={saveAnswer} disabled={savingAnswer}>
+												{#if savingAnswer}
+													<Spinner size={13} class="animate-spin" />
+												{/if}
+												Save
+											</Button>
+										</div>
 									</div>
 
 									{#if showImproveInput}

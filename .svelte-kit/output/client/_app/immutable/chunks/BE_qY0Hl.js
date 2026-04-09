@@ -1,1 +1,0 @@
-import{o,z as v,m,A as y,B as f,F as l,w as p,v as i,G as T,x as A}from"./DODTOTXo.js";import{B as R}from"./Dkwvs-kV.js";function B(d,_,e){var s;o&&(s=A,v());var r=new R(d);m(()=>{var a=_()??null;if(o){var h=f(s),c=h===T,u=a!==null;if(c!==u){var t=l();p(t),r.anchor=t,i(!1),r.ensure(a,a&&(n=>e(n,a))),i(!0);return}}r.ensure(a,a&&(n=>e(n,a)))},y)}export{B as c};

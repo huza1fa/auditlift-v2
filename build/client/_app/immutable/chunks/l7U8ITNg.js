@@ -1,1 +1,0 @@
-import{ab as a,ac as o,e as t,ad as c,j as l}from"./DODTOTXo.js";function f(e){t===null&&a(),c&&t.l!==null?u(t).m.push(e):o(()=>{const n=l(e);if(typeof n=="function")return n})}function u(e){var n=e.l;return n.u??={a:[],b:[],m:[]}}export{f as o};

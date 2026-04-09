@@ -9,12 +9,14 @@ import { P as Plus } from "../../../../chunks/Plus.js";
 import { S as Spinner } from "../../../../chunks/Spinner.js";
 import { T as Trash } from "../../../../chunks/Trash.js";
 import { X } from "../../../../chunks/X.js";
+import { marked } from "marked";
 import { B as Button } from "../../../../chunks/Button.js";
 import { C as Card } from "../../../../chunks/Card.js";
 import { B as Badge } from "../../../../chunks/Badge.js";
 import { b as toastSuccess, a as toastError } from "../../../../chunks/toasts.svelte.js";
 import { g as getLocale } from "../../../../chunks/runtime.js";
 import { p as policies_title } from "../../../../chunks/policies_title.js";
+import { h as html } from "../../../../chunks/html.js";
 function ArrowCounterClockwise($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     const ctx = getIconContext();
@@ -132,6 +134,130 @@ function ClockCounterClockwise($$renderer, $$props) {
     } else if (weight() === "thin") {
       $$renderer2.push("<!--[5-->");
       $$renderer2.push(`<path d="M132,80v45.74l38.06,22.83a4,4,0,0,1-4.12,6.86l-40-24A4,4,0,0,1,124,128V80a4,4,0,0,1,8,0Zm-4-44A91.42,91.42,0,0,0,62.93,63C53.05,73,44.66,82.47,36,92.86V64a4,4,0,0,0-8,0v40a4,4,0,0,0,4,4H72a4,4,0,0,0,0-8H40.47C49.61,89,58.3,79,68.6,68.6a84,84,0,1,1,1.75,120.49,4,4,0,1,0-5.5,5.82A92,92,0,1,0,128,36Z"></path>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+      $$renderer2.push(`${escape_html((console.error('Unsupported icon weight. Choose from "thin", "light", "regular", "bold", "fill", or "duotone".'), ""))}`);
+    }
+    $$renderer2.push(`<!--]--></svg>`);
+  });
+}
+function Code($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    const ctx = getIconContext();
+    let { children, $$slots, $$events, ...props } = $$props;
+    let weight = derived(() => props.weight ?? ctx.weight ?? "regular");
+    let color = derived(() => props.color ?? ctx.color ?? "currentColor");
+    let size = derived(() => props.size ?? ctx.size ?? "1em");
+    let mirrored = derived(() => props.mirrored ?? ctx.mirrored ?? false);
+    function svgAttr(obj) {
+      let { weight: weight2, color: color2, size: size2, mirrored: mirrored2, ...attrs } = obj;
+      return attrs;
+    }
+    $$renderer2.push(`<svg${attributes(
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        role: "img",
+        width: size(),
+        height: size(),
+        fill: color(),
+        transform: mirrored() ? "scale(-1, 1)" : void 0,
+        viewBox: "0 0 256 256",
+        ...svgAttr(ctx),
+        ...svgAttr(props)
+      },
+      void 0,
+      void 0,
+      void 0,
+      3
+    )}>`);
+    if (children) {
+      $$renderer2.push("<!--[0-->");
+      children($$renderer2);
+      $$renderer2.push(`<!---->`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--><rect width="256" height="256" fill="none"></rect>`);
+    if (weight() === "bold") {
+      $$renderer2.push("<!--[0-->");
+      $$renderer2.push(`<path d="M71.68,97.22,34.74,128l36.94,30.78a12,12,0,1,1-15.36,18.44l-48-40a12,12,0,0,1,0-18.44l48-40A12,12,0,0,1,71.68,97.22Zm176,21.56-48-40a12,12,0,1,0-15.36,18.44L221.26,128l-36.94,30.78a12,12,0,1,0,15.36,18.44l48-40a12,12,0,0,0,0-18.44ZM164.1,28.72a12,12,0,0,0-15.38,7.18l-64,176a12,12,0,0,0,7.18,15.37A11.79,11.79,0,0,0,96,228a12,12,0,0,0,11.28-7.9l64-176A12,12,0,0,0,164.1,28.72Z"></path>`);
+    } else if (weight() === "duotone") {
+      $$renderer2.push("<!--[1-->");
+      $$renderer2.push(`<path d="M240,128l-48,40H64L16,128,64,88H192Z" opacity="0.2"></path><path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>`);
+    } else if (weight() === "fill") {
+      $$renderer2.push("<!--[2-->");
+      $$renderer2.push(`<path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM92.8,145.6a8,8,0,1,1-9.6,12.8l-32-24a8,8,0,0,1,0-12.8l32-24a8,8,0,0,1,9.6,12.8L69.33,128Zm58.89-71.4-32,112a8,8,0,1,1-15.38-4.4l32-112a8,8,0,0,1,15.38,4.4Zm53.11,60.2-32,24a8,8,0,0,1-9.6-12.8L186.67,128,163.2,110.4a8,8,0,1,1,9.6-12.8l32,24a8,8,0,0,1,0,12.8Z"></path>`);
+    } else if (weight() === "light") {
+      $$renderer2.push("<!--[3-->");
+      $$renderer2.push(`<path d="M67.84,92.61,25.37,128l42.47,35.39a6,6,0,1,1-7.68,9.22l-48-40a6,6,0,0,1,0-9.22l48-40a6,6,0,0,1,7.68,9.22Zm176,30.78-48-40a6,6,0,1,0-7.68,9.22L230.63,128l-42.47,35.39a6,6,0,1,0,7.68,9.22l48-40a6,6,0,0,0,0-9.22Zm-81.79-89A6,6,0,0,0,154.36,38l-64,176A6,6,0,0,0,94,221.64a6.15,6.15,0,0,0,2,.36,6,6,0,0,0,5.64-3.95l64-176A6,6,0,0,0,162.05,34.36Z"></path>`);
+    } else if (weight() === "regular") {
+      $$renderer2.push("<!--[4-->");
+      $$renderer2.push(`<path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>`);
+    } else if (weight() === "thin") {
+      $$renderer2.push("<!--[5-->");
+      $$renderer2.push(`<path d="M66.56,91.07,22.25,128l44.31,36.93A4,4,0,0,1,64,172a3.94,3.94,0,0,1-2.56-.93l-48-40a4,4,0,0,1,0-6.14l48-40a4,4,0,0,1,5.12,6.14Zm176,33.86-48-40a4,4,0,1,0-5.12,6.14L233.75,128l-44.31,36.93a4,4,0,1,0,5.12,6.14l48-40a4,4,0,0,0,0-6.14ZM161.37,36.24a4,4,0,0,0-5.13,2.39l-64,176a4,4,0,0,0,2.39,5.13A4.12,4.12,0,0,0,96,220a4,4,0,0,0,3.76-2.63l64-176A4,4,0,0,0,161.37,36.24Z"></path>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+      $$renderer2.push(`${escape_html((console.error('Unsupported icon weight. Choose from "thin", "light", "regular", "bold", "fill", or "duotone".'), ""))}`);
+    }
+    $$renderer2.push(`<!--]--></svg>`);
+  });
+}
+function Eye($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    const ctx = getIconContext();
+    let { children, $$slots, $$events, ...props } = $$props;
+    let weight = derived(() => props.weight ?? ctx.weight ?? "regular");
+    let color = derived(() => props.color ?? ctx.color ?? "currentColor");
+    let size = derived(() => props.size ?? ctx.size ?? "1em");
+    let mirrored = derived(() => props.mirrored ?? ctx.mirrored ?? false);
+    function svgAttr(obj) {
+      let { weight: weight2, color: color2, size: size2, mirrored: mirrored2, ...attrs } = obj;
+      return attrs;
+    }
+    $$renderer2.push(`<svg${attributes(
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        role: "img",
+        width: size(),
+        height: size(),
+        fill: color(),
+        transform: mirrored() ? "scale(-1, 1)" : void 0,
+        viewBox: "0 0 256 256",
+        ...svgAttr(ctx),
+        ...svgAttr(props)
+      },
+      void 0,
+      void 0,
+      void 0,
+      3
+    )}>`);
+    if (children) {
+      $$renderer2.push("<!--[0-->");
+      children($$renderer2);
+      $$renderer2.push(`<!---->`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--><rect width="256" height="256" fill="none"></rect>`);
+    if (weight() === "bold") {
+      $$renderer2.push("<!--[0-->");
+      $$renderer2.push(`<path d="M251,123.13c-.37-.81-9.13-20.26-28.48-39.61C196.63,57.67,164,44,128,44S59.37,57.67,33.51,83.52C14.16,102.87,5.4,122.32,5,123.13a12.08,12.08,0,0,0,0,9.75c.37.82,9.13,20.26,28.49,39.61C59.37,198.34,92,212,128,212s68.63-13.66,94.48-39.51c19.36-19.35,28.12-38.79,28.49-39.61A12.08,12.08,0,0,0,251,123.13Zm-46.06,33C183.47,177.27,157.59,188,128,188s-55.47-10.73-76.91-31.88A130.36,130.36,0,0,1,29.52,128,130.45,130.45,0,0,1,51.09,99.89C72.54,78.73,98.41,68,128,68s55.46,10.73,76.91,31.89A130.36,130.36,0,0,1,226.48,128,130.45,130.45,0,0,1,204.91,156.12ZM128,84a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,84Zm0,64a20,20,0,1,1,20-20A20,20,0,0,1,128,148Z"></path>`);
+    } else if (weight() === "duotone") {
+      $$renderer2.push("<!--[1-->");
+      $$renderer2.push(`<path d="M128,56C48,56,16,128,16,128s32,72,112,72,112-72,112-72S208,56,128,56Zm0,112a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z" opacity="0.2"></path><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"></path>`);
+    } else if (weight() === "fill") {
+      $$renderer2.push("<!--[2-->");
+      $$renderer2.push(`<path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path>`);
+    } else if (weight() === "light") {
+      $$renderer2.push("<!--[3-->");
+      $$renderer2.push(`<path d="M245.48,125.57c-.34-.78-8.66-19.23-27.24-37.81C201,70.54,171.38,50,128,50S55,70.54,37.76,87.76c-18.58,18.58-26.9,37-27.24,37.81a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206s73-20.53,90.24-37.75c18.58-18.58,26.9-37,27.24-37.8A6,6,0,0,0,245.48,125.57ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.77,134.77,0,0,1,22.69,128,134.56,134.56,0,0,1,46.55,95.94C69.22,73.42,96.62,62,128,62s58.78,11.42,81.45,33.94A134.56,134.56,0,0,1,233.31,128C226.94,140.21,195,194,128,194Zm0-112a46,46,0,1,0,46,46A46.06,46.06,0,0,0,128,82Zm0,80a34,34,0,1,1,34-34A34,34,0,0,1,128,162Z"></path>`);
+    } else if (weight() === "regular") {
+      $$renderer2.push("<!--[4-->");
+      $$renderer2.push(`<path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"></path>`);
+    } else if (weight() === "thin") {
+      $$renderer2.push("<!--[5-->");
+      $$renderer2.push(`<path d="M243.66,126.38c-.34-.76-8.52-18.89-26.83-37.2C199.87,72.22,170.7,52,128,52S56.13,72.22,39.17,89.18c-18.31,18.31-26.49,36.44-26.83,37.2a4.08,4.08,0,0,0,0,3.25c.34.77,8.52,18.89,26.83,37.2,17,17,46.14,37.17,88.83,37.17s71.87-20.21,88.83-37.17c18.31-18.31,26.49-36.43,26.83-37.2A4.08,4.08,0,0,0,243.66,126.38Zm-32.7,35c-23.07,23-51,34.62-83,34.62s-59.89-11.65-83-34.62A135.71,135.71,0,0,1,20.44,128,135.69,135.69,0,0,1,45,94.62C68.11,71.65,96,60,128,60s59.89,11.65,83,34.62A135.79,135.79,0,0,1,235.56,128,135.71,135.71,0,0,1,211,161.38ZM128,84a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,84Zm0,80a36,36,0,1,1,36-36A36,36,0,0,1,128,164Z"></path>`);
     } else {
       $$renderer2.push("<!--[-1-->");
       $$renderer2.push(`${escape_html((console.error('Unsupported icon weight. Choose from "thin", "light", "regular", "bold", "fill", or "duotone".'), ""))}`);
@@ -539,6 +665,38 @@ const policies_group_technology = (
     return en_policies_group_technology();
   })
 );
+const en_policies_view_raw = (
+  /** @type {(inputs: Policies_View_RawInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Markdown`
+    );
+  }
+);
+const policies_view_raw = (
+  /** @type {((inputs?: Policies_View_RawInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Policies_View_RawInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_policies_view_raw();
+  })
+);
+const en_policies_view_preview = (
+  /** @type {(inputs: Policies_View_PreviewInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Preview`
+    );
+  }
+);
+const policies_view_preview = (
+  /** @type {((inputs?: Policies_View_PreviewInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Policies_View_PreviewInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_policies_view_preview();
+  })
+);
 const POLICY_DESCRIPTIONS = {
   "security-policy": "Overarching InfoSec governance covering asset classification, access controls, and risk management.",
   "access-control-policy": "User provisioning, MFA requirements, privileged access, and quarterly access reviews.",
@@ -581,6 +739,7 @@ function _page($$renderer, $$props) {
     let versionsByPolicy = {};
     let versionsOpenId = null;
     let restoringVersionId = null;
+    let previewingId = null;
     const policyGroups = [
       {
         label: policies_group_security_fundamentals(),
@@ -997,7 +1156,19 @@ function _page($$renderer, $$props) {
                 $$renderer3.push(`<!----></div>`);
               } else {
                 $$renderer3.push("<!--[-1-->");
-                $$renderer3.push(`<pre class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">${escape_html(policy.content)}</pre>`);
+                $$renderer3.push(`<div class="mb-3 flex items-center gap-1 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] p-0.5 w-fit"><button${attr_class(`rounded-[var(--radius)] px-2.5 py-1 text-xs font-medium transition-colors ${stringify(previewingId !== policy.id ? "bg-[var(--background-alt)] text-[var(--foreground)] shadow-sm" : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]")}`)}><span class="inline-flex items-center gap-1">`);
+                Code($$renderer3, { size: 12 });
+                $$renderer3.push(`<!----> ${escape_html(policies_view_raw())}</span></button> <button${attr_class(`rounded-[var(--radius)] px-2.5 py-1 text-xs font-medium transition-colors ${stringify(previewingId === policy.id ? "bg-[var(--background-alt)] text-[var(--foreground)] shadow-sm" : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]")}`)}><span class="inline-flex items-center gap-1">`);
+                Eye($$renderer3, { size: 12 });
+                $$renderer3.push(`<!----> ${escape_html(policies_view_preview())}</span></button></div> `);
+                if (previewingId === policy.id) {
+                  $$renderer3.push("<!--[0-->");
+                  $$renderer3.push(`<div class="prose prose-sm max-w-none text-[var(--foreground)] [&amp;_h1]:text-lg [&amp;_h1]:font-bold [&amp;_h1]:mb-2 [&amp;_h2]:text-base [&amp;_h2]:font-semibold [&amp;_h2]:mb-2 [&amp;_h3]:text-sm [&amp;_h3]:font-semibold [&amp;_h3]:mb-1 [&amp;_p]:text-sm [&amp;_p]:leading-relaxed [&amp;_p]:mb-2 [&amp;_ul]:text-sm [&amp;_ul]:ml-4 [&amp;_ul]:list-disc [&amp;_ol]:text-sm [&amp;_ol]:ml-4 [&amp;_ol]:list-decimal [&amp;_li]:mb-1 [&amp;_strong]:font-semibold [&amp;_hr]:border-[var(--border)] [&amp;_hr]:my-4">${html(marked(policy.content))}</div>`);
+                } else {
+                  $$renderer3.push("<!--[-1-->");
+                  $$renderer3.push(`<pre class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">${escape_html(policy.content)}</pre>`);
+                }
+                $$renderer3.push(`<!--]-->`);
               }
               $$renderer3.push(`<!--]--> `);
               if (versionsByPolicy[policy.id]?.length > 0) {

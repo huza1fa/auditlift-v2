@@ -239,5 +239,12 @@
 	"control_policy_label_vendor_management": "Vendor Management Policy",
 	"control_policy_label_cryptography": "Cryptography Policy",
 	"control_policy_label_remote_work": "Remote Work Policy",
-	"control_policy_label_ai_usage": "AI Usage Policy"
+	"control_policy_label_ai_usage": "AI Usage Policy",
+	"questionnaires_copy_answer": "Copy",
+	"questionnaires_copied": "Copied to clipboard",
+	"policies_view_raw": "Markdown",
+	"policies_view_preview": "Preview",
+	"dashboard_last_activity": "Last activity: {description} {timeAgo}",
+	"dashboard_no_activity_yet": "No activity yet — start by uploading a questionnaire",
+	"controls_search_placeholder": "Search controls..."
 }
