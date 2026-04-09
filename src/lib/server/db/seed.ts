@@ -65,6 +65,7 @@ export async function seed() {
 	await db
 		.insert(controls)
 		.values([
+			// ── CC1: Control Environment ────────────────────────────────────────
 			{
 				frameworkId: soc2Framework.id,
 				code: 'CC1.1',
@@ -79,6 +80,55 @@ export async function seed() {
 			},
 			{
 				frameworkId: soc2Framework.id,
+				code: 'CC1.2',
+				title: 'Board Oversight of Internal Controls',
+				description:
+					"The board of directors or equivalent oversight body demonstrates independence from management and exercises oversight of the development and performance of internal controls. The board reviews and approves the organization's risk appetite and monitors whether management has implemented effective controls to manage key risks. Board-level oversight provides an independent check on the effectiveness of the control environment.",
+				whyItMatters:
+					'Without independent board oversight, management has unchecked authority over the controls that are supposed to constrain it. Enterprise customers and auditors expect demonstrable governance above the executive layer.',
+				whatAuditorExpects:
+					'Auditors will review board meeting minutes, audit committee charters, and evidence that the board receives regular security and risk reporting from management. They will confirm that board composition includes independent members and that significant control failures are escalated to the board level.',
+				category: 'Control Environment'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC1.3',
+				title: 'Management Structure, Authority, and Responsibility',
+				description:
+					'Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives. Organizational charts and role definitions clarify who is responsible for operating controls and who has authority to make decisions affecting the control environment. Accountability structures ensure that control gaps are owned and remediated.',
+				whyItMatters:
+					"Unclear authority creates gaps where controls are assumed to be someone else's responsibility. A documented management structure ensures every control has a named owner who can be held accountable.",
+				whatAuditorExpects:
+					'Auditors will examine organizational charts, job descriptions, and delegation-of-authority documents. They will verify that security and compliance responsibilities are formally assigned at the management level and that reporting lines support timely escalation of control issues.',
+				category: 'Control Environment'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC1.4',
+				title: 'Commitment to Competence',
+				description:
+					'The organization demonstrates a commitment to attract, develop, and retain competent individuals in alignment with the objectives of the organization. Management defines the knowledge and skills required for roles involved in operating internal controls and ensures that hiring, training, and development programs meet those requirements. Performance evaluations assess whether individuals are meeting their control responsibilities.',
+				whyItMatters:
+					'Controls operated by undertrained personnel are controls that fail in practice. Demonstrating competence development gives auditors and enterprise customers confidence that your team can actually execute what your policies describe.',
+				whatAuditorExpects:
+					'Auditors will review job descriptions with defined competency requirements, training completion records for security-relevant roles, and performance review documentation. They will look for evidence of ongoing security awareness training and role-specific technical training programs.',
+				category: 'Control Environment'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC1.5',
+				title: 'Accountability for Internal Control Responsibilities',
+				description:
+					'The organization holds individuals accountable for their internal control responsibilities in the pursuit of objectives. Performance targets include control-related expectations and deviations are addressed through corrective action. A culture of accountability reinforces that failing to operate controls has real consequences.',
+				whyItMatters:
+					'Accountability mechanisms are what turn written policies into consistently operating controls. When people know they are measured on control performance, compliance rates improve materially.',
+				whatAuditorExpects:
+					'Auditors will look for evidence that control responsibilities are reflected in performance objectives and that instances of non-compliance were followed up with documented corrective actions. They may review HR records or manager feedback to confirm accountability is enforced, not just stated.',
+				category: 'Control Environment'
+			},
+			// ── CC2: Communication & Information ────────────────────────────────
+			{
+				frameworkId: soc2Framework.id,
 				code: 'CC2.1',
 				title: 'Internal Communication of Control Information',
 				description:
@@ -89,6 +139,31 @@ export async function seed() {
 					'Auditors will look for evidence of regular all-hands meetings, internal memos, or an intranet where security policies are published. They expect to see documented role assignments and acknowledgments that employees have read and understood relevant policies.',
 				category: 'Communication & Information'
 			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC2.2',
+				title: 'External Communication of Control Information',
+				description:
+					"The organization communicates with external parties regarding matters affecting the functioning of internal controls. This includes communicating security and privacy commitments to customers, disclosing relevant control information to third parties who rely on the organization's system, and maintaining transparency with regulators. External communications are accurate, timely, and consistent with internal policies.",
+				whyItMatters:
+					'Enterprise customers need to understand what controls protect their data before they can trust you with it. Proactive external communication of your control posture is a competitive differentiator and a compliance requirement.',
+				whatAuditorExpects:
+					'Auditors will review customer-facing security documentation such as trust pages, security questionnaire responses, data processing agreements, and breach notification procedures. They will verify that the claims made externally are consistent with the controls actually operating internally.',
+				category: 'Communication & Information'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC2.3',
+				title: 'Communication of Internal Control Deficiencies',
+				description:
+					'The organization communicates internal control deficiencies to those parties responsible for taking corrective action in a timely manner, including senior management and the board as appropriate. A defined process captures control failures, assesses their severity, and routes them to the right owner. Deficiencies are tracked to resolution and patterns are reported to leadership.',
+				whyItMatters:
+					'Controls that break silently are more dangerous than controls that were never implemented. A formal deficiency reporting process ensures that gaps are surfaced quickly and addressed before they lead to incidents.',
+				whatAuditorExpects:
+					'Auditors will look for a deficiency tracking log or issue register and evidence that identified control gaps were reported to management and the board. They will verify that deficiencies were assigned owners, given remediation timelines, and resolved or formally accepted as residual risk.',
+				category: 'Communication & Information'
+			},
+			// ── CC3: Risk Assessment ─────────────────────────────────────────────
 			{
 				frameworkId: soc2Framework.id,
 				code: 'CC3.1',
@@ -103,99 +178,149 @@ export async function seed() {
 			},
 			{
 				frameworkId: soc2Framework.id,
-				code: 'CC6.1',
-				title: 'Logical and Physical Access Controls',
+				code: 'CC3.2',
+				title: 'Identification of Fraud Risk',
 				description:
-					'The organization implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events. This includes enforcing authentication, authorization, and access restrictions to prevent unauthorized access to data and systems. Physical access to data centers and server rooms is also restricted and monitored.',
+					'The organization considers the potential for fraud in assessing risks to the achievement of objectives. This includes evaluating incentives and pressures that could motivate fraud, opportunities that could enable it, and rationalizations that could be used to justify it. Fraud risk assessments inform the design of preventive and detective controls.',
 				whyItMatters:
-					'Unauthorized access is one of the most common causes of data breaches. Strong access controls are foundational to protecting customer data and maintaining trust.',
+					'Fraud risk is often underweighted in technical security assessments but is a primary concern for auditors and for enterprise customers evaluating vendor trustworthiness. Addressing it explicitly signals a mature risk program.',
 				whatAuditorExpects:
-					'Auditors will review access control policies, user access lists, and MFA enforcement records. They will test that only authorized personnel can access production systems and that physical access logs for server rooms are retained and reviewed.',
+					'Auditors will review the risk assessment to confirm fraud scenarios (e.g., insider data theft, financial misstatement, vendor collusion) are explicitly addressed. They will look for antifraud controls such as segregation of duties, anomaly monitoring, and whistleblower channels.',
+				category: 'Risk Assessment'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC3.3',
+				title: 'Assessment of Changes That Could Impact Controls',
+				description:
+					'The organization identifies and assesses changes that could significantly impact the system of internal controls. Triggers include changes to business objectives, technology environments, personnel, regulatory requirements, and external threats. When significant changes are identified, the risk assessment is updated and affected controls are reviewed for continued effectiveness.',
+				whyItMatters:
+					'A risk assessment that is only done once at audit time quickly becomes stale. Rapidly growing startups face constant change — new cloud services, new hires, new product features — all of which can invalidate previously adequate controls.',
+				whatAuditorExpects:
+					'Auditors will check whether the risk assessment process includes a defined set of change triggers and whether recent significant changes (e.g., a new infrastructure migration or a key personnel departure) prompted a reassessment. They will look for documented evidence of change-triggered reviews.',
+				category: 'Risk Assessment'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC3.4',
+				title: 'Risk Assessment of Third-Party Relationships',
+				description:
+					"The organization assesses risks arising from third-party relationships, including subservice organizations, vendors, and partners that have access to the organization's systems or data. Risk assessments consider the nature of the third party's access, the sensitivity of data shared, and the third party's own control environment. Findings drive contractual requirements and ongoing monitoring obligations.",
+				whyItMatters:
+					'Your vendors can be the source of your breach. Enterprise customers increasingly ask detailed questions about third-party risk management, and auditors expect evidence that vendor risk is formally evaluated rather than assumed.',
+				whatAuditorExpects:
+					'Auditors will request a vendor inventory listing critical third-party relationships, corresponding risk assessments or security questionnaires sent to vendors, and vendor contracts that include appropriate data protection and security requirements. They will sample vendor reviews to confirm they are performed on a regular schedule.',
+				category: 'Risk Assessment'
+			},
+			// ── CC4: Monitoring Activities ───────────────────────────────────────
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC4.1',
+				title: 'Selection and Development of Monitoring Activities',
+				description:
+					'The organization selects, develops, and performs ongoing and separate evaluations to ascertain whether the components of internal control are present and functioning. Monitoring activities are built into business processes and are responsive to the level of risk. Both automated continuous monitoring and periodic manual reviews are used to ensure controls operate effectively over time.',
+				whyItMatters:
+					'Designing controls is not enough — you must monitor whether they are actually operating as intended. Continuous monitoring catches drift and degradation before they become audit findings or incidents.',
+				whatAuditorExpects:
+					'Auditors will look for evidence of automated monitoring tools (e.g., cloud security posture management, log alerts) and scheduled manual reviews such as quarterly access reviews or annual penetration tests. They will verify that monitoring activities are documented and that their results are reviewed by responsible personnel.',
+				category: 'Monitoring Activities'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC4.2',
+				title: 'Evaluation and Communication of Internal Control Deficiencies',
+				description:
+					'The organization evaluates and communicates internal control deficiencies in a timely manner to those parties responsible for taking corrective action, including senior management and the board of directors as appropriate. Deficiencies identified through monitoring activities are assessed for severity and root cause, and remediation plans are developed and tracked.',
+				whyItMatters:
+					'Monitoring is only valuable if its findings lead to action. A closed-loop deficiency management process demonstrates that the organization learns from control failures rather than just recording them.',
+				whatAuditorExpects:
+					'Auditors will look for a deficiency log or finding tracker that captures issues identified by monitoring activities, their severity ratings, assigned owners, remediation actions taken, and closure dates. They will confirm that material deficiencies were escalated to senior management with documented follow-up.',
+				category: 'Monitoring Activities'
+			},
+			// ── CC5: Control Activities ──────────────────────────────────────────
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC5.1',
+				title: 'Selection and Development of Control Activities',
+				description:
+					'The organization selects and develops control activities that contribute to the mitigation of risks to the achievement of objectives to acceptable levels. Control activities are selected considering cost-effectiveness, the nature of the risk being addressed, and the degree of automation feasible. Controls are designed to prevent or detect errors and irregularities and to protect information assets.',
+				whyItMatters:
+					'Choosing the right controls for the actual risks your organization faces is more effective than implementing a generic checklist. Thoughtful control design reduces both the cost of compliance and the residual risk exposure.',
+				whatAuditorExpects:
+					'Auditors will review the process used to select and design controls relative to identified risks. They will check that controls are mapped to specific risks in the risk register and that the rationale for the chosen control type (preventive vs. detective, manual vs. automated) is documented.',
+				category: 'Control Activities'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC5.2',
+				title: 'Technology General Controls',
+				description:
+					'The organization selects and develops general control activities over technology to support the achievement of objectives. Technology general controls encompass acquisition, development, and maintenance of technology infrastructure and software, as well as security controls that cut across all systems such as access management, change management, and operations controls. These controls form the foundation upon which application-level controls rely.',
+				whyItMatters:
+					'Weak general IT controls undermine every application-level control built on top of them. Enterprise customers and auditors evaluate the strength of general controls as a proxy for overall security maturity.',
+				whatAuditorExpects:
+					'Auditors will assess the completeness and effectiveness of controls across change management, logical access, operations, and backup/recovery domains. They will look for documented policies and evidence of consistent operation across all in-scope systems, not just the primary product.',
+				category: 'Control Activities'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC5.3',
+				title: 'Deployment of Control Activities Through Policies and Procedures',
+				description:
+					'The organization deploys control activities through policies that establish what is expected and procedures that put policies into action. Policies are translated into clear, actionable procedures so that personnel know exactly how to operate controls in their day-to-day work. Procedures are kept current as technology, business processes, and risk profiles evolve.',
+				whyItMatters:
+					'A policy without a corresponding procedure is an intention without execution. Operationalized procedures ensure controls are applied consistently regardless of which team member is doing the work.',
+				whatAuditorExpects:
+					'Auditors will sample policies and request the corresponding operating procedures to verify they exist and are detailed enough to be followed. They will interview personnel to confirm awareness of the procedures and check procedure version dates to ensure they have been kept current.',
+				category: 'Control Activities'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC6.7',
+				title: 'Restriction of Data Movement and Output',
+				description:
+					'The organization restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission. Controls prevent unauthorized data exfiltration via email, removable media, cloud storage, or API exports. Data classification drives the level of restriction applied to different categories of information.',
+				whyItMatters:
+					'Data leakage — intentional or accidental — is a leading cause of breaches and regulatory violations. Controlling where sensitive data can go is as important as controlling who can access it.',
+				whatAuditorExpects:
+					'Auditors will look for a data classification policy and evidence of technical controls that enforce movement restrictions, such as DLP tools, email filtering, USB port controls, and API rate limiting or export logging. They will verify that sensitive data in transit is encrypted and that transfers to external parties are logged and authorized.',
 				category: 'Logical & Physical Access'
 			},
 			{
 				frameworkId: soc2Framework.id,
-				code: 'CC6.2',
-				title: 'Provisioning and Management of System Credentials',
+				code: 'CC6.8',
+				title: 'Prevention and Detection of Unauthorized or Malicious Software',
 				description:
-					"Prior to issuing system credentials and granting system access, the organization registers and authorizes new internal and external users. The process includes verifying the identity of new users, obtaining management approval, and provisioning only the access required for the user's role. Access is promptly revoked when no longer needed.",
+					'The organization implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software. This includes endpoint protection tools, software composition analysis, allowlisting of approved software, and procedures for evaluating and approving new software before deployment. Alerts for malware detections are triaged and remediated promptly.',
 				whyItMatters:
-					'Improper credential management can leave orphaned accounts that act as open doors for attackers. Timely provisioning and deprovisioning reduces attack surface and demonstrates a mature identity lifecycle.',
+					'Malware and unauthorized software are a primary vector for data theft and ransomware. Enterprise customers expect evidence that your environment actively prevents and detects malicious code, not just that you have a policy against it.',
 				whatAuditorExpects:
-					'Auditors will sample onboarding and offboarding tickets to verify that access was granted with manager approval and revoked within a defined SLA after termination. They will also check for automated provisioning workflows and periodic access reviews.',
+					'Auditors will ask for evidence of deployed endpoint detection and response (EDR) or antivirus tools across all endpoints and servers, including configuration settings showing real-time protection is enabled. They will review a sample of malware detection alerts and the corresponding incident response actions taken.',
 				category: 'Logical & Physical Access'
 			},
 			{
 				frameworkId: soc2Framework.id,
-				code: 'CC6.3',
-				title: 'Role-Based Access Controls and Least Privilege',
+				code: 'CC7.4',
+				title: 'Incident Response and Recovery',
 				description:
-					'The organization uses role-based access controls to grant system access based on the principle of least privilege. Users are assigned to roles that provide only the permissions necessary to perform their job functions. Access privileges are reviewed periodically and adjusted as job responsibilities change.',
+					'The organization responds to identified security incidents by executing a defined incident response plan. The plan includes roles and responsibilities, escalation procedures, containment and eradication steps, evidence preservation, and recovery processes. After incidents are resolved, post-incident reviews are conducted to identify root causes and prevent recurrence.',
 				whyItMatters:
-					'Overly permissive access increases the blast radius of any compromise. Role-based access controls ensure that a single compromised account cannot access all sensitive data.',
+					'The ability to respond effectively to incidents directly limits the damage they cause. Customers and auditors want assurance that if something goes wrong, there is a practiced plan to contain and recover from it.',
 				whatAuditorExpects:
-					'Auditors expect to see a defined role matrix or RBAC policy. They will test a sample of user accounts to confirm that permissions align with documented roles and that privileged access (admin rights) is granted sparingly and subject to additional controls such as MFA.',
-				category: 'Logical & Physical Access'
-			},
-			{
-				frameworkId: soc2Framework.id,
-				code: 'CC6.6',
-				title: 'Logical Access Security Measures Against External Threats',
-				description:
-					'The organization implements controls to protect against threats from sources outside its system boundaries. This includes perimeter security measures such as firewalls, intrusion detection systems, and encryption in transit to prevent unauthorized external access. Vulnerability scanning and penetration testing are conducted regularly to identify and remediate weaknesses.',
-				whyItMatters:
-					'External threats — from malicious actors attempting to breach the perimeter — are constant. Layered perimeter controls are necessary to protect data from outside attackers.',
-				whatAuditorExpects:
-					'Auditors will review firewall rule sets, network diagrams, and IDS/IPS configurations. They will ask for penetration test reports and vulnerability scan results, along with remediation timelines that demonstrate identified issues were addressed promptly.',
-				category: 'Logical & Physical Access'
-			},
-			{
-				frameworkId: soc2Framework.id,
-				code: 'CC7.1',
-				title: 'Configuration Management',
-				description:
-					'The organization uses detection and monitoring procedures to identify changes to configurations that result in the introduction of new vulnerabilities, and susceptibilities to known vulnerabilities. Baseline configurations are established for all systems and deviations are detected and reviewed. Configuration changes go through a defined approval process.',
-				whyItMatters:
-					'Misconfigured systems are among the leading causes of security incidents. A strong configuration management program ensures systems remain hardened and that changes do not introduce unexpected risk.',
-				whatAuditorExpects:
-					'Auditors will look for documented baseline configurations (e.g., CIS benchmarks) and evidence that automated configuration monitoring tools are in place. They will request change records showing that configuration modifications were approved and tested before deployment to production.',
+					'Auditors will review the incident response policy and plan and look for evidence that it has been tested through tabletop exercises or drills. They will sample recent incident tickets to confirm the plan was followed, that incidents were classified by severity, and that post-incident reviews were completed and led to documented improvements.',
 				category: 'System Operations'
 			},
 			{
 				frameworkId: soc2Framework.id,
-				code: 'CC7.2',
-				title: 'System Monitoring and Anomaly Detection',
+				code: 'CC7.5',
+				title: 'Communication of System Incidents',
 				description:
-					"The organization designs and implements monitoring activities to detect anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity's ability to achieve its objectives. Monitoring tools continuously collect and analyze system and security logs to surface unusual behavior. Alerts are triaged and escalated according to defined procedures.",
+					'The organization identifies, develops, and implements activities to recover from identified security incidents and communicates information about the incidents to affected parties and those charged with governance. This includes notifying impacted customers, regulators, and other stakeholders within contractually or legally required timeframes. Communication is accurate, timely, and coordinated to avoid creating additional confusion.',
 				whyItMatters:
-					'Early detection of anomalies limits the damage from security incidents and operational failures. Without active monitoring, breaches can go undetected for months.',
+					'Delayed or poorly managed incident communication can cause more reputational damage than the incident itself. Enterprise customers expect contractual breach notification SLAs to be met and auditors evaluate whether communications were appropriate.',
 				whatAuditorExpects:
-					'Auditors expect evidence of a deployed SIEM or log management solution with defined alert rules. They will review a sample of security alerts and incident tickets to confirm that anomalies were investigated and resolved within the documented SLA.',
+					'Auditors will look for documented notification procedures within the incident response plan that specify who is notified, by when, and through what channels for different incident categories. They will review any incident communications sent during the audit period to verify they were timely, accurate, and followed the documented procedure.',
 				category: 'System Operations'
-			},
-			{
-				frameworkId: soc2Framework.id,
-				code: 'CC7.3',
-				title: 'Evaluation of Security Events',
-				description:
-					'The organization evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives. A formal process exists to classify and investigate security events, determine root cause, and decide on remediation actions. Findings are documented and tracked to closure.',
-				whyItMatters:
-					'Not all security events are incidents, but all events must be evaluated to make that determination. A consistent evaluation process prevents real incidents from being dismissed and ensures learnings are captured.',
-				whatAuditorExpects:
-					'Auditors will review the incident management policy and a sample of event investigation records. They will check that events are classified by severity, that investigations are completed by qualified personnel, and that post-incident reviews are conducted for significant events.',
-				category: 'System Operations'
-			},
-			{
-				frameworkId: soc2Framework.id,
-				code: 'CC8.1',
-				title: 'Change Management Process',
-				description:
-					'The organization authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives. A formal change management process ensures that all changes are reviewed and tested before being deployed to production environments.',
-				whyItMatters:
-					'Uncontrolled changes are a major source of outages and security vulnerabilities. A structured change process reduces the risk that changes introduce new problems.',
-				whatAuditorExpects:
-					'Auditors will examine change management policies and sample change tickets from the audit period. They expect to see evidence of peer code review, QA testing, manager or change advisory board approval, and rollback plans for significant changes before they were deployed.',
-				category: 'Change Management'
 			},
 			{
 				frameworkId: soc2Framework.id,
@@ -207,6 +332,18 @@ export async function seed() {
 					'Risk mitigation ties directly to business resilience. Organizations that fail to proactively address identified risks face greater likelihood of significant disruptions to operations or data security.',
 				whatAuditorExpects:
 					'Auditors will review the risk management policy and the most recent risk assessment. They will expect a documented risk treatment plan that maps each identified risk to a chosen response, with ownership assigned and evidence that mitigating controls were implemented as planned.',
+				category: 'Risk Mitigation'
+			},
+			{
+				frameworkId: soc2Framework.id,
+				code: 'CC9.2',
+				title: 'Vendor and Third-Party Risk Management',
+				description:
+					'The organization assesses and manages risks associated with vendors and business partners whose services or products are part of the organization\'s system. Vendor risk management includes initial due diligence before engagement, ongoing monitoring of vendor control environments, and contractual requirements for security, confidentiality, and breach notification. Vendor access to systems and data is scoped to the minimum necessary.',
+				whyItMatters:
+					'Your attack surface extends to every vendor with access to your systems or data. Third-party breaches are among the most frequent causes of downstream customer data exposure, making vendor risk management a critical enterprise sales requirement.',
+				whatAuditorExpects:
+					'Auditors will request a register of critical vendors and evidence of security reviews conducted before and during each vendor relationship, such as SOC 2 reports, security questionnaire responses, or penetration test results. They will review vendor contracts to confirm data protection clauses, right-to-audit provisions, and breach notification obligations are included.',
 				category: 'Risk Mitigation'
 			}
 		])

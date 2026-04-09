@@ -10,13 +10,13 @@ import {
 	frameworks
 } from '$lib/server/db/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
+import { hasActivePaidAccess } from '$lib/server/billing';
 
 export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
 	const orgId = locals.organizationId;
 
-	const canExport = hasActiveAccess(locals.subscription);
+	const canExport = hasActivePaidAccess(locals.subscription);
 
 	const [orgFramework] = await db
 		.select({ framework: frameworks })
