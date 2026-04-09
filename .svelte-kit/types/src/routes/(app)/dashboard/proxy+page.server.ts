@@ -10,7 +10,8 @@ import {
 	questionnaireQuestions,
 	policies,
 	controls,
-	evidence
+	evidence,
+	activityLogs
 } from '$lib/server/db/schema';
 import { eq, and, desc, count, avg, isNull, inArray, lt } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
@@ -281,6 +282,18 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		nextAction = { type: 'stale-evidence' };
 	}
 
+	// Last activity for momentum indicator
+	const [lastActivity] = await db
+		.select({
+			action: activityLogs.action,
+			entityName: activityLogs.entityName,
+			createdAt: activityLogs.createdAt
+		})
+		.from(activityLogs)
+		.where(eq(activityLogs.organizationId, orgId))
+		.orderBy(desc(activityLogs.createdAt))
+		.limit(1);
+
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
@@ -293,6 +306,7 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		policiesTotal,
 		questionnaireCoverage,
 		staleEvidenceCount,
-		nextAction
+		nextAction,
+		lastActivity: lastActivity ?? null
 	};
 };

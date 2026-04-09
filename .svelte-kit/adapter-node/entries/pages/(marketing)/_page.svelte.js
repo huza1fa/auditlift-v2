@@ -8,11 +8,7 @@ import { F as FileText } from "../../../chunks/FileText.js";
 import { F as FolderOpen } from "../../../chunks/FolderOpen.js";
 import { U as Users } from "../../../chunks/Users.js";
 import { L as LogoMark, T as ThemeToggle } from "../../../chunks/ThemeToggle.js";
-function html(value) {
-  var html2 = String(value ?? "");
-  var open = "<!---->";
-  return open + html2 + "<!---->";
-}
+import { h as html } from "../../../chunks/html.js";
 function ChartBar($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     const ctx = getIconContext();

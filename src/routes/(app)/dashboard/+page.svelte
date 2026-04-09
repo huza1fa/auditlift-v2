@@ -129,6 +129,30 @@
 		data.readiness.completedControls === 0 && data.readiness.blockers.length > 0 && !data.isReadOnly
 	);
 
+	function formatRelativeTime(date: Date | string): string {
+		const d = new Date(date);
+		const diffMs = Date.now() - d.getTime();
+		const diffMins = Math.floor(diffMs / 60000);
+		const diffHours = Math.floor(diffMs / 3600000);
+		const diffDays = Math.floor(diffMs / 86400000);
+		if (diffMins < 1) return 'just now';
+		if (diffMins < 60) return `${diffMins}m ago`;
+		if (diffHours < 24) return `${diffHours}h ago`;
+		if (diffDays === 1) return '1 day ago';
+		if (diffDays < 30) return `${diffDays} days ago`;
+		return d.toLocaleDateString();
+	}
+
+	function formatActivityAction(action: string): string {
+		const map: Record<string, string> = {
+			'evidence.upload': 'uploaded evidence',
+			'evidence.delete': 'removed evidence',
+			'policy.generate': 'generated a policy',
+			'policy.edit': 'edited a policy'
+		};
+		return map[action] ?? action;
+	}
+
 	function dealReadinessColor(score: number | null): string {
 		if (score === null) return 'var(--foreground-muted)';
 		if (score >= 70) return 'var(--success)';
@@ -279,6 +303,18 @@
 		<h1 class="text-2xl font-bold text-[var(--foreground)]">
 			{m.dashboard_welcome({ name: firstName })}
 		</h1>
+		{#if data.lastActivity}
+			<p class="mt-1 text-xs text-[var(--foreground-subtle)]">
+				{m.dashboard_last_activity({
+					description: formatActivityAction(data.lastActivity.action) + (data.lastActivity.entityName ? ` "${data.lastActivity.entityName}"` : ''),
+					timeAgo: formatRelativeTime(data.lastActivity.createdAt)
+				})}
+			</p>
+		{:else}
+			<p class="mt-1 text-xs text-[var(--foreground-subtle)]">
+				{m.dashboard_no_activity_yet()}
+			</p>
+		{/if}
 	</div>
 
 	<!-- =========================================================== -->

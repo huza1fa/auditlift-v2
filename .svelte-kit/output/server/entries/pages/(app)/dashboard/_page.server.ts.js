@@ -1,5 +1,5 @@
 import { redirect } from "@sveltejs/kit";
-import { d as db, f as frameworks, o as organizationFrameworks, k as readinessSnapshots, q as questionnaires, p as policies, i as questionnaireQuestions, c as controls, e as evidence } from "../../../../chunks/index2.js";
+import { d as db, f as frameworks, o as organizationFrameworks, k as readinessSnapshots, q as questionnaires, p as policies, i as questionnaireQuestions, c as controls, e as evidence, h as activityLogs } from "../../../../chunks/index2.js";
 import { eq, and, desc, count, avg, isNull, inArray, lt } from "drizzle-orm";
 import { c as computeReadinessScore } from "../../../../chunks/score.js";
 const load = async ({ locals, url }) => {
@@ -136,6 +136,11 @@ const load = async ({ locals, url }) => {
   } else if (staleEvidenceCount > 0) {
     nextAction = { type: "stale-evidence" };
   }
+  const [lastActivity] = await db.select({
+    action: activityLogs.action,
+    entityName: activityLogs.entityName,
+    createdAt: activityLogs.createdAt
+  }).from(activityLogs).where(eq(activityLogs.organizationId, orgId)).orderBy(desc(activityLogs.createdAt)).limit(1);
   return {
     readiness,
     framework: orgFramework?.framework ?? null,
@@ -148,7 +153,8 @@ const load = async ({ locals, url }) => {
     policiesTotal,
     questionnaireCoverage,
     staleEvidenceCount,
-    nextAction
+    nextAction,
+    lastActivity: lastActivity ?? null
   };
 };
 export {

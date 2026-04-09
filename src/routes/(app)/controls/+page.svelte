@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle, Circle, ArrowRight, CheckSquare } from 'phosphor-svelte';
+	import { CheckCircle, Circle, ArrowRight, CheckSquare, MagnifyingGlass } from 'phosphor-svelte';
 	import * as m from '$lib/paraglide/messages';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -8,15 +8,28 @@
 
 	type ControlItem = (typeof data.controls)[number];
 
+	let searchQuery = $state('');
+
 	function getStatus(c: ControlItem): 'not-started' | 'in-progress' | 'complete' {
 		if (c.evidenceCount === 0 && c.policyCount === 0) return 'not-started';
 		if (c.evidenceCount > 0 && c.policyCount > 0) return 'complete';
 		return 'in-progress';
 	}
 
+	const filtered = $derived.by(() => {
+		const q = searchQuery.toLowerCase().trim();
+		if (!q) return data.controls;
+		return data.controls.filter(
+			(c) =>
+				c.code.toLowerCase().includes(q) ||
+				c.title.toLowerCase().includes(q) ||
+				c.category.toLowerCase().includes(q)
+		);
+	});
+
 	const grouped = $derived.by(() => {
 		const map = new Map<string, ControlItem[]>();
-		for (const c of data.controls) {
+		for (const c of filtered) {
 			if (!map.has(c.category)) map.set(c.category, []);
 			map.get(c.category)!.push(c);
 		}
@@ -46,6 +59,21 @@
 			<Badge variant="info">{data.framework.name}</Badge>
 		{/if}
 	</div>
+
+	{#if data.controls.length > 0}
+		<div class="relative">
+			<MagnifyingGlass
+				size={16}
+				class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--foreground-subtle)]"
+			/>
+			<input
+				type="text"
+				bind:value={searchQuery}
+				placeholder={m.controls_search_placeholder()}
+				class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] py-2 pr-3 pl-9 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+			/>
+		</div>
+	{/if}
 
 	{#if data.frameworks.length === 0}
 		<Card class="p-10">
@@ -126,4 +154,13 @@
 			</div>
 		</Card>
 	{/each}
+
+	{#if searchQuery && filtered.length === 0}
+		<Card class="p-8 text-center">
+			<MagnifyingGlass size={32} color="var(--foreground-subtle)" class="mx-auto mb-2" />
+			<p class="text-sm text-[var(--foreground-muted)]">
+				No controls matching "<span class="font-medium text-[var(--foreground)]">{searchQuery}</span>"
+			</p>
+		</Card>
+	{/if}
 </div>

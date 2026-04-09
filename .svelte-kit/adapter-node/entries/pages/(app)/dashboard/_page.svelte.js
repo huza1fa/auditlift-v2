@@ -841,6 +841,38 @@ const dashboard_stale_evidence_plural = (
     return en_dashboard_stale_evidence_plural(inputs);
   })
 );
+const en_dashboard_last_activity = (
+  /** @type {(inputs: Dashboard_Last_ActivityInputs) => LocalizedString} */
+  (i) => {
+    return (
+      /** @type {LocalizedString} */
+      `Last activity: ${i?.description} ${i?.timeAgo}`
+    );
+  }
+);
+const dashboard_last_activity = (
+  /** @type {((inputs: Dashboard_Last_ActivityInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_Last_ActivityInputs, { locale?: "en" }, {}>} */
+  ((inputs, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_last_activity(inputs);
+  })
+);
+const en_dashboard_no_activity_yet = (
+  /** @type {(inputs: Dashboard_No_Activity_YetInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `No activity yet — start by uploading a questionnaire`
+    );
+  }
+);
+const dashboard_no_activity_yet = (
+  /** @type {((inputs?: Dashboard_No_Activity_YetInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_No_Activity_YetInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_no_activity_yet();
+  })
+);
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let { data } = $$props;
@@ -871,6 +903,28 @@ function _page($$renderer, $$props) {
     const hasFramework = derived(() => data.framework !== null);
     const questionnaireCoverageCount = derived(() => data.questionnaireCoverage?.[0]?.controlsCoveredByQuestionnaires ?? 0);
     const showStartHere = derived(() => data.readiness.completedControls === 0 && data.readiness.blockers.length > 0 && !data.isReadOnly);
+    function formatRelativeTime(date) {
+      const d = new Date(date);
+      const diffMs = Date.now() - d.getTime();
+      const diffMins = Math.floor(diffMs / 6e4);
+      const diffHours = Math.floor(diffMs / 36e5);
+      const diffDays = Math.floor(diffMs / 864e5);
+      if (diffMins < 1) return "just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays === 1) return "1 day ago";
+      if (diffDays < 30) return `${diffDays} days ago`;
+      return d.toLocaleDateString();
+    }
+    function formatActivityAction(action) {
+      const map = {
+        "evidence.upload": "uploaded evidence",
+        "evidence.delete": "removed evidence",
+        "policy.generate": "generated a policy",
+        "policy.edit": "edited a policy"
+      };
+      return map[action] ?? action;
+    }
     function dealReadinessColor(score) {
       if (score === null) return "var(--foreground-muted)";
       if (score >= 70) return "var(--success)";
@@ -943,7 +997,18 @@ function _page($$renderer, $$props) {
     } else {
       $$renderer2.push("<!--[-1-->");
     }
-    $$renderer2.push(`<!--]-->  <div><p class="text-sm text-[var(--foreground-muted)]">${escape_html(today)}</p> <h1 class="text-2xl font-bold text-[var(--foreground)]">${escape_html(dashboard_welcome({ name: firstName() }))}</h1></div>  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3"><a href="/questionnaires" class="group">`);
+    $$renderer2.push(`<!--]-->  <div><p class="text-sm text-[var(--foreground-muted)]">${escape_html(today)}</p> <h1 class="text-2xl font-bold text-[var(--foreground)]">${escape_html(dashboard_welcome({ name: firstName() }))}</h1> `);
+    if (data.lastActivity) {
+      $$renderer2.push("<!--[0-->");
+      $$renderer2.push(`<p class="mt-1 text-xs text-[var(--foreground-subtle)]">${escape_html(dashboard_last_activity({
+        description: formatActivityAction(data.lastActivity.action) + (data.lastActivity.entityName ? ` "${data.lastActivity.entityName}"` : ""),
+        timeAgo: formatRelativeTime(data.lastActivity.createdAt)
+      }))}</p>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+      $$renderer2.push(`<p class="mt-1 text-xs text-[var(--foreground-subtle)]">${escape_html(dashboard_no_activity_yet())}</p>`);
+    }
+    $$renderer2.push(`<!--]--></div>  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3"><a href="/questionnaires" class="group">`);
     Card($$renderer2, {
       class: "p-5 transition-shadow hover:shadow-[var(--shadow-md)]",
       children: ($$renderer3) => {

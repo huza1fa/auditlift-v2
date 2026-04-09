@@ -1,4 +1,4 @@
-import { a6 as attributes, a4 as escape_html, _ as derived, a2 as ensure_array_like, aa as attr_style, ab as stringify, a3 as attr } from "../../../../chunks/index3.js";
+import { a6 as attributes, a4 as escape_html, _ as derived, a2 as ensure_array_like, a3 as attr, aa as attr_style, ab as stringify } from "../../../../chunks/index3.js";
 import { A as ArrowRight } from "../../../../chunks/ArrowRight.js";
 import { C as CheckCircle } from "../../../../chunks/CheckCircle.js";
 import { C as CheckSquare } from "../../../../chunks/CheckSquare.js";
@@ -61,6 +61,68 @@ function Circle($$renderer, $$props) {
     } else if (weight() === "thin") {
       $$renderer2.push("<!--[5-->");
       $$renderer2.push(`<path d="M128,28A100,100,0,1,0,228,128,100.11,100.11,0,0,0,128,28Zm0,192a92,92,0,1,1,92-92A92.1,92.1,0,0,1,128,220Z"></path>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+      $$renderer2.push(`${escape_html((console.error('Unsupported icon weight. Choose from "thin", "light", "regular", "bold", "fill", or "duotone".'), ""))}`);
+    }
+    $$renderer2.push(`<!--]--></svg>`);
+  });
+}
+function MagnifyingGlass($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    const ctx = getIconContext();
+    let { children, $$slots, $$events, ...props } = $$props;
+    let weight = derived(() => props.weight ?? ctx.weight ?? "regular");
+    let color = derived(() => props.color ?? ctx.color ?? "currentColor");
+    let size = derived(() => props.size ?? ctx.size ?? "1em");
+    let mirrored = derived(() => props.mirrored ?? ctx.mirrored ?? false);
+    function svgAttr(obj) {
+      let { weight: weight2, color: color2, size: size2, mirrored: mirrored2, ...attrs } = obj;
+      return attrs;
+    }
+    $$renderer2.push(`<svg${attributes(
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        role: "img",
+        width: size(),
+        height: size(),
+        fill: color(),
+        transform: mirrored() ? "scale(-1, 1)" : void 0,
+        viewBox: "0 0 256 256",
+        ...svgAttr(ctx),
+        ...svgAttr(props)
+      },
+      void 0,
+      void 0,
+      void 0,
+      3
+    )}>`);
+    if (children) {
+      $$renderer2.push("<!--[0-->");
+      children($$renderer2);
+      $$renderer2.push(`<!---->`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--><rect width="256" height="256" fill="none"></rect>`);
+    if (weight() === "bold") {
+      $$renderer2.push("<!--[0-->");
+      $$renderer2.push(`<path d="M232.49,215.51,185,168a92.12,92.12,0,1,0-17,17l47.53,47.54a12,12,0,0,0,17-17ZM44,112a68,68,0,1,1,68,68A68.07,68.07,0,0,1,44,112Z"></path>`);
+    } else if (weight() === "duotone") {
+      $$renderer2.push("<!--[1-->");
+      $$renderer2.push(`<path d="M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z" opacity="0.2"></path><path d="M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>`);
+    } else if (weight() === "fill") {
+      $$renderer2.push("<!--[2-->");
+      $$renderer2.push(`<path d="M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z"></path>`);
+    } else if (weight() === "light") {
+      $$renderer2.push("<!--[3-->");
+      $$renderer2.push(`<path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"></path>`);
+    } else if (weight() === "regular") {
+      $$renderer2.push("<!--[4-->");
+      $$renderer2.push(`<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>`);
+    } else if (weight() === "thin") {
+      $$renderer2.push("<!--[5-->");
+      $$renderer2.push(`<path d="M226.83,221.17l-52.7-52.7a84.1,84.1,0,1,0-5.66,5.66l52.7,52.7a4,4,0,0,0,5.66-5.66ZM36,112a76,76,0,1,1,76,76A76.08,76.08,0,0,1,36,112Z"></path>`);
     } else {
       $$renderer2.push("<!--[-1-->");
       $$renderer2.push(`${escape_html((console.error('Unsupported icon weight. Choose from "thin", "light", "regular", "bold", "fill", or "duotone".'), ""))}`);
@@ -148,17 +210,39 @@ const controls_empty_no_controls_body = (
     return en_controls_empty_no_controls_body();
   })
 );
+const en_controls_search_placeholder = (
+  /** @type {(inputs: Controls_Search_PlaceholderInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Search controls...`
+    );
+  }
+);
+const controls_search_placeholder = (
+  /** @type {((inputs?: Controls_Search_PlaceholderInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Controls_Search_PlaceholderInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_controls_search_placeholder();
+  })
+);
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let { data } = $$props;
+    let searchQuery = "";
     function getStatus(c) {
       if (c.evidenceCount === 0 && c.policyCount === 0) return "not-started";
       if (c.evidenceCount > 0 && c.policyCount > 0) return "complete";
       return "in-progress";
     }
+    const filtered = derived(() => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return data.controls;
+      return data.controls.filter((c) => c.code.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+    });
     const grouped = derived(() => {
       const map = /* @__PURE__ */ new Map();
-      for (const c of data.controls) {
+      for (const c of filtered()) {
         if (!map.has(c.category)) map.set(c.category, []);
         map.get(c.category).push(c);
       }
@@ -188,6 +272,18 @@ function _page($$renderer, $$props) {
       $$renderer2.push("<!--[-1-->");
     }
     $$renderer2.push(`<!--]--></div> `);
+    if (data.controls.length > 0) {
+      $$renderer2.push("<!--[0-->");
+      $$renderer2.push(`<div class="relative">`);
+      MagnifyingGlass($$renderer2, {
+        size: 16,
+        class: "pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--foreground-subtle)]"
+      });
+      $$renderer2.push(`<!----> <input type="text"${attr("value", searchQuery)}${attr("placeholder", controls_search_placeholder())} class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] py-2 pr-3 pl-9 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"/></div>`);
+    } else {
+      $$renderer2.push("<!--[-1-->");
+    }
+    $$renderer2.push(`<!--]--> `);
     if (data.frameworks.length === 0) {
       $$renderer2.push("<!--[0-->");
       Card($$renderer2, {
@@ -269,6 +365,10 @@ function _page($$renderer, $$props) {
           $$renderer3.push(`<!--]--></div>`);
         }
       });
+    }
+    $$renderer2.push(`<!--]--> `);
+    {
+      $$renderer2.push("<!--[-1-->");
     }
     $$renderer2.push(`<!--]--></div>`);
   });
