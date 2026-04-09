@@ -1,0 +1,73 @@
+import { a1 as head } from "../../../../chunks/index3.js";
+import { L as LogoMark, T as ThemeToggle } from "../../../../chunks/ThemeToggle.js";
+function _page($$renderer) {
+  head("1jp39n4", $$renderer, ($$renderer2) => {
+    $$renderer2.title(($$renderer3) => {
+      $$renderer3.push(`<title>Terms of Service — AuditLift</title>`);
+    });
+    $$renderer2.push(`<meta name="description" content="AuditLift terms of service. Read the terms governing your use of our compliance readiness software."/> <link rel="canonical" href="https://auditlift.app/terms"/> <meta property="og:type" content="website"/> <meta property="og:url" content="https://auditlift.app/terms"/> <meta property="og:title" content="Terms of Service — AuditLift"/> <meta property="og:description" content="The terms governing your use of AuditLift."/> <meta name="robots" content="noindex"/>`);
+  });
+  $$renderer.push(`<nav class="fixed top-0 right-0 left-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm"><div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6"><a href="/" class="flex items-center gap-2 no-underline svelte-1jp39n4">`);
+  LogoMark($$renderer, { size: 20 });
+  $$renderer.push(`<!----> <span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">AuditLift</span></a> <div class="flex items-center gap-3">`);
+  ThemeToggle($$renderer, {});
+  $$renderer.push(`<!----> <a href="/login" class="text-[13px] font-medium text-[var(--foreground-muted)] no-underline hover:text-[var(--foreground)] svelte-1jp39n4">Sign in</a></div></div></nav> <div class="min-h-screen bg-[var(--background)] pt-24 pb-20"><div class="mx-auto max-w-2xl px-6"><h1 class="mb-2 text-3xl font-bold tracking-tight text-[var(--foreground)]">Terms of Service</h1> <p class="mb-10 text-[14px] text-[var(--foreground-muted)] svelte-1jp39n4">Last updated: April 5, 2026</p> <div class="prose-section svelte-1jp39n4"><p class="svelte-1jp39n4">These Terms of Service ("Terms") govern your access to and use of AuditLift ("we", "us",
+				"our") — a compliance readiness tool for startups and SMBs. By creating an account or using
+				the service, you agree to these Terms. We've written them to be readable, not just legally
+				defensible.</p></div> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">1. Acceptance of Terms</h2> <p class="svelte-1jp39n4">By accessing or using AuditLift, you confirm that you are at least 18 years old, that you
+				have the authority to bind yourself or your organization to these Terms, and that you agree
+				to comply with them. If you do not agree, do not use the service.</p> <p class="svelte-1jp39n4">We may update these Terms from time to time. When we do, we'll notify you by email and
+				update the "Last updated" date above. Continued use of AuditLift after changes take effect
+				constitutes your acceptance of the revised Terms.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">2. Description of Service</h2> <p class="svelte-1jp39n4">AuditLift is a compliance readiness platform that helps startups and small-to-medium
+				businesses prepare for audits against frameworks including SOC 2, PCI-DSS, and ISO 27001.
+				The service provides:</p> <ul class="svelte-1jp39n4"><li class="svelte-1jp39n4">Pre-mapped compliance controls per framework</li> <li class="svelte-1jp39n4">An evidence locker for uploading and tagging supporting documents</li> <li class="svelte-1jp39n4">AI-assisted policy generation based on your company profile</li> <li class="svelte-1jp39n4">An Audit Readiness Score to track your progress</li> <li class="svelte-1jp39n4">An Auditor Export package (ZIP/PDF) ready to hand to an auditor</li></ul> <p class="svelte-1jp39n4">We reserve the right to add, modify, or discontinue features at any time. We'll give
+				reasonable notice for any removals that materially reduce core functionality.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">3. Account Registration &amp; Security</h2> <p class="svelte-1jp39n4">To use AuditLift you must create an account using a valid email address or a supported OAuth
+				provider. You are responsible for keeping your credentials secure and for all activity that
+				occurs under your account.</p> <p class="svelte-1jp39n4">If you suspect unauthorized access, notify us immediately at <a href="mailto:hello@auditlift.app" class="svelte-1jp39n4">hello@auditlift.app</a>. We will never ask for your
+				password by email. You may not share your account with others outside your organization or
+				transfer it to another party.</p> <p class="svelte-1jp39n4">Each account is tied to a single organization. If you represent multiple organizations, a
+				separate account must be created for each.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">4. Subscription, Billing &amp; Trial</h2> <h3 class="svelte-1jp39n4">Free trial</h3> <p class="svelte-1jp39n4">New organizations receive a <strong>14-day free trial</strong> with full access to all features.
+				No credit card is required to start the trial. At the end of the trial period, access to the service
+				will be restricted unless you subscribe.</p> <h3 class="svelte-1jp39n4">Paid subscription</h3> <p class="svelte-1jp39n4">After your trial ends, continued access requires an active monthly subscription. Billing is
+				processed through <strong>Stripe</strong>. Your subscription renews automatically each month
+				on the date you first subscribed unless cancelled beforehand.</p> <h3 class="svelte-1jp39n4">Cancellation</h3> <p class="svelte-1jp39n4">You may cancel your subscription at any time from the Settings page. Cancellation takes
+				effect at the end of the current billing period — you will retain full access until then. We
+				do not offer prorated refunds for partial months, but if you believe you were charged in
+				error, contact us and we'll make it right.</p> <h3 class="svelte-1jp39n4">Price changes</h3> <p class="svelte-1jp39n4">If we change our pricing, we will give you at least 30 days' notice by email before the new
+				price applies to your subscription.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">5. Acceptable Use</h2> <p class="svelte-1jp39n4">You agree not to use AuditLift to:</p> <ul class="svelte-1jp39n4"><li class="svelte-1jp39n4">Violate any applicable law or regulation</li> <li class="svelte-1jp39n4">Upload malicious files, malware, or content that infringes third-party rights</li> <li class="svelte-1jp39n4">Attempt to gain unauthorized access to other users' data, our systems, or infrastructure</li> <li class="svelte-1jp39n4">Scrape, reverse-engineer, or create derivative products based on our platform</li> <li class="svelte-1jp39n4">Resell or sublicense access to AuditLift without our written permission</li> <li class="svelte-1jp39n4">Submit false, misleading, or fraudulent compliance information</li></ul> <p class="svelte-1jp39n4">We reserve the right to suspend or terminate accounts that violate these rules, with or
+				without prior notice depending on the severity of the violation.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">6. Intellectual Property</h2> <h3 class="svelte-1jp39n4">Your content</h3> <p class="svelte-1jp39n4">You own the data you bring into AuditLift — your evidence files, your uploaded policies,
+				your organization details, and any content you create or generate using the service. We do
+				not claim ownership of your compliance content.</p> <p class="svelte-1jp39n4">By using the service, you grant us a limited license to store, process, and transmit your
+				content solely to provide the service to you. We do not use your content to train AI models
+				or share it with third parties except as described in our <a href="/privacy" class="svelte-1jp39n4">Privacy Policy</a>.</p> <h3 class="svelte-1jp39n4">Our platform</h3> <p class="svelte-1jp39n4">AuditLift — including the application code, UI design, control frameworks, policy templates,
+				scoring logic, and all underlying infrastructure — is owned by us and protected by
+				intellectual property laws. Nothing in these Terms grants you a right to copy, modify, or
+				distribute any part of the platform.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">7. Data &amp; Privacy</h2> <p class="svelte-1jp39n4">How we collect, store, and use your data is described in our <a href="/privacy" class="svelte-1jp39n4">Privacy Policy</a>, which is incorporated into these Terms by reference.
+				By using AuditLift you also agree to our Privacy Policy.</p> <p class="svelte-1jp39n4">Your data is stored on US-based infrastructure. Evidence files are stored on Cloudflare R2
+				object storage. Data is encrypted in transit (TLS) and at rest.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">8. Disclaimers</h2> <p class="svelte-1jp39n4"><strong>AuditLift is a readiness tool, not a legal or compliance advisory service.</strong> Nothing we provide — including policy templates, control guidance, readiness scores, or audit
+				exports — constitutes legal advice or a guarantee that your organization will pass any audit or
+				certification process.</p> <p class="svelte-1jp39n4">Compliance frameworks such as SOC 2, PCI-DSS, and ISO 27001 are governed by their respective
+				standards bodies and audited by accredited third parties. AuditLift helps you organize and
+				prepare your evidence, but the outcome of any audit depends on your organization's actual
+				practices and the independent judgment of your auditor.</p> <p class="svelte-1jp39n4">The service is provided <strong>"as is"</strong> and <strong>"as available"</strong> without warranties of any kind, express or implied, including but not limited to merchantability,
+				fitness for a particular purpose, or non-infringement. We do not warrant that the service will
+				be uninterrupted, error-free, or free of harmful components.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">9. Limitation of Liability</h2> <p class="svelte-1jp39n4">To the fullest extent permitted by law, AuditLift and its affiliates, officers, employees,
+				and agents will not be liable for any indirect, incidental, special, consequential, or
+				punitive damages — including lost profits, lost data, or business interruption — arising
+				from your use of or inability to use the service, even if we have been advised of the
+				possibility of such damages.</p> <p class="svelte-1jp39n4">Our total aggregate liability to you for any claim arising out of or relating to these Terms
+				or the service will not exceed the greater of (a) the amount you paid us in the 12 months
+				preceding the claim or (b) USD $100.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">10. Termination</h2> <p class="svelte-1jp39n4">You may terminate your account at any time by deleting your organization from the Settings
+				page or by contacting us. Upon termination, your data will be retained in read-only form for
+				90 days and then permanently deleted, per our Privacy Policy.</p> <p class="svelte-1jp39n4">We may suspend or terminate your access if you breach these Terms, fail to pay, or if we are
+				required to do so by law. Where reasonably practicable, we will give you notice before
+				suspension and an opportunity to cure the issue.</p> <p class="svelte-1jp39n4">Sections on Intellectual Property, Disclaimers, Limitation of Liability, and Governing Law
+				survive termination.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">11. Governing Law</h2> <p class="svelte-1jp39n4">These Terms are governed by and construed in accordance with the laws of the jurisdiction in
+				which AuditLift is incorporated, without regard to its conflict-of-law provisions. Any
+				disputes arising under these Terms will be subject to the exclusive jurisdiction of the
+				courts of that jurisdiction.</p></section> <section class="mt-10 svelte-1jp39n4"><h2 class="svelte-1jp39n4">12. Contact</h2> <p class="svelte-1jp39n4">Questions about these Terms? Email us at <a href="mailto:hello@auditlift.app" class="svelte-1jp39n4">hello@auditlift.app</a>. We'll respond within 2
+				business days.</p></section></div></div> <footer class="border-t border-[var(--border)] py-8"><div class="mx-auto flex max-w-6xl items-center justify-between px-6"><p class="text-[12px] text-[var(--foreground-subtle)] svelte-1jp39n4">© 2026 AuditLift. All rights reserved.</p> <div class="flex items-center gap-4"><a href="/" class="text-[12px] text-[var(--foreground-subtle)] no-underline hover:text-[var(--foreground)] svelte-1jp39n4">Home</a> <a href="/pricing" class="text-[12px] text-[var(--foreground-subtle)] no-underline hover:text-[var(--foreground)] svelte-1jp39n4">Pricing</a> <a href="/privacy" class="text-[12px] text-[var(--foreground-subtle)] no-underline hover:text-[var(--foreground)] svelte-1jp39n4">Privacy Policy</a></div></div></footer>`);
+}
+export {
+  _page as default
+};

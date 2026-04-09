@@ -193,8 +193,9 @@
 			<div class="flex items-center gap-3">
 				<Warning size={16} color="var(--warning)" weight="fill" />
 				<p class="text-sm text-[var(--warning)]">
-					<span class="font-semibold">{data.staleEvidenceCount}</span>
-					{(data.staleEvidenceCount ?? 0) === 1 ? 'evidence file' : 'evidence files'} uploaded more than
+					{(data.staleEvidenceCount ?? 0) === 1
+						? m.dashboard_stale_evidence_singular({ count: data.staleEvidenceCount })
+						: m.dashboard_stale_evidence_plural({ count: data.staleEvidenceCount })} uploaded more than
 					90 days ago — auditors may question outdated evidence.
 				</p>
 			</div>

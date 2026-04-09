@@ -64,6 +64,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	if (!dev) {
+		response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+	}
 
 	// Only enforce CSP in production — Vite's module system in dev doesn't
 	// play well with script-src restrictions (dynamic imports, HMR, eval for source maps)

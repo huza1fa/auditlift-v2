@@ -127,7 +127,7 @@ function buildWelcomeHtml(opts: {
 		: null;
 
 	const trialText = trialStr
-		? ` Your 10-day free trial runs until <strong style="color:#18181b;font-weight:600;">${trialStr}</strong>.`
+		? ` Your 14-day free trial runs until <strong style="color:#18181b;font-weight:600;">${trialStr}</strong>.`
 		: '';
 
 	return `<!DOCTYPE html>

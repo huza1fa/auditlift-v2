@@ -1,0 +1,11 @@
+import { ag as attr_class, ai as stringify } from './index3-A6PWQL_h.js';
+
+function Card($$renderer, $$props) {
+  let { class: className = "", children } = $$props;
+  $$renderer.push(`<div${attr_class(`rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow)] ${stringify(className)}`)}>`);
+  children($$renderer);
+  $$renderer.push(`<!----></div>`);
+}
+
+export { Card as C };
+//# sourceMappingURL=Card-B7pxgW8R.js.map

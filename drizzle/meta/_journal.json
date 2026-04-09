@@ -50,6 +50,13 @@
       "when": 1775680646115,
       "tag": "0006_white_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775761848338,
+      "tag": "0007_add-performance-indexes",
+      "breakpoints": true
     }
   ]
 }
