@@ -208,7 +208,7 @@
 			} else if (step === 4) {
 				// NEW: Data & Customers — validate and save
 				if (!customerType || !geoReach || !productType) {
-					errorMsg = 'Please complete all selections before continuing.';
+					errorMsg = m.onboarding_error_profile_required();
 					loading = false;
 					return;
 				}

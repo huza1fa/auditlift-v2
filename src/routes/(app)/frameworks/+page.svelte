@@ -3,6 +3,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
 
@@ -26,7 +27,7 @@
 				<div class="mb-3 flex items-start justify-between">
 					<ShieldCheck size={24} color="var(--brand)" weight="fill" />
 					{#if framework.recommended}
-						<Badge variant="info">⭐ Most Popular</Badge>
+						<Badge variant="info">{m.frameworks_most_popular()}</Badge>
 					{/if}
 				</div>
 				<h2 class="mb-1 font-semibold text-[var(--foreground)]">{framework.name}</h2>

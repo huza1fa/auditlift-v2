@@ -31,22 +31,22 @@
 
 	// ── Policy label map ──────────────────────────────────────────────────────
 	const POLICY_LABELS: Record<string, string> = {
-		'security-policy': 'Security Policy',
-		'access-control-policy': 'Access Control Policy',
-		'password-policy': 'Password Policy',
-		'acceptable-use-policy': 'Acceptable Use Policy',
-		'incident-response-policy': 'Incident Response Policy',
-		'change-management-policy': 'Change Management Policy',
-		'vulnerability-management-policy': 'Vulnerability Management Policy',
-		'physical-security-policy': 'Physical Security Policy',
-		'data-classification-policy': 'Data Classification Policy',
-		'data-retention-policy': 'Data Retention Policy',
-		'privacy-policy': 'Privacy Policy',
-		'business-continuity-policy': 'Business Continuity Policy',
-		'vendor-management-policy': 'Vendor Management Policy',
-		'cryptography-policy': 'Cryptography Policy',
-		'remote-work-policy': 'Remote Work Policy',
-		'ai-usage-policy': 'AI Usage Policy'
+		'security-policy': m.control_policy_label_security(),
+		'access-control-policy': m.control_policy_label_access_control(),
+		'password-policy': m.control_policy_label_password(),
+		'acceptable-use-policy': m.control_policy_label_acceptable_use(),
+		'incident-response-policy': m.control_policy_label_incident_response(),
+		'change-management-policy': m.control_policy_label_change_management(),
+		'vulnerability-management-policy': m.control_policy_label_vulnerability_management(),
+		'physical-security-policy': m.control_policy_label_physical_security(),
+		'data-classification-policy': m.control_policy_label_data_classification(),
+		'data-retention-policy': m.control_policy_label_data_retention(),
+		'privacy-policy': m.control_policy_label_privacy(),
+		'business-continuity-policy': m.control_policy_label_business_continuity(),
+		'vendor-management-policy': m.control_policy_label_vendor_management(),
+		'cryptography-policy': m.control_policy_label_cryptography(),
+		'remote-work-policy': m.control_policy_label_remote_work(),
+		'ai-usage-policy': m.control_policy_label_ai_usage()
 	};
 
 	// ── Policy types for the full dropdown fallback ───────────────────────────
@@ -93,20 +93,20 @@
 	function getUploadGuidance(category: string, code: string): string {
 		const cat = category.toLowerCase();
 		if (cat.includes('access') || code.startsWith('CC6'))
-			return 'Upload screenshots of MFA settings, access control lists, user permission reports, or SSO configuration.';
+			return m.control_upload_guidance_access();
 		if (cat.includes('incident') || code.startsWith('CC7'))
-			return 'Upload incident response runbooks, post-incident reports, on-call schedules, or alert screenshots.';
+			return m.control_upload_guidance_incident();
 		if (cat.includes('change') || code.startsWith('CC8'))
-			return 'Upload PR/merge policies, deployment approval screenshots, or change log exports.';
+			return m.control_upload_guidance_change();
 		if (cat.includes('vendor') || code.startsWith('CC9'))
-			return 'Upload vendor agreements, security assessments, or vendor review records.';
+			return m.control_upload_guidance_vendor();
 		if (cat.includes('data') || cat.includes('privacy'))
-			return 'Upload data flow diagrams, retention schedules, or data handling procedures.';
+			return m.control_upload_guidance_data();
 		if (cat.includes('physical'))
-			return 'Upload office access logs, badge records, or physical security photos.';
+			return m.control_upload_guidance_physical();
 		if (cat.includes('crypto'))
-			return 'Upload encryption configuration screenshots, key management procedures, or TLS certificate records.';
-		return 'Upload any document, screenshot, or file that demonstrates this control is in place.';
+			return m.control_upload_guidance_crypto();
+		return m.control_upload_guidance_default();
 	}
 
 	// ── Local state ──────────────────────────────────────────────────────────
