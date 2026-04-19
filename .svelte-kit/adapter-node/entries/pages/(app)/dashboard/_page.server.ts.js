@@ -145,6 +145,7 @@ const load = async ({ locals, url }) => {
     readiness,
     framework: orgFramework?.framework ?? null,
     trialDaysRemaining,
+    isActiveSubscription,
     justSubscribed,
     scoreHistory,
     recentQuestionnaires,

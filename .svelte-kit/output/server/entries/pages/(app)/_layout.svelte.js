@@ -466,7 +466,7 @@ function Toast($$renderer, $$props) {
       info: "var(--info)",
       warning: "var(--warning)"
     };
-    $$renderer2.push(`<div class="fixed top-4 right-4 z-50 flex w-80 max-w-sm flex-col gap-2"><!--[-->`);
+    $$renderer2.push(`<div class="fixed top-14 right-4 z-50 flex w-80 max-w-sm flex-col gap-2"><!--[-->`);
     const each_array = ensure_array_like(store_get($$store_subs ??= {}, "$toasts", toasts));
     for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
       let toast = each_array[$$index];

@@ -10,12 +10,14 @@ import { S as Spinner } from "../../../../chunks/Spinner.js";
 import { T as Trash } from "../../../../chunks/Trash.js";
 import { X } from "../../../../chunks/X.js";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { B as Button } from "../../../../chunks/Button.js";
 import { C as Card } from "../../../../chunks/Card.js";
 import { B as Badge } from "../../../../chunks/Badge.js";
 import { b as toastSuccess, a as toastError } from "../../../../chunks/toasts.svelte.js";
 import { g as getLocale } from "../../../../chunks/runtime.js";
 import { p as policies_title } from "../../../../chunks/policies_title.js";
+import "../../../../chunks/client.js";
 import { h as html } from "../../../../chunks/html.js";
 function ArrowCounterClockwise($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
@@ -1163,7 +1165,7 @@ function _page($$renderer, $$props) {
                 $$renderer3.push(`<!----> ${escape_html(policies_view_preview())}</span></button></div> `);
                 if (previewingId === policy.id) {
                   $$renderer3.push("<!--[0-->");
-                  $$renderer3.push(`<div class="prose prose-sm max-w-none text-[var(--foreground)] [&amp;_h1]:text-lg [&amp;_h1]:font-bold [&amp;_h1]:mb-2 [&amp;_h2]:text-base [&amp;_h2]:font-semibold [&amp;_h2]:mb-2 [&amp;_h3]:text-sm [&amp;_h3]:font-semibold [&amp;_h3]:mb-1 [&amp;_p]:text-sm [&amp;_p]:leading-relaxed [&amp;_p]:mb-2 [&amp;_ul]:text-sm [&amp;_ul]:ml-4 [&amp;_ul]:list-disc [&amp;_ol]:text-sm [&amp;_ol]:ml-4 [&amp;_ol]:list-decimal [&amp;_li]:mb-1 [&amp;_strong]:font-semibold [&amp;_hr]:border-[var(--border)] [&amp;_hr]:my-4">${html(marked(policy.content))}</div>`);
+                  $$renderer3.push(`<div class="prose prose-sm max-w-none text-[var(--foreground)] [&amp;_h1]:text-lg [&amp;_h1]:font-bold [&amp;_h1]:mb-2 [&amp;_h1]:text-[var(--foreground)] [&amp;_h2]:text-base [&amp;_h2]:font-semibold [&amp;_h2]:mb-2 [&amp;_h2]:text-[var(--foreground)] [&amp;_h3]:text-sm [&amp;_h3]:font-semibold [&amp;_h3]:mb-1 [&amp;_h3]:text-[var(--foreground)] [&amp;_h4]:text-[var(--foreground)] [&amp;_p]:text-sm [&amp;_p]:leading-relaxed [&amp;_p]:mb-2 [&amp;_ul]:text-sm [&amp;_ul]:ml-4 [&amp;_ul]:list-disc [&amp;_ol]:text-sm [&amp;_ol]:ml-4 [&amp;_ol]:list-decimal [&amp;_li]:mb-1 [&amp;_li]:text-[var(--foreground)] [&amp;_strong]:font-semibold [&amp;_strong]:text-[var(--foreground)] [&amp;_a]:text-[var(--brand)] [&amp;_hr]:border-[var(--border)] [&amp;_hr]:my-4 [&amp;_code]:text-[var(--foreground)] [&amp;_blockquote]:text-[var(--foreground-muted)] [&amp;_blockquote]:border-[var(--border)]">${html(DOMPurify.sanitize(marked(policy.content)))}</div>`);
                 } else {
                   $$renderer3.push("<!--[-1-->");
                   $$renderer3.push(`<pre class="font-mono text-xs leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">${escape_html(policy.content)}</pre>`);

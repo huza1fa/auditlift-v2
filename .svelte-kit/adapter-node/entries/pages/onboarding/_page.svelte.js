@@ -876,7 +876,7 @@ function Input($$renderer, $$props) {
         placeholder,
         required,
         disabled,
-        class: `w-full rounded-[var(--radius)] border px-3 py-2 text-sm text-[var(--foreground)] transition-colors placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--border-focus)] focus:outline-none disabled:opacity-50 ${stringify(error ? "border-[var(--danger)] focus:ring-[var(--danger)]" : "border-[var(--border)]")}`
+        class: `w-full rounded-[var(--radius)] border bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] transition-colors placeholder:text-[var(--foreground-muted)] focus:ring-2 focus:ring-[var(--border-focus)] focus:outline-none disabled:opacity-50 ${stringify(error ? "border-[var(--danger)] focus:ring-[var(--danger)]" : "border-[var(--border)]")}`
       },
       void 0,
       void 0,

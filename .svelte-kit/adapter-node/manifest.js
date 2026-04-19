@@ -10,7 +10,7 @@ return {
 	assets: new Set(["favicon.ico","robots.txt"]),
 	mimeTypes: {".txt":"text/plain"},
 	_: {
-		client: {start:"_app/immutable/entry/start.B5vInAZE.js",app:"_app/immutable/entry/app.DynXejwR.js",imports:["_app/immutable/entry/start.B5vInAZE.js","_app/immutable/chunks/BPbtIwII.js","_app/immutable/chunks/BpQeBFz6.js","_app/immutable/chunks/G6ebqmrI.js","_app/immutable/chunks/BIwpEWWY.js","_app/immutable/entry/app.DynXejwR.js","_app/immutable/chunks/-lbl0OOQ.js","_app/immutable/chunks/BpQeBFz6.js","_app/immutable/chunks/DL1dF8Co.js","_app/immutable/chunks/wva3lzuF.js","_app/immutable/chunks/C4-OglNa.js","_app/immutable/chunks/BIwpEWWY.js","_app/immutable/chunks/DDNgD1vj.js","_app/immutable/chunks/D7VKJyCS.js","_app/immutable/chunks/G6ebqmrI.js","_app/immutable/chunks/f_6DPdZv.js","_app/immutable/chunks/DdQ4hoYq.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.DTX5-d6C.js",app:"_app/immutable/entry/app.CwNcKvdp.js",imports:["_app/immutable/entry/start.DTX5-d6C.js","_app/immutable/chunks/lY-74J4r.js","_app/immutable/chunks/1oeAXw7e.js","_app/immutable/chunks/VMAnGNGo.js","_app/immutable/chunks/pVCgLvoe.js","_app/immutable/entry/app.CwNcKvdp.js","_app/immutable/chunks/-lbl0OOQ.js","_app/immutable/chunks/1oeAXw7e.js","_app/immutable/chunks/C6UkpnRT.js","_app/immutable/chunks/bwukILhv.js","_app/immutable/chunks/IeieXNp_.js","_app/immutable/chunks/pVCgLvoe.js","_app/immutable/chunks/D3gf1KUH.js","_app/immutable/chunks/9nS58d2P.js","_app/immutable/chunks/VMAnGNGo.js","_app/immutable/chunks/uAfJ0NmM.js","_app/immutable/chunks/VnUabZk2.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -38,7 +38,8 @@ return {
 			__memo(() => import('./nodes/23.js')),
 			__memo(() => import('./nodes/24.js')),
 			__memo(() => import('./nodes/25.js')),
-			__memo(() => import('./nodes/26.js'))
+			__memo(() => import('./nodes/26.js')),
+			__memo(() => import('./nodes/27.js'))
 		],
 		remotes: {
 			
@@ -255,6 +256,20 @@ return {
 				endpoint: __memo(() => import('./entries/endpoints/api/questionnaires/_id_/questions/_qid_/improve/_server.ts.js'))
 			},
 			{
+				id: "/api/questionnaires/[id]/reprocess",
+				pattern: /^\/api\/questionnaires\/([^/]+?)\/reprocess\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/questionnaires/_id_/reprocess/_server.ts.js'))
+			},
+			{
+				id: "/api/questionnaires/[id]/share",
+				pattern: /^\/api\/questionnaires\/([^/]+?)\/share\/?$/,
+				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/api/questionnaires/_id_/share/_server.ts.js'))
+			},
+			{
 				id: "/api/questionnaires/[id]/stream",
 				pattern: /^\/api\/questionnaires\/([^/]+?)\/stream\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
@@ -427,6 +442,13 @@ return {
 				pattern: /^\/settings\/team\/?$/,
 				params: [],
 				page: { layouts: [0,2,3,], errors: [1,,,], leaf: 17 },
+				endpoint: null
+			},
+			{
+				id: "/share/[token]",
+				pattern: /^\/share\/([^/]+?)\/?$/,
+				params: [{"name":"token","optional":false,"rest":false,"chained":false}],
+				page: { layouts: [0,], errors: [1,], leaf: 27 },
 				endpoint: null
 			},
 			{

@@ -1,6 +1,6 @@
 import { error, json } from "@sveltejs/kit";
 import { d as db, q as questionnaires, i as questionnaireQuestions, p as policies, c as controls } from "../../../../../chunks/index2.js";
-import { and, eq, asc, inArray } from "drizzle-orm";
+import { and, eq, asc, inArray, isNull } from "drizzle-orm";
 import { h as hasActiveAccess } from "../../../../../chunks/billing.js";
 const DELETE = async ({ locals, params }) => {
   if (!locals.session || !locals.organizationId) {
@@ -63,7 +63,9 @@ const GET = async ({ locals, params }) => {
       controlMap[c.id] = { code: c.code, title: c.title };
     }
   }
-  return json({ questionnaire, questions, policyMap, controlMap });
+  const orgPolicyRows = await db.select({ type: policies.type }).from(policies).where(and(eq(policies.organizationId, orgId), isNull(policies.archivedAt)));
+  const existingPolicyTypes = [...new Set(orgPolicyRows.map((p) => p.type))];
+  return json({ questionnaire, questions, policyMap, controlMap, existingPolicyTypes });
 };
 export {
   DELETE,

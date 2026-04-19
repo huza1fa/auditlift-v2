@@ -46,20 +46,38 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	}
 
 	// Stream status updates via polling the DB until terminal state or timeout
+	let intervalId: ReturnType<typeof setInterval> | null = null;
+	let closed = false;
+
+	function cleanup() {
+		if (intervalId !== null) {
+			clearInterval(intervalId);
+			intervalId = null;
+		}
+	}
+
 	const stream = new ReadableStream({
 		start(controller) {
-			let intervalId: ReturnType<typeof setInterval> | null = null;
 			let attempts = 0;
 			const MAX_ATTEMPTS = 45; // 90 seconds max at 2s interval
 
-			function cleanup() {
-				if (intervalId !== null) {
-					clearInterval(intervalId);
-					intervalId = null;
+			function safeClose() {
+				cleanup();
+				if (!closed) {
+					closed = true;
+					try {
+						controller.close();
+					} catch {
+						// Already closed — ignore
+					}
 				}
 			}
 
 			intervalId = setInterval(async () => {
+				if (closed) {
+					cleanup();
+					return;
+				}
 				attempts++;
 				try {
 					const [current] = await db
@@ -69,31 +87,29 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 						.limit(1);
 
 					if (!current) {
-						cleanup();
-						controller.close();
+						safeClose();
 						return;
 					}
 
-					controller.enqueue(encode({ status: current.status }));
+					if (!closed) {
+						controller.enqueue(encode({ status: current.status }));
+					}
 
 					if (
 						current.status === 'ready' ||
 						current.status === 'error' ||
 						attempts >= MAX_ATTEMPTS
 					) {
-						cleanup();
-						controller.close();
+						safeClose();
 					}
 				} catch {
-					cleanup();
-					controller.close();
+					safeClose();
 				}
 			}, 2000);
-
-			return cleanup;
 		},
 		cancel() {
-			// Cleanup is handled by the start() return function
+			closed = true;
+			cleanup();
 		}
 	});
 

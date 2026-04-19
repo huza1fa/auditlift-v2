@@ -4,6 +4,7 @@ import { g as getIconContext } from "../../../../../chunks/context.js";
 import { P as Plus } from "../../../../../chunks/Plus.js";
 import { T as Trash } from "../../../../../chunks/Trash.js";
 import { U as Users } from "../../../../../chunks/Users.js";
+import { W as Warning } from "../../../../../chunks/Warning.js";
 import { X } from "../../../../../chunks/X.js";
 import { C as Card } from "../../../../../chunks/Card.js";
 import { B as Button } from "../../../../../chunks/Button.js";
@@ -73,8 +74,10 @@ function Copy($$renderer, $$props) {
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let { data } = $$props;
-    const canInvite = data.currentUser.role === "owner" || data.currentUser.role === "admin";
+    const hasInviteRole = data.currentUser.role === "owner" || data.currentUser.role === "admin";
     const canManageRoles = data.currentUser.role === "owner" || data.currentUser.role === "admin";
+    let canInviteMore = data.canInviteMore;
+    const isTrialLimited = derived(() => data.memberLimit !== null);
     let showInviteModal = false;
     let inviteEmail = "";
     let inviteRole = "member";
@@ -116,6 +119,9 @@ function _page($$renderer, $$props) {
             createdAt: /* @__PURE__ */ new Date()
           }
         ];
+        if (data.memberLimit !== null) {
+          canInviteMore = data.members.length + data.pendingInvites.length < data.memberLimit;
+        }
       } catch {
         inviteError = "An error occurred. Please try again.";
       } finally {
@@ -161,15 +167,29 @@ function _page($$renderer, $$props) {
       }
     }
     $$renderer2.push(`<div class="space-y-6"><div class="flex items-center justify-between"><div><h1 class="text-2xl font-bold text-[var(--foreground)]">Team</h1> <p class="text-sm text-[var(--foreground-muted)]">Manage your organization team members and invitations</p></div> `);
-    if (canInvite) {
+    if (hasInviteRole) {
       $$renderer2.push("<!--[0-->");
-      Button($$renderer2, {
-        onclick: () => showInviteModal = true,
-        children: ($$renderer3) => {
-          Plus($$renderer3, { size: 16 });
-          $$renderer3.push(`<!----> Invite Member`);
-        }
-      });
+      if (canInviteMore) {
+        $$renderer2.push("<!--[0-->");
+        Button($$renderer2, {
+          onclick: () => showInviteModal = true,
+          children: ($$renderer3) => {
+            Plus($$renderer3, { size: 16 });
+            $$renderer3.push(`<!----> Invite Member`);
+          }
+        });
+      } else {
+        $$renderer2.push("<!--[-1-->");
+        $$renderer2.push(`<a href="/settings/billing">`);
+        Button($$renderer2, {
+          variant: "secondary",
+          children: ($$renderer3) => {
+            $$renderer3.push(`<!---->Upgrade to invite more`);
+          }
+        });
+        $$renderer2.push(`<!----></a>`);
+      }
+      $$renderer2.push(`<!--]-->`);
     } else {
       $$renderer2.push("<!--[-1-->");
     }
@@ -179,7 +199,23 @@ function _page($$renderer, $$props) {
       children: ($$renderer3) => {
         $$renderer3.push(`<div class="mb-4 flex items-center gap-3">`);
         Users($$renderer3, { size: 20, color: "var(--brand)" });
-        $$renderer3.push(`<!----> <h2 class="font-semibold text-[var(--foreground)]">Members (${escape_html(data.members.length)})</h2></div> `);
+        $$renderer3.push(`<!----> <h2 class="font-semibold text-[var(--foreground)]">Members (${escape_html(data.members.length)}`);
+        if (isTrialLimited()) {
+          $$renderer3.push("<!--[0-->");
+          $$renderer3.push(`/${escape_html(data.memberLimit)}`);
+        } else {
+          $$renderer3.push("<!--[-1-->");
+        }
+        $$renderer3.push(`<!--]-->)</h2></div> `);
+        if (isTrialLimited() && !canInviteMore) {
+          $$renderer3.push("<!--[0-->");
+          $$renderer3.push(`<div class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] bg-[var(--warning-light)] px-3 py-3">`);
+          Warning($$renderer3, { size: 16, color: "var(--warning)", class: "mt-0.5 shrink-0" });
+          $$renderer3.push(`<!----> <p class="text-xs leading-snug text-[var(--warning)]">Trial plans are limited to ${escape_html(data.memberLimit)} team members. <a href="/settings/billing" class="underline font-medium">Upgrade</a> for unlimited invites.</p></div>`);
+        } else {
+          $$renderer3.push("<!--[-1-->");
+        }
+        $$renderer3.push(`<!--]--> `);
         if (data.members.length === 0) {
           $$renderer3.push("<!--[0-->");
           $$renderer3.push(`<p class="text-sm text-[var(--foreground-muted)]">No team members yet.</p>`);
