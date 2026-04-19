@@ -29,7 +29,8 @@ export const nodes = [
 	() => import('./nodes/23'),
 	() => import('./nodes/24'),
 	() => import('./nodes/25'),
-	() => import('./nodes/26')
+	() => import('./nodes/26'),
+	() => import('./nodes/27')
 ];
 
 export const server_loads = [2];
@@ -56,6 +57,7 @@ export const dictionary = {
 		"/(app)/settings/activity": [~15,[2,3]],
 		"/(app)/settings/billing": [~16,[2,3]],
 		"/(app)/settings/team": [~17,[2,3]],
+		"/share/[token]": [~27],
 		"/(marketing)/terms": [24,[4]]
 	};
 

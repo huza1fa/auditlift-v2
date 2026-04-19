@@ -16,6 +16,8 @@ import { env } from '$env/dynamic/private';
 import { hasActivePaidAccess } from '$lib/server/billing';
 
 const TRIAL_QUESTION_LIMIT = 15;
+const BATCH_SIZE = 5; // Questions per API call
+const PARALLEL_BATCHES = 3; // Concurrent API calls
 
 const QuestionClassificationSchema = z.object({
 	domain: z.string(),
@@ -25,6 +27,10 @@ const QuestionClassificationSchema = z.object({
 	gapRemediation: z.string().nullable(),
 	mappedPolicyIds: z.array(z.string()),
 	mappedControlIds: z.array(z.string())
+});
+
+const BatchClassificationSchema = z.object({
+	results: z.array(QuestionClassificationSchema)
 });
 
 type QuestionClassification = z.infer<typeof QuestionClassificationSchema>;
@@ -115,6 +121,110 @@ Instructions:
 	});
 
 	return result.object;
+}
+
+/**
+ * Classify multiple questions in a single API call.
+ * Returns results in the same order as the input questions.
+ * Falls back to individual classification if batch fails.
+ */
+async function classifyQuestionBatch(
+	questions: Array<{ id: string; questionText: string }>,
+	orgName: string,
+	policyContext: ProcessingContext['policyContext'],
+	controlContext: ProcessingContext['controlContext']
+): Promise<Array<{ questionId: string; classification: QuestionClassification }>> {
+	if (questions.length === 0) return [];
+
+	// Single question — use the existing function
+	if (questions.length === 1) {
+		const classification = await classifyQuestion(
+			questions[0].questionText,
+			orgName,
+			policyContext,
+			controlContext
+		);
+		return [{ questionId: questions[0].id, classification }];
+	}
+
+	const openrouter = getOpenRouterClient();
+
+	const policiesList = policyContext
+		.map((p) => `- [${p.id}] ${p.title}: ${p.contentSnippet}`)
+		.join('\n');
+
+	const controlsList = controlContext
+		.map((c) => `- [${c.id}] ${c.code} ${c.title} (${c.category}): ${c.whatAuditorExpects}`)
+		.join('\n');
+
+	const hasOrgContext = policyContext.length > 0 || controlContext.length > 0;
+
+	const questionsList = questions
+		.map(
+			(q, i) =>
+				`<question index="${i}">${q.questionText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</question>`
+		)
+		.join('\n');
+
+	const prompt = `You are helping answer a security questionnaire on behalf of ${orgName}.
+
+${
+	hasOrgContext
+		? `Use the provided policies and controls as your primary source. Supplement with general industry-standard security practices when the provided context is incomplete.
+
+Available policies:
+${policiesList || '(none)'}
+
+Available controls:
+${controlsList || '(none)'}`
+		: `${orgName} has not yet generated policies or mapped controls. Draft reasonable answers based on industry-standard security practices (SOC 2, ISO 27001, NIST). Answers will be marked as low confidence.`
+}
+
+Classify and answer each of these ${questions.length} questions. Return a "results" array with exactly ${questions.length} items, one per question, in the same order.
+
+${questionsList}
+
+For each question return:
+- domain: one of access_control, data_security, incident_response, vendor_management, business_continuity, cryptography, physical_security, vulnerability_management, change_management, privacy, remote_work, ai_usage, data_retention, general, other
+- confidence: high | medium | low | gap
+- answer: draft answer (null only for gaps)
+- gapReason: why it can't be answered (null unless gap)
+- gapRemediation: action to fix the gap (null unless gap)
+- mappedPolicyIds: policy IDs used (from list above)
+- mappedControlIds: control IDs used (from list above)`;
+
+	try {
+		const result = await generateObject({
+			model: openrouter('openai/gpt-4o-mini'),
+			schema: BatchClassificationSchema,
+			prompt
+		});
+
+		const results = result.object.results;
+
+		// Ensure we got the right number of results
+		if (results.length === questions.length) {
+			return questions.map((q, i) => ({
+				questionId: q.id,
+				classification: results[i]
+			}));
+		}
+
+		// Mismatch — fall back to individual processing
+		console.warn(
+			`[questionnaire-processor] Batch returned ${results.length} results for ${questions.length} questions, falling back to individual`
+		);
+	} catch (batchErr) {
+		console.warn('[questionnaire-processor] Batch classification failed, falling back:', batchErr);
+	}
+
+	// Fallback: process individually
+	const fallbackResults: Array<{ questionId: string; classification: QuestionClassification }> = [];
+	for (const q of questions) {
+		const classification = await classifyQuestion(q.questionText, orgName, policyContext, controlContext);
+		fallbackResults.push({ questionId: q.id, classification });
+	}
+	return fallbackResults;
 }
 
 /**
@@ -285,52 +395,73 @@ export async function processQuestionnaire(
 			: Math.min(TRIAL_QUESTION_LIMIT, questions.length);
 		const questionsToProcess = questions.slice(0, processLimit);
 
-		// 4. Process each question
-		for (const question of questionsToProcess) {
-			try {
-				const classification = await classifyQuestion(
-					question.questionText,
-					orgName,
-					policyContext,
-					controlContext
-				);
+		// 4. Process questions in batches with parallel execution
+		const validPolicyIds = new Set(policyContext.map((p) => p.id));
+		const validControlIds = new Set(controlContext.map((c) => c.id));
 
-				// Validate AI-returned IDs against known IDs — the model sometimes
-				// returns control codes (e.g. "5.2") instead of UUIDs.
-				const validPolicyIds = new Set(policyContext.map((p) => p.id));
-				const validControlIds = new Set(controlContext.map((c) => c.id));
-				const safePolicyIds = classification.mappedPolicyIds.filter((id) => validPolicyIds.has(id));
-				const safeControlIds = classification.mappedControlIds.filter((id) =>
-					validControlIds.has(id)
-				);
+		// Split into batches of BATCH_SIZE
+		const batches: Array<typeof questionsToProcess> = [];
+		for (let i = 0; i < questionsToProcess.length; i += BATCH_SIZE) {
+			batches.push(questionsToProcess.slice(i, i + BATCH_SIZE));
+		}
 
-				await db
-					.update(questionnaireQuestions)
-					.set({
-						domain: classification.domain,
-						confidence: classification.confidence,
-						generatedAnswer: classification.answer,
-						gapReason: classification.gapReason,
-						gapRemediation: classification.gapRemediation,
-						mappedPolicyIds: safePolicyIds,
-						mappedControlIds: safeControlIds,
-						updatedAt: new Date()
-					})
-					.where(eq(questionnaireQuestions.id, question.id));
-			} catch (questionErr) {
-				console.error(
-					`[questionnaire-processor] Failed to process question ${question.id}:`,
-					questionErr
-				);
-				// Mark as gap on failure so it's still accounted for
-				await db
-					.update(questionnaireQuestions)
-					.set({
-						confidence: 'gap',
-						gapReason: 'Processing failed due to an internal error.',
-						updatedAt: new Date()
-					})
-					.where(eq(questionnaireQuestions.id, question.id));
+		// Process PARALLEL_BATCHES at a time
+		for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
+			const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES);
+
+			const batchResults = await Promise.allSettled(
+				parallelBatches.map((batch) =>
+					classifyQuestionBatch(
+						batch.map((q) => ({ id: q.id, questionText: q.questionText })),
+						orgName,
+						policyContext,
+						controlContext
+					)
+				)
+			);
+
+			// Persist results from all parallel batches
+			for (const result of batchResults) {
+				if (result.status === 'fulfilled') {
+					for (const { questionId, classification } of result.value) {
+						const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
+							validPolicyIds.has(id)
+						);
+						const safeControlIds = classification.mappedControlIds.filter((id) =>
+							validControlIds.has(id)
+						);
+
+						await db
+							.update(questionnaireQuestions)
+							.set({
+								domain: classification.domain,
+								confidence: classification.confidence,
+								generatedAnswer: classification.answer,
+								gapReason: classification.gapReason,
+								gapRemediation: classification.gapRemediation,
+								mappedPolicyIds: safePolicyIds,
+								mappedControlIds: safeControlIds,
+								updatedAt: new Date()
+							})
+							.where(eq(questionnaireQuestions.id, questionId));
+					}
+				} else {
+					console.error('[questionnaire-processor] Batch failed:', result.reason);
+					// Mark all questions in the failed batch as gaps
+					const failedBatch = parallelBatches[batchResults.indexOf(result)];
+					if (failedBatch) {
+						for (const question of failedBatch) {
+							await db
+								.update(questionnaireQuestions)
+								.set({
+									confidence: 'gap',
+									gapReason: 'Processing failed due to an internal error.',
+									updatedAt: new Date()
+								})
+								.where(eq(questionnaireQuestions.id, question.id));
+						}
+					}
+				}
 			}
 		}
 
@@ -415,59 +546,79 @@ export async function reprocessQuestionnaire(
 			: Math.min(TRIAL_QUESTION_LIMIT, eligibleQuestions.length);
 		const questionsToProcess = eligibleQuestions.slice(0, processLimit);
 
-		// 6. Reclassify each eligible question
-		for (const question of questionsToProcess) {
-			try {
-				const classification = await classifyQuestion(
-					question.questionText,
-					orgName,
-					policyContext,
-					controlContext
-				);
+		// 6. Reclassify eligible questions in batches with parallel execution
+		const validPolicyIds = new Set(policyContext.map((p) => p.id));
+		const validControlIds = new Set(controlContext.map((c) => c.id));
 
-				const validPolicyIds = new Set(policyContext.map((p) => p.id));
-				const validControlIds = new Set(controlContext.map((c) => c.id));
-				const safePolicyIds = classification.mappedPolicyIds.filter((id) => validPolicyIds.has(id));
-				const safeControlIds = classification.mappedControlIds.filter((id) =>
-					validControlIds.has(id)
-				);
+		const batches: Array<typeof questionsToProcess> = [];
+		for (let i = 0; i < questionsToProcess.length; i += BATCH_SIZE) {
+			batches.push(questionsToProcess.slice(i, i + BATCH_SIZE));
+		}
 
-				await db
-					.update(questionnaireQuestions)
-					.set({
-						domain: classification.domain,
-						confidence: classification.confidence,
-						generatedAnswer: classification.answer,
-						gapReason: classification.gapReason,
-						gapRemediation: classification.gapRemediation,
-						mappedPolicyIds: safePolicyIds,
-						mappedControlIds: safeControlIds,
-						updatedAt: new Date()
-					})
-					.where(
-						and(
-							eq(questionnaireQuestions.id, question.id),
-							eq(questionnaireQuestions.organizationId, organizationId)
-						)
-					);
-			} catch (questionErr) {
-				console.error(
-					`[questionnaire-processor] reprocess: failed on question ${question.id}:`,
-					questionErr
-				);
-				await db
-					.update(questionnaireQuestions)
-					.set({
-						confidence: 'gap',
-						gapReason: 'Reprocessing failed due to an internal error.',
-						updatedAt: new Date()
-					})
-					.where(
-						and(
-							eq(questionnaireQuestions.id, question.id),
-							eq(questionnaireQuestions.organizationId, organizationId)
-						)
-					);
+		for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
+			const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES);
+
+			const batchResults = await Promise.allSettled(
+				parallelBatches.map((batch) =>
+					classifyQuestionBatch(
+						batch.map((q) => ({ id: q.id, questionText: q.questionText })),
+						orgName,
+						policyContext,
+						controlContext
+					)
+				)
+			);
+
+			for (const result of batchResults) {
+				if (result.status === 'fulfilled') {
+					for (const { questionId, classification } of result.value) {
+						const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
+							validPolicyIds.has(id)
+						);
+						const safeControlIds = classification.mappedControlIds.filter((id) =>
+							validControlIds.has(id)
+						);
+
+						await db
+							.update(questionnaireQuestions)
+							.set({
+								domain: classification.domain,
+								confidence: classification.confidence,
+								generatedAnswer: classification.answer,
+								gapReason: classification.gapReason,
+								gapRemediation: classification.gapRemediation,
+								mappedPolicyIds: safePolicyIds,
+								mappedControlIds: safeControlIds,
+								updatedAt: new Date()
+							})
+							.where(
+								and(
+									eq(questionnaireQuestions.id, questionId),
+									eq(questionnaireQuestions.organizationId, organizationId)
+								)
+							);
+					}
+				} else {
+					console.error('[questionnaire-processor] reprocess batch failed:', result.reason);
+					const failedBatch = parallelBatches[batchResults.indexOf(result)];
+					if (failedBatch) {
+						for (const question of failedBatch) {
+							await db
+								.update(questionnaireQuestions)
+								.set({
+									confidence: 'gap',
+									gapReason: 'Reprocessing failed due to an internal error.',
+									updatedAt: new Date()
+								})
+								.where(
+									and(
+										eq(questionnaireQuestions.id, question.id),
+										eq(questionnaireQuestions.organizationId, organizationId)
+									)
+								);
+						}
+					}
+				}
 			}
 		}
 
