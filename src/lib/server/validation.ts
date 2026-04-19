@@ -60,7 +60,7 @@ export const ImproveAnswerSchema = z.object({
 export const SystemDescriptionSchema = z.object({
 	productDescription: z.string().max(500).optional().default(''),
 	dataFlowType: z.enum(['cloud-saas', 'on-prem', 'hybrid', 'api-only', '']).optional().default(''),
-	dataStorageProviders: z.array(z.string()).optional().default([]),
+	dataStorageProviders: z.array(z.string().max(100)).max(20).optional().default([]),
 	dataStorageRegion: z.string().max(100).optional().default(''),
 	endpointManagement: z
 		.enum(['mdm', 'compliance-tool', 'manual', 'none', ''])
