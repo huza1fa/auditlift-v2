@@ -29,6 +29,19 @@ const QuestionClassificationSchema = z.object({
 
 type QuestionClassification = z.infer<typeof QuestionClassificationSchema>;
 
+interface ProcessingContext {
+	orgName: string;
+	isPaid: boolean;
+	policyContext: Array<{ id: string; title: string; contentSnippet: string }>;
+	controlContext: Array<{
+		id: string;
+		code: string;
+		title: string;
+		category: string;
+		whatAuditorExpects: string;
+	}>;
+}
+
 function getOpenRouterClient() {
 	const apiKey = env.OPEN_ROUTER_API_KEY;
 	if (!apiKey) throw new Error('OPEN_ROUTER_API_KEY is not configured');
@@ -104,6 +117,139 @@ Instructions:
 	return result.object;
 }
 
+/**
+ * Loads all org-level context needed for classifying questions: org name,
+ * paid status, policy snippets, and control list from enrolled frameworks.
+ */
+async function loadProcessingContext(organizationId: string): Promise<ProcessingContext> {
+	const [org] = await db
+		.select()
+		.from(organizations)
+		.where(eq(organizations.id, organizationId))
+		.limit(1);
+
+	const [subscription] = await db
+		.select()
+		.from(subscriptions)
+		.where(eq(subscriptions.organizationId, organizationId))
+		.limit(1);
+
+	const orgName = org?.name ?? 'the organization';
+	const isPaid = hasActivePaidAccess(subscription ?? null);
+
+	const orgPolicies = await db
+		.select({
+			id: policies.id,
+			title: policies.title,
+			type: policies.type,
+			content: policies.content,
+			archivedAt: policies.archivedAt
+		})
+		.from(policies)
+		.where(eq(policies.organizationId, organizationId));
+
+	const policyContext = orgPolicies
+		.filter((p) => p.archivedAt === null)
+		.map((p) => ({
+			id: p.id,
+			title: p.title,
+			contentSnippet: p.content.slice(0, 500)
+		}));
+
+	const orgFrameworkRows = await db
+		.select({ frameworkId: organizationFrameworks.frameworkId })
+		.from(organizationFrameworks)
+		.where(eq(organizationFrameworks.organizationId, organizationId));
+
+	const frameworkIds = orgFrameworkRows.map((r) => r.frameworkId);
+
+	const orgControls =
+		frameworkIds.length > 0
+			? await db
+					.select({
+						id: controls.id,
+						code: controls.code,
+						title: controls.title,
+						category: controls.category,
+						whatAuditorExpects: controls.whatAuditorExpects
+					})
+					.from(controls)
+					.where(inArray(controls.frameworkId, frameworkIds))
+			: [];
+
+	const controlContext = orgControls.map((c) => ({
+		id: c.id,
+		code: c.code,
+		title: c.title,
+		category: c.category,
+		whatAuditorExpects: c.whatAuditorExpects
+	}));
+
+	return { orgName, isPaid, policyContext, controlContext };
+}
+
+/**
+ * Re-fetches all questions for the questionnaire, computes summary stats
+ * (high/medium/low/gap counts and deal readiness score), and writes them
+ * back to the questionnaires row. The processedCount parameter is used as
+ * the denominator for the deal readiness score — it should equal the number
+ * of questions that were actually sent to the AI (respecting trial limits).
+ */
+async function computeAndSaveStats(
+	questionnaireId: string,
+	organizationId: string,
+	processedCount: number
+): Promise<void> {
+	const processedQuestions = await db
+		.select({ confidence: questionnaireQuestions.confidence })
+		.from(questionnaireQuestions)
+		.where(
+			and(
+				eq(questionnaireQuestions.questionnaireId, questionnaireId),
+				eq(questionnaireQuestions.organizationId, organizationId)
+			)
+		);
+
+	const totalQuestions = processedQuestions.length;
+	let highCount = 0;
+	let mediumCount = 0;
+	let lowCount = 0;
+	let gapCount = 0;
+
+	for (const q of processedQuestions) {
+		if (q.confidence === 'high') highCount++;
+		else if (q.confidence === 'medium') mediumCount++;
+		else if (q.confidence === 'low') lowCount++;
+		else if (q.confidence === 'gap') gapCount++;
+	}
+
+	const answeredCount = highCount + mediumCount + lowCount;
+
+	const dealReadinessScore =
+		processedCount > 0
+			? Math.min(
+					100,
+					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / processedCount)
+				)
+			: 0;
+
+	await db
+		.update(questionnaires)
+		.set({
+			status: 'ready',
+			totalQuestions,
+			answeredCount,
+			gapCount,
+			highCount,
+			mediumCount,
+			lowCount,
+			dealReadinessScore,
+			errorMessage: null,
+			updatedAt: new Date()
+		})
+		.where(eq(questionnaires.id, questionnaireId));
+}
+
 export async function processQuestionnaire(
 	questionnaireId: string,
 	organizationId: string
@@ -129,21 +275,9 @@ export async function processQuestionnaire(
 			return;
 		}
 
-		// 2. Load org details (for name) and subscription
-		const [org] = await db
-			.select()
-			.from(organizations)
-			.where(eq(organizations.id, organizationId))
-			.limit(1);
-
-		const [subscription] = await db
-			.select()
-			.from(subscriptions)
-			.where(eq(subscriptions.organizationId, organizationId))
-			.limit(1);
-
-		const orgName = org?.name ?? 'the organization';
-		const isPaid = hasActivePaidAccess(subscription ?? null);
+		// 2. Load org context (name, subscription, policies, controls)
+		const { orgName, isPaid, policyContext, controlContext } =
+			await loadProcessingContext(organizationId);
 
 		// 3. Determine how many questions to process
 		const processLimit = isPaid
@@ -151,57 +285,7 @@ export async function processQuestionnaire(
 			: Math.min(TRIAL_QUESTION_LIMIT, questions.length);
 		const questionsToProcess = questions.slice(0, processLimit);
 
-		// 4. Load org's policies (first 2000 chars of content)
-		const orgPolicies = await db
-			.select({
-				id: policies.id,
-				title: policies.title,
-				type: policies.type,
-				content: policies.content,
-				archivedAt: policies.archivedAt
-			})
-			.from(policies)
-			.where(eq(policies.organizationId, organizationId));
-
-		const policyContext = orgPolicies
-			.filter((p) => p.archivedAt === null)
-			.map((p) => ({
-				id: p.id,
-				title: p.title,
-				contentSnippet: p.content.slice(0, 500)
-			}));
-
-		// 5. Load org's controls via their frameworks
-		const orgFrameworkRows = await db
-			.select({ frameworkId: organizationFrameworks.frameworkId })
-			.from(organizationFrameworks)
-			.where(eq(organizationFrameworks.organizationId, organizationId));
-
-		const frameworkIds = orgFrameworkRows.map((r) => r.frameworkId);
-
-		const orgControls =
-			frameworkIds.length > 0
-				? await db
-						.select({
-							id: controls.id,
-							code: controls.code,
-							title: controls.title,
-							category: controls.category,
-							whatAuditorExpects: controls.whatAuditorExpects
-						})
-						.from(controls)
-						.where(inArray(controls.frameworkId, frameworkIds))
-				: [];
-
-		const controlContext = orgControls.map((c) => ({
-			id: c.id,
-			code: c.code,
-			title: c.title,
-			category: c.category,
-			whatAuditorExpects: c.whatAuditorExpects
-		}));
-
-		// 6. Process each question
+		// 4. Process each question
 		for (const question of questionsToProcess) {
 			try {
 				const classification = await classifyQuestion(
@@ -250,60 +334,148 @@ export async function processQuestionnaire(
 			}
 		}
 
-		// 7. Re-fetch all processed questions to compute summary stats
-		const processedQuestions = await db
-			.select({
-				confidence: questionnaireQuestions.confidence
+		// 5. Compute and persist summary stats
+		await computeAndSaveStats(questionnaireId, organizationId, processLimit);
+	} catch (err) {
+		console.error('[questionnaire-processor] Fatal error:', err);
+		await db
+			.update(questionnaires)
+			.set({
+				status: 'error',
+				errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
+				updatedAt: new Date()
 			})
+			.where(eq(questionnaires.id, questionnaireId));
+	}
+}
+
+/**
+ * Re-runs AI classification for all questions in a questionnaire that:
+ * - Have NOT been edited by the user (userEditedAnswer IS NULL)
+ * - Have a confidence of 'gap', 'low', or 'medium' (skips 'high' and unprocessed)
+ *
+ * The questionnaire status is set to 'processing' at the start and 'ready'
+ * (or 'error') at the end. Summary stats are recomputed after all updates.
+ */
+export async function reprocessQuestionnaire(
+	questionnaireId: string,
+	organizationId: string
+): Promise<void> {
+	try {
+		// 1. Mark as processing
+		await db
+			.update(questionnaires)
+			.set({ status: 'processing', updatedAt: new Date() })
+			.where(
+				and(
+					eq(questionnaires.id, questionnaireId),
+					eq(questionnaires.organizationId, organizationId)
+				)
+			);
+
+		// 2. Load all questions for this questionnaire scoped to org
+		const allQuestions = await db
+			.select()
 			.from(questionnaireQuestions)
 			.where(
 				and(
 					eq(questionnaireQuestions.questionnaireId, questionnaireId),
 					eq(questionnaireQuestions.organizationId, organizationId)
 				)
-			);
+			)
+			.orderBy(questionnaireQuestions.order);
 
-		const totalQuestions = processedQuestions.length;
-		let highCount = 0;
-		let mediumCount = 0;
-		let lowCount = 0;
-		let gapCount = 0;
+		// 3. Filter to only eligible questions:
+		//    - No user edit (userEditedAnswer IS NULL)
+		//    - Confidence is gap, low, or medium (not high, not unprocessed/null)
+		const REPROCESS_CONFIDENCES = new Set(['gap', 'low', 'medium']);
+		const eligibleQuestions = allQuestions.filter(
+			(q) =>
+				q.userEditedAnswer === null &&
+				q.confidence !== null &&
+				REPROCESS_CONFIDENCES.has(q.confidence)
+		);
 
-		for (const q of processedQuestions) {
-			if (q.confidence === 'high') highCount++;
-			else if (q.confidence === 'medium') mediumCount++;
-			else if (q.confidence === 'low') lowCount++;
-			else if (q.confidence === 'gap') gapCount++;
+		if (eligibleQuestions.length === 0) {
+			// Nothing to reprocess — mark ready immediately
+			await db
+				.update(questionnaires)
+				.set({ status: 'ready', updatedAt: new Date() })
+				.where(eq(questionnaires.id, questionnaireId));
+			return;
 		}
 
-		const answeredCount = highCount + mediumCount + lowCount;
-		const totalProcessed = processLimit;
+		// 4. Load processing context
+		const { orgName, isPaid, policyContext, controlContext } =
+			await loadProcessingContext(organizationId);
 
-		const dealReadinessScore =
-			totalProcessed > 0
-				? Math.min(
-						100,
-						Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / totalProcessed)
-					)
-				: 0;
+		// 5. Apply trial question limit to the eligible set
+		const processLimit = isPaid
+			? eligibleQuestions.length
+			: Math.min(TRIAL_QUESTION_LIMIT, eligibleQuestions.length);
+		const questionsToProcess = eligibleQuestions.slice(0, processLimit);
 
-		await db
-			.update(questionnaires)
-			.set({
-				status: 'ready',
-				totalQuestions,
-				answeredCount,
-				gapCount,
-				highCount,
-				mediumCount,
-				lowCount,
-				dealReadinessScore,
-				errorMessage: null,
-				updatedAt: new Date()
-			})
-			.where(eq(questionnaires.id, questionnaireId));
+		// 6. Reclassify each eligible question
+		for (const question of questionsToProcess) {
+			try {
+				const classification = await classifyQuestion(
+					question.questionText,
+					orgName,
+					policyContext,
+					controlContext
+				);
+
+				const validPolicyIds = new Set(policyContext.map((p) => p.id));
+				const validControlIds = new Set(controlContext.map((c) => c.id));
+				const safePolicyIds = classification.mappedPolicyIds.filter((id) => validPolicyIds.has(id));
+				const safeControlIds = classification.mappedControlIds.filter((id) =>
+					validControlIds.has(id)
+				);
+
+				await db
+					.update(questionnaireQuestions)
+					.set({
+						domain: classification.domain,
+						confidence: classification.confidence,
+						generatedAnswer: classification.answer,
+						gapReason: classification.gapReason,
+						gapRemediation: classification.gapRemediation,
+						mappedPolicyIds: safePolicyIds,
+						mappedControlIds: safeControlIds,
+						updatedAt: new Date()
+					})
+					.where(
+						and(
+							eq(questionnaireQuestions.id, question.id),
+							eq(questionnaireQuestions.organizationId, organizationId)
+						)
+					);
+			} catch (questionErr) {
+				console.error(
+					`[questionnaire-processor] reprocess: failed on question ${question.id}:`,
+					questionErr
+				);
+				await db
+					.update(questionnaireQuestions)
+					.set({
+						confidence: 'gap',
+						gapReason: 'Reprocessing failed due to an internal error.',
+						updatedAt: new Date()
+					})
+					.where(
+						and(
+							eq(questionnaireQuestions.id, question.id),
+							eq(questionnaireQuestions.organizationId, organizationId)
+						)
+					);
+			}
+		}
+
+		// 7. Recompute summary stats across all questions (not just reprocessed ones)
+		//    Use total all-question count as denominator to keep score consistent
+		await computeAndSaveStats(questionnaireId, organizationId, allQuestions.length);
 	} catch (err) {
-		console.error('[questionnaire-processor] Fatal error:', err);
+		console.error('[questionnaire-processor] reprocess fatal error:', err);
 		await db
 			.update(questionnaires)
 			.set({

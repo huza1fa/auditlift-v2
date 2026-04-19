@@ -16,12 +16,14 @@
 		Code
 	} from 'phosphor-svelte';
 	import { marked } from 'marked';
+	import DOMPurify from 'dompurify';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { POLICY_DESCRIPTIONS } from '$lib/policy-descriptions';
+	import { page } from '$app/state';
 
 	// ── Types ────────────────────────────────────────────────────────────────
 	type Policy = (typeof data.policies)[0];
@@ -104,6 +106,17 @@
 			]
 		}
 	];
+
+	// ── Pre-select policy type from URL param (e.g. /policies?generate=access-control-policy) ──
+	$effect(() => {
+		const generateParam = page.url.searchParams.get('generate');
+		if (generateParam) {
+			const allTypes = policyGroups.flatMap((g) => g.items.map((i) => i.value));
+			if (allTypes.includes(generateParam)) {
+				selectedType = generateParam;
+			}
+		}
+	});
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	function formatDate(date: Date | string | null): string {
@@ -556,8 +569,8 @@
 									</button>
 								</div>
 								{#if previewingId === policy.id}
-									<div class="prose prose-sm max-w-none text-[var(--foreground)] [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_ul]:text-sm [&_ul]:ml-4 [&_ul]:list-disc [&_ol]:text-sm [&_ol]:ml-4 [&_ol]:list-decimal [&_li]:mb-1 [&_strong]:font-semibold [&_hr]:border-[var(--border)] [&_hr]:my-4">
-										{@html marked(policy.content)}
+									<div class="prose prose-sm max-w-none text-[var(--foreground)] [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h1]:text-[var(--foreground)] [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h2]:text-[var(--foreground)] [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_h3]:text-[var(--foreground)] [&_h4]:text-[var(--foreground)] [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_ul]:text-sm [&_ul]:ml-4 [&_ul]:list-disc [&_ol]:text-sm [&_ol]:ml-4 [&_ol]:list-decimal [&_li]:mb-1 [&_li]:text-[var(--foreground)] [&_strong]:font-semibold [&_strong]:text-[var(--foreground)] [&_a]:text-[var(--brand)] [&_hr]:border-[var(--border)] [&_hr]:my-4 [&_code]:text-[var(--foreground)] [&_blockquote]:text-[var(--foreground-muted)] [&_blockquote]:border-[var(--border)]">
+										{@html DOMPurify.sanitize(marked(policy.content) as string)}
 									</div>
 								{:else}
 									<pre

@@ -14,7 +14,10 @@
 		ShieldCheck,
 		ListChecks,
 		Sparkle,
-		Copy
+		Copy,
+		ArrowClockwise,
+		ShareNetwork,
+		Link as LinkIcon
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -22,6 +25,7 @@
 	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { page } from '$app/state';
+	import { getSuggestedPolicyType, getPolicyTitle } from '$lib/domain-policy-map';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type Confidence = 'high' | 'medium' | 'low' | 'gap' | null;
@@ -35,6 +39,7 @@
 		answeredCount: number;
 		gapCount: number;
 		dealReadinessScore: number | null;
+		shareToken?: string | null;
 	}
 
 	interface Question {
@@ -58,6 +63,7 @@
 		questions: Question[];
 		policyMap: Record<string, string>;
 		controlMap: Record<string, { code: string; title: string }>;
+		existingPolicyTypes?: string[];
 	}
 
 	interface FrameworkCoverage {
@@ -97,6 +103,11 @@
 	let refinementPrompt = $state('');
 	let improving = $state(false);
 	let improveError = $state('');
+	let reprocessing = $state(false);
+	let shareToken = $state<string | null>(null);
+	let sharing = $state(false);
+	let shareCopied = $state(false);
+	let existingPolicyTypes = $state<string[]>([]);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	const selectedQuestion = $derived(questions.find((q) => q.id === selectedQuestionId) ?? null);
@@ -245,6 +256,8 @@
 			questions = json.questions ?? [];
 			policyMap = json.policyMap ?? {};
 			controlMap = json.controlMap ?? {};
+			existingPolicyTypes = json.existingPolicyTypes ?? [];
+			shareToken = json.questionnaire.shareToken ?? null;
 
 			// Auto-select first question
 			if (!selectedQuestionId && questions.length > 0) {
@@ -378,6 +391,54 @@
 		} finally {
 			exporting = false;
 		}
+	}
+
+	// ── Reprocess ─────────────────────────────────────────────────────────────
+	async function handleReprocess() {
+		reprocessing = true;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/reprocess`, { method: 'POST' });
+			if (!res.ok) {
+				const json = await res.json().catch(() => ({}));
+				toastError((json as { message?: string }).message ?? 'Failed to update answers.');
+				return;
+			}
+			if (questionnaire) questionnaire.status = 'processing';
+			openSSE(id);
+			toastSuccess('Updating answers with latest policies...');
+		} catch {
+			toastError('Failed to start reprocessing.');
+		} finally {
+			reprocessing = false;
+		}
+	}
+
+	// ── Share ─────────────────────────────────────────────────────────────────
+	async function toggleShare() {
+		sharing = true;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/share`, { method: 'POST' });
+			if (!res.ok) {
+				const json = await res.json().catch(() => ({}));
+				toastError((json as { message?: string }).message ?? 'Failed to toggle sharing.');
+				return;
+			}
+			const result = await res.json();
+			shareToken = result.shareToken;
+			toastSuccess(shareToken ? 'Sharing enabled' : 'Sharing disabled');
+		} catch {
+			toastError('Failed to toggle sharing.');
+		} finally {
+			sharing = false;
+		}
+	}
+
+	async function copyShareLink() {
+		if (!shareToken) return;
+		const url = `${window.location.origin}/share/${shareToken}`;
+		await navigator.clipboard.writeText(url);
+		shareCopied = true;
+		setTimeout(() => (shareCopied = false), 2000);
 	}
 
 	// ── Effects ───────────────────────────────────────────────────────────────
@@ -636,8 +697,54 @@
 				</div>
 			</div>
 
-			<!-- Export button -->
-			<div class="shrink-0">
+			<!-- Action buttons -->
+			<div class="flex shrink-0 flex-wrap items-center gap-2">
+				<!-- Update answers button -->
+				{#if questionnaire.status === 'ready' && (gapCount > 0 || lowCount > 0 || mediumCount > 0)}
+					<Button
+						variant="secondary"
+						onclick={handleReprocess}
+						disabled={reprocessing}
+					>
+						{#if reprocessing}
+							<Spinner size={14} class="animate-spin" />
+						{:else}
+							<ArrowClockwise size={14} />
+						{/if}
+						Update answers
+					</Button>
+				{/if}
+
+				<!-- Share button -->
+				{#if data.hasActivePaidAccess && questionnaire.status === 'ready'}
+					{#if shareToken}
+						<div class="flex items-center gap-1">
+							<Button variant="secondary" onclick={copyShareLink}>
+								{#if shareCopied}
+									<CheckCircle size={14} color="var(--success)" />
+									Copied
+								{:else}
+									<LinkIcon size={14} />
+									Copy link
+								{/if}
+							</Button>
+							<Button variant="ghost" onclick={toggleShare} disabled={sharing}>
+								<XCircle size={14} />
+							</Button>
+						</div>
+					{:else}
+						<Button variant="secondary" onclick={toggleShare} disabled={sharing}>
+							{#if sharing}
+								<Spinner size={14} class="animate-spin" />
+							{:else}
+								<ShareNetwork size={14} />
+							{/if}
+							Share
+						</Button>
+					{/if}
+				{/if}
+
+				<!-- Export button -->
 				{#if data.hasActivePaidAccess}
 					<Button
 						variant="secondary"
@@ -866,6 +973,19 @@
 									</p>
 								</div>
 
+								<!-- Confidence upgrade hint -->
+								{#if (selectedQuestion.confidence === 'medium' || selectedQuestion.confidence === 'low') && getSuggestedPolicyType(selectedQuestion.domain)}
+									{@const upgradeType = getSuggestedPolicyType(selectedQuestion.domain)!}
+									{#if !existingPolicyTypes.includes(upgradeType)}
+										<div class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--brand)] bg-[var(--brand-light)] px-3 py-2.5">
+											<Sparkle size={14} color="var(--brand)" class="mt-0.5 shrink-0" />
+											<p class="text-xs leading-snug text-[var(--foreground-muted)]">
+												Generate a <a href="/policies?generate={upgradeType}" class="font-medium text-[var(--brand)] hover:underline">{getPolicyTitle(upgradeType)}</a> to potentially upgrade this answer to High confidence.
+											</p>
+										</div>
+									{/if}
+								{/if}
+
 								<!-- Source policies -->
 								{#if sourcePolicies.length > 0}
 									<div class="mb-4">
@@ -1020,7 +1140,7 @@
 								</div>
 
 								{#if selectedQuestion.gapRemediation}
-									{@const link = remediationLink(selectedQuestion.gapRemediation)}
+									{@const suggestedType = getSuggestedPolicyType(selectedQuestion.domain)}
 									<div class="rounded-[var(--radius-lg)] border border-[var(--border)] p-4">
 										<p class="mb-2 text-xs font-semibold text-[var(--foreground-muted)] uppercase">
 											{m.questionnaires_gap_remediation_label()}
@@ -1028,16 +1148,26 @@
 										<p class="mb-4 text-sm leading-relaxed text-[var(--foreground)]">
 											{selectedQuestion.gapRemediation}
 										</p>
-										{#if link}
-											{@const LinkIcon = remediationLinkIcon(link)}
-											<a href={link}>
-												<Button size="sm" variant="secondary">
-													<LinkIcon size={14} />
-													{remediationLinkLabel(link)}
-													<ArrowRight size={12} />
-												</Button>
-											</a>
-										{/if}
+										<div class="flex flex-wrap gap-2">
+											{#if suggestedType}
+												<a href="/policies?generate={suggestedType}">
+													<Button size="sm" variant="secondary">
+														<FileText size={14} />
+														Generate {getPolicyTitle(suggestedType)}
+														<ArrowRight size={12} />
+													</Button>
+												</a>
+											{/if}
+											{#if gapControls.length > 0}
+												<a href="/controls/{gapControls[0].id}">
+													<Button size="sm" variant="secondary">
+														<FolderOpen size={14} />
+														Upload evidence for {gapControls[0].code}
+														<ArrowRight size={12} />
+													</Button>
+												</a>
+											{/if}
+										</div>
 									</div>
 								{/if}
 
