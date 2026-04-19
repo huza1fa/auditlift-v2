@@ -93,6 +93,12 @@
 	"/api/questionnaires/[id]/questions/[qid]/improve": [
 		"src/routes/api/questionnaires/[id]/questions/[qid]/improve/+server.ts"
 	],
+	"/api/questionnaires/[id]/reprocess": [
+		"src/routes/api/questionnaires/[id]/reprocess/+server.ts"
+	],
+	"/api/questionnaires/[id]/share": [
+		"src/routes/api/questionnaires/[id]/share/+server.ts"
+	],
 	"/api/questionnaires/[id]/stream": [
 		"src/routes/api/questionnaires/[id]/stream/+server.ts"
 	],
@@ -171,6 +177,9 @@
 	"/(app)/settings/team": [
 		"src/routes/(app)/settings/team/+page.server.ts",
 		"src/routes/(app)/+layout.server.ts"
+	],
+	"/share/[token]": [
+		"src/routes/share/[token]/+page.server.ts"
 	],
 	"/sitemap.xml": [
 		"src/routes/sitemap.xml/+server.ts"

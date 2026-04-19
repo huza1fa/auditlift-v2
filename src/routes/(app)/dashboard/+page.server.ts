@@ -297,6 +297,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		readiness,
 		framework: orgFramework?.framework ?? null,
 		trialDaysRemaining,
+		isActiveSubscription,
 		justSubscribed,
 		scoreHistory,
 		recentQuestionnaires,

@@ -48,6 +48,7 @@
 		};
 		framework: { id: string; name: string } | null;
 		trialDaysRemaining: number | null;
+		isActiveSubscription: boolean;
 		justSubscribed: boolean;
 		scoreHistory?: Array<{ score: number; snapshotAt: Date }>;
 		isReadOnly?: boolean;
@@ -571,31 +572,64 @@
 		</Card>
 	{/if}
 
-	<!-- Trial card (shown beneath compliance coverage when no framework or at bottom of stats col) -->
-	<Card class="flex flex-col justify-between p-6 sm:flex-row sm:items-center">
-		<div>
-			<h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">
-				{m.dashboard_trial_status_title()}
-			</h2>
-			{#if data.trialDaysRemaining !== null}
-				<p
-					class="text-3xl font-bold {isTrialUrgent
-						? 'text-[var(--warning)]'
-						: 'text-[var(--foreground)]'}"
-				>
-					{data.trialDaysRemaining}
-				</p>
-				<p class="text-sm text-[var(--foreground-muted)]">{m.dashboard_trial_days_remaining()}</p>
-			{:else}
-				<Badge variant="success">{m.dashboard_trial_active()}</Badge>
-			{/if}
-		</div>
-		<div class="mt-4 sm:mt-0">
-			<Button variant="secondary" size="sm">
-				<a href="/settings/billing">{m.dashboard_manage_billing()}</a>
-			</Button>
-		</div>
-	</Card>
+	{#if data.isActiveSubscription}
+		<!-- Readiness insight card (replaces trial card for subscribed users) -->
+		<Card class="flex flex-col justify-between p-6 sm:flex-row sm:items-center">
+			<div>
+				<h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">
+					{m.dashboard_plan_status_title()}
+				</h2>
+				<div class="flex items-center gap-2">
+					<Badge variant="success">{m.dashboard_plan_active()}</Badge>
+				</div>
+				{#if data.framework}
+					<p class="mt-2 text-sm text-[var(--foreground-muted)]">
+						{m.dashboard_plan_readiness_insight({
+							completed: data.readiness.completedControls,
+							total: data.readiness.totalControls,
+							remaining: data.readiness.totalControls - data.readiness.completedControls,
+							framework: data.framework.name
+						})}
+					</p>
+				{:else}
+					<p class="mt-2 text-sm text-[var(--foreground-muted)]">
+						{m.dashboard_plan_no_framework_insight()}
+					</p>
+				{/if}
+			</div>
+			<div class="mt-4 sm:mt-0">
+				<Button variant="secondary" size="sm">
+					<a href="/settings/billing">{m.dashboard_manage_billing()}</a>
+				</Button>
+			</div>
+		</Card>
+	{:else}
+		<!-- Trial card -->
+		<Card class="flex flex-col justify-between p-6 sm:flex-row sm:items-center">
+			<div>
+				<h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">
+					{m.dashboard_trial_status_title()}
+				</h2>
+				{#if data.trialDaysRemaining !== null}
+					<p
+						class="text-3xl font-bold {isTrialUrgent
+							? 'text-[var(--warning)]'
+							: 'text-[var(--foreground)]'}"
+					>
+						{data.trialDaysRemaining}
+					</p>
+					<p class="text-sm text-[var(--foreground-muted)]">{m.dashboard_trial_days_remaining()}</p>
+				{:else}
+					<Badge variant="success">{m.dashboard_trial_active()}</Badge>
+				{/if}
+			</div>
+			<div class="mt-4 sm:mt-0">
+				<Button variant="secondary" size="sm">
+					<a href="/settings/billing">{m.dashboard_manage_billing()}</a>
+				</Button>
+			</div>
+		</Card>
+	{/if}
 
 	<!-- =========================================================== -->
 	<!-- 5. Blockers section -->

@@ -4,6 +4,7 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { userOrganizations, organizationInvitations, organizations } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { hasActivePaidAccess, TRIAL_MEMBER_LIMIT } from '$lib/server/billing';
 
 export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 	if (!locals.session || !locals.organizationId) {
@@ -66,6 +67,9 @@ export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 			)
 		);
 
+	const isPaid = hasActivePaidAccess(locals.subscription);
+	const canInviteMore = isPaid || (members.length + pendingInvites.length) < TRIAL_MEMBER_LIMIT;
+
 	return {
 		organization: org,
 		currentUser: {
@@ -79,6 +83,8 @@ export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
 			...m,
 			isCurrentUser: m.userId === locals.session?.user.id
 		})),
-		pendingInvites
+		pendingInvites,
+		memberLimit: isPaid ? null : TRIAL_MEMBER_LIMIT,
+		canInviteMore
 	};
 };

@@ -22,8 +22,10 @@
 
 	let { data } = $props();
 
-	const canInvite = data.currentUser.role === 'owner' || data.currentUser.role === 'admin';
+	const hasInviteRole = data.currentUser.role === 'owner' || data.currentUser.role === 'admin';
 	const canManageRoles = data.currentUser.role === 'owner' || data.currentUser.role === 'admin';
+	let canInviteMore = $state(data.canInviteMore);
+	const isTrialLimited = $derived(data.memberLimit !== null);
 
 	let showInviteModal = $state(false);
 	let inviteEmail = $state('');
@@ -73,6 +75,10 @@
 					createdAt: new Date()
 				}
 			];
+			// Re-check if trial limit is now reached
+			if (data.memberLimit !== null) {
+				canInviteMore = (data.members.length + data.pendingInvites.length) < data.memberLimit;
+			}
 		} catch {
 			inviteError = 'An error occurred. Please try again.';
 		} finally {
@@ -144,11 +150,19 @@
 				Manage your organization team members and invitations
 			</p>
 		</div>
-		{#if canInvite}
-			<Button onclick={() => (showInviteModal = true)}>
-				<Plus size={16} />
-				Invite Member
-			</Button>
+		{#if hasInviteRole}
+			{#if canInviteMore}
+				<Button onclick={() => (showInviteModal = true)}>
+					<Plus size={16} />
+					Invite Member
+				</Button>
+			{:else}
+				<a href="/settings/billing">
+					<Button variant="secondary">
+						Upgrade to invite more
+					</Button>
+				</a>
+			{/if}
 		{/if}
 	</div>
 
@@ -156,9 +170,18 @@
 		<div class="mb-4 flex items-center gap-3">
 			<Users size={20} color="var(--brand)" />
 			<h2 class="font-semibold text-[var(--foreground)]">
-				Members ({data.members.length})
+				Members ({data.members.length}{#if isTrialLimited}/{data.memberLimit}{/if})
 			</h2>
 		</div>
+
+		{#if isTrialLimited && !canInviteMore}
+			<div class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] bg-[var(--warning-light)] px-3 py-3">
+				<Warning size={16} color="var(--warning)" class="mt-0.5 shrink-0" />
+				<p class="text-xs leading-snug text-[var(--warning)]">
+					Trial plans are limited to {data.memberLimit} team members. <a href="/settings/billing" class="underline font-medium">Upgrade</a> for unlimited invites.
+				</p>
+			</div>
+		{/if}
 
 		{#if data.members.length === 0}
 			<p class="text-sm text-[var(--foreground-muted)]">No team members yet.</p>

@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions, policies, controls } from '$lib/server/db/schema';
-import { eq, and, asc, inArray } from 'drizzle-orm';
+import { eq, and, asc, inArray, isNull } from 'drizzle-orm';
 import { hasActiveAccess } from '$lib/server/billing';
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
@@ -111,5 +111,12 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		}
 	}
 
-	return json({ questionnaire, questions, policyMap, controlMap });
+	// Existing policy types for confidence upgrade hints
+	const orgPolicyRows = await db
+		.select({ type: policies.type })
+		.from(policies)
+		.where(and(eq(policies.organizationId, orgId), isNull(policies.archivedAt)));
+	const existingPolicyTypes = [...new Set(orgPolicyRows.map((p) => p.type))];
+
+	return json({ questionnaire, questions, policyMap, controlMap, existingPolicyTypes });
 };

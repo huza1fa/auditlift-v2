@@ -8,11 +8,12 @@ import {
 	organizations,
 	user
 } from '$lib/server/db/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, count } from 'drizzle-orm';
 import { requireInvitePermission, canInvite } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
 import { sendInviteEmail } from '$lib/server/email';
 import { InviteTeamMemberSchema } from '$lib/server/validation';
+import { hasActivePaidAccess, TRIAL_MEMBER_LIMIT } from '$lib/server/billing';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -54,12 +55,16 @@ export const GET: RequestHandler = async ({ locals }) => {
 			)
 		);
 
+	const isPaid = hasActivePaidAccess(locals.subscription);
+
 	return json({
 		members: members.map((m) => ({
 			...m,
 			isCurrentUser: m.userId === locals.session?.user.id
 		})),
-		pendingInvites
+		pendingInvites,
+		memberLimit: isPaid ? null : TRIAL_MEMBER_LIMIT,
+		canInviteMore: isPaid || (members.length + pendingInvites.length) < TRIAL_MEMBER_LIMIT
 	});
 };
 
@@ -87,6 +92,31 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	requireInvitePermission(userMembership.role as UserRole);
+
+	// Enforce member limit on trial plans
+	if (!hasActivePaidAccess(locals.subscription)) {
+		const [{ value: currentMemberCount }] = await db
+			.select({ value: count() })
+			.from(userOrganizations)
+			.where(eq(userOrganizations.organizationId, orgId));
+
+		const [{ value: pendingInviteCount }] = await db
+			.select({ value: count() })
+			.from(organizationInvitations)
+			.where(
+				and(
+					eq(organizationInvitations.organizationId, orgId),
+					eq(organizationInvitations.status, 'pending')
+				)
+			);
+
+		if (currentMemberCount + pendingInviteCount >= TRIAL_MEMBER_LIMIT) {
+			throw error(
+				403,
+				`Trial plans are limited to ${TRIAL_MEMBER_LIMIT} team members. Upgrade to invite more.`
+			);
+		}
+	}
 
 	const result = InviteTeamMemberSchema.safeParse(await request.json());
 	if (!result.success) throw error(400, 'Invalid input');
