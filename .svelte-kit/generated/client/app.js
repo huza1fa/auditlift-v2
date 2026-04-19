@@ -30,35 +30,37 @@ export const nodes = [
 	() => import('./nodes/24'),
 	() => import('./nodes/25'),
 	() => import('./nodes/26'),
-	() => import('./nodes/27')
+	() => import('./nodes/27'),
+	() => import('./nodes/28')
 ];
 
 export const server_loads = [2];
 
 export const dictionary = {
-		"/(marketing)": [~18,[4]],
+		"/(marketing)": [~19,[4]],
 		"/(app)/controls": [~5,[2]],
 		"/(app)/controls/[controlId]": [~6,[2]],
 		"/(app)/dashboard": [~7,[2]],
 		"/(app)/evidence": [~8,[2]],
 		"/(app)/export": [~9,[2]],
-		"/(marketing)/forgot-password": [19,[4]],
+		"/(marketing)/forgot-password": [20,[4]],
 		"/(app)/frameworks": [~10,[2]],
-		"/invite/[token]": [~25],
-		"/(marketing)/login": [20,[4]],
-		"/onboarding": [~26],
+		"/invite/[token]": [~26],
+		"/(marketing)/login": [21,[4]],
+		"/onboarding": [~27],
 		"/(app)/policies": [~11,[2]],
-		"/(marketing)/pricing": [21,[4]],
-		"/(marketing)/privacy": [22,[4]],
+		"/(marketing)/pricing": [22,[4]],
+		"/(marketing)/privacy": [23,[4]],
 		"/(app)/questionnaires": [~12,[2]],
 		"/(app)/questionnaires/[id]": [~13,[2]],
-		"/(marketing)/reset-password": [23,[4]],
+		"/(marketing)/reset-password": [24,[4]],
 		"/(app)/settings": [~14,[2,3]],
 		"/(app)/settings/activity": [~15,[2,3]],
 		"/(app)/settings/billing": [~16,[2,3]],
-		"/(app)/settings/team": [~17,[2,3]],
-		"/share/[token]": [~27],
-		"/(marketing)/terms": [24,[4]]
+		"/(app)/settings/system": [17,[2,3]],
+		"/(app)/settings/team": [~18,[2,3]],
+		"/share/[token]": [~28],
+		"/(marketing)/terms": [25,[4]]
 	};
 
 export const hooks = {

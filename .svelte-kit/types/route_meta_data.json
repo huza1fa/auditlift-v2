@@ -105,6 +105,9 @@
 	"/api/settings/organization": [
 		"src/routes/api/settings/organization/+server.ts"
 	],
+	"/api/settings/system-description": [
+		"src/routes/api/settings/system-description/+server.ts"
+	],
 	"/api/settings/team": [
 		"src/routes/api/settings/team/+server.ts"
 	],
@@ -172,6 +175,9 @@
 	],
 	"/(app)/settings/billing": [
 		"src/routes/(app)/settings/billing/+page.server.ts",
+		"src/routes/(app)/+layout.server.ts"
+	],
+	"/(app)/settings/system": [
 		"src/routes/(app)/+layout.server.ts"
 	],
 	"/(app)/settings/team": [
