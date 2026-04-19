@@ -26,7 +26,12 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 		throw error(401, 'Unauthorized');
 	}
 
-	const body = await request.json();
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		throw error(400, 'Invalid JSON');
+	}
 	const result = SystemDescriptionSchema.safeParse(body);
 	if (!result.success) {
 		throw error(400, 'Invalid input');

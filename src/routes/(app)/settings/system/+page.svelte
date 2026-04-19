@@ -69,7 +69,7 @@
 				}
 			}
 		} catch {
-			// Silently fail on load — form just stays empty
+			toastError('Failed to load system description.');
 		} finally {
 			loading = false;
 		}
