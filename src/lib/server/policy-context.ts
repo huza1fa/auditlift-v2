@@ -5,6 +5,18 @@
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface SystemDescription {
+	productDescription?: string;
+	dataFlowType?: string;
+	dataStorageProviders?: string[];
+	dataStorageRegion?: string;
+	endpointManagement?: string;
+	endpointManagementTool?: string;
+	identityProvider?: string;
+	keyTools?: string;
+	additionalContext?: string;
+}
+
 export interface RichPolicyContext {
 	companyName: string;
 	industry: string;
@@ -12,10 +24,11 @@ export interface RichPolicyContext {
 	teamSize: string;
 	stack: string;
 	framework: string;
-	dataTypes: string[]; // 'pii' | 'phi' | 'financial' | 'business'
-	customerType: string | null; // 'b2b' | 'b2c' | 'enterprise' | 'internal'
-	geoReach: string | null; // 'us' | 'eu' | 'global'
-	securityTools: string[]; // 'sso' | 'mdm' | 'password_manager' | 'ci_cd' | 'code_review'
+	dataTypes: string[];
+	customerType: string | null;
+	geoReach: string | null;
+	securityTools: string[];
+	systemDescription: SystemDescription;
 }
 
 // ─── Label maps ───────────────────────────────────────────────────────────────
@@ -159,6 +172,78 @@ export function buildSystemPrompt(ctx: RichPolicyContext): string {
 	}
 	parts.push('');
 
+	// System description (detailed environment context)
+	const sd = ctx.systemDescription;
+	const hasSystemDesc =
+		sd.productDescription ||
+		sd.dataFlowType ||
+		(sd.dataStorageProviders && sd.dataStorageProviders.length > 0) ||
+		sd.identityProvider ||
+		sd.endpointManagement ||
+		sd.keyTools ||
+		sd.additionalContext;
+
+	if (hasSystemDesc) {
+		parts.push('## System Description');
+
+		if (sd.productDescription) {
+			parts.push(`**What the company does:** ${sd.productDescription}`);
+		}
+
+		if (sd.dataFlowType) {
+			const flowLabels: Record<string, string> = {
+				'cloud-saas': 'cloud-hosted SaaS application',
+				'on-prem': 'on-premises / self-hosted deployment',
+				hybrid: 'hybrid deployment (cloud + on-prem)',
+				'api-only': 'API / developer platform'
+			};
+			parts.push(
+				`**Architecture:** ${flowLabels[sd.dataFlowType] ?? sd.dataFlowType}`
+			);
+		}
+
+		if (sd.dataStorageProviders && sd.dataStorageProviders.length > 0) {
+			const region = sd.dataStorageRegion ? ` (primary region: ${sd.dataStorageRegion})` : '';
+			parts.push(
+				`**Data storage:** ${sd.dataStorageProviders.join(', ')}${region}`
+			);
+			parts.push(
+				'→ Reference these specific cloud providers in data residency, encryption at rest, and backup/DR sections instead of generic "cloud provider" language.'
+			);
+		}
+
+		if (sd.identityProvider && sd.identityProvider !== 'None') {
+			parts.push(
+				`**Identity provider:** ${sd.identityProvider} — Reference this as the SSO/identity source in access control, authentication, and onboarding/offboarding policies.`
+			);
+		}
+
+		if (sd.endpointManagement) {
+			const epLabels: Record<string, string> = {
+				mdm: `MDM solution${sd.endpointManagementTool ? ` (${sd.endpointManagementTool})` : ''} — Reference MDM enrollment as mandatory for device access.`,
+				'compliance-tool': `Device compliance tool${sd.endpointManagementTool ? ` (${sd.endpointManagementTool})` : ''} — This serves as a compensating control for MDM. Reference it in endpoint security, acceptable use, and remote work policies. Note that full MDM is not in place, but device compliance is enforced via this tool.`,
+				manual:
+					'Manual device policies (no automated enforcement) — Policies should prescribe clear manual procedures and note this as an area for improvement.',
+				none: 'No endpoint management in place — Policies should recommend implementing endpoint management and include interim manual controls.'
+			};
+			parts.push(`**Endpoint management:** ${epLabels[sd.endpointManagement] ?? sd.endpointManagement}`);
+		}
+
+		if (sd.keyTools) {
+			parts.push(
+				`**Key tools in use:** ${sd.keyTools} — Reference these tools by name where relevant (e.g., password manager in credential policies, monitoring tools in incident response, CI/CD in change management).`
+			);
+		}
+
+		if (sd.additionalContext) {
+			parts.push(
+				`**Additional context:** ${sd.additionalContext}`
+			);
+		}
+
+		parts.push('');
+	}
+
 	// Writing calibration
 	parts.push('## Writing Calibration');
 	parts.push(
@@ -199,6 +284,7 @@ export function buildRichContext(
 		customerType?: string | null;
 		geoReach?: string | null;
 		securityTools?: string[] | null;
+		systemDescription?: SystemDescription | null;
 	},
 	frameworkName: string
 ): RichPolicyContext {
@@ -216,6 +302,7 @@ export function buildRichContext(
 		dataTypes: Array.isArray(org.dataTypes) ? org.dataTypes : [],
 		customerType: org.customerType ?? null,
 		geoReach: org.geoReach ?? null,
-		securityTools: Array.isArray(org.securityTools) ? org.securityTools : []
+		securityTools: Array.isArray(org.securityTools) ? org.securityTools : [],
+		systemDescription: org.systemDescription ?? {}
 	};
 }

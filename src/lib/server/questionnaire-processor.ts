@@ -38,6 +38,7 @@ type QuestionClassification = z.infer<typeof QuestionClassificationSchema>;
 interface ProcessingContext {
 	orgName: string;
 	isPaid: boolean;
+	systemDescriptionPrompt: string;
 	policyContext: Array<{ id: string; title: string; contentSnippet: string }>;
 	controlContext: Array<{
 		id: string;
@@ -71,7 +72,8 @@ async function classifyQuestion(
 		title: string;
 		category: string;
 		whatAuditorExpects: string;
-	}>
+	}>,
+	systemDescriptionPrompt: string = ''
 ): Promise<QuestionClassification> {
 	const openrouter = getOpenRouterClient();
 
@@ -97,7 +99,7 @@ ${policiesList || '(none)'}
 Available controls:
 ${controlsList || '(none)'}`
 		: `${orgName} has not yet generated policies or mapped controls. Draft a reasonable answer based on industry-standard security practices (SOC 2, ISO 27001, NIST) that a typical SaaS company would follow. The answer will be marked as low confidence so the user can review and customize it.`
-}
+}${systemDescriptionPrompt}
 
 <question>${questionText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</question>
 
@@ -132,7 +134,8 @@ async function classifyQuestionBatch(
 	questions: Array<{ id: string; questionText: string }>,
 	orgName: string,
 	policyContext: ProcessingContext['policyContext'],
-	controlContext: ProcessingContext['controlContext']
+	controlContext: ProcessingContext['controlContext'],
+	systemDescriptionPrompt: string = ''
 ): Promise<Array<{ questionId: string; classification: QuestionClassification }>> {
 	if (questions.length === 0) return [];
 
@@ -142,7 +145,8 @@ async function classifyQuestionBatch(
 			questions[0].questionText,
 			orgName,
 			policyContext,
-			controlContext
+			controlContext,
+			systemDescriptionPrompt
 		);
 		return [{ questionId: questions[0].id, classification }];
 	}
@@ -178,7 +182,7 @@ ${policiesList || '(none)'}
 Available controls:
 ${controlsList || '(none)'}`
 		: `${orgName} has not yet generated policies or mapped controls. Draft reasonable answers based on industry-standard security practices (SOC 2, ISO 27001, NIST). Answers will be marked as low confidence.`
-}
+}${systemDescriptionPrompt}
 
 Classify and answer each of these ${questions.length} questions. Return a "results" array with exactly ${questions.length} items, one per question, in the same order.
 
@@ -221,7 +225,7 @@ For each question return:
 	// Fallback: process individually
 	const fallbackResults: Array<{ questionId: string; classification: QuestionClassification }> = [];
 	for (const q of questions) {
-		const classification = await classifyQuestion(q.questionText, orgName, policyContext, controlContext);
+		const classification = await classifyQuestion(q.questionText, orgName, policyContext, controlContext, systemDescriptionPrompt);
 		fallbackResults.push({ questionId: q.id, classification });
 	}
 	return fallbackResults;
@@ -295,7 +299,33 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 		whatAuditorExpects: c.whatAuditorExpects
 	}));
 
-	return { orgName, isPaid, policyContext, controlContext };
+	// Build system description context string for AI prompts
+	const sd = org?.systemDescription as ProcessingContext['policyContext'] extends unknown
+		? Record<string, unknown> | null
+		: never;
+	const sdParts: string[] = [];
+	if (sd) {
+		if (sd.productDescription) sdParts.push(`Product: ${sd.productDescription}`);
+		if (sd.dataFlowType) sdParts.push(`Architecture: ${sd.dataFlowType}`);
+		if (Array.isArray(sd.dataStorageProviders) && sd.dataStorageProviders.length > 0) {
+			const region = sd.dataStorageRegion ? ` (${sd.dataStorageRegion})` : '';
+			sdParts.push(`Data storage: ${(sd.dataStorageProviders as string[]).join(', ')}${region}`);
+		}
+		if (sd.identityProvider && sd.identityProvider !== 'None')
+			sdParts.push(`Identity provider: ${sd.identityProvider}`);
+		if (sd.endpointManagement) {
+			const tool = sd.endpointManagementTool ? ` (${sd.endpointManagementTool})` : '';
+			sdParts.push(`Endpoint management: ${sd.endpointManagement}${tool}`);
+		}
+		if (sd.keyTools) sdParts.push(`Key tools: ${sd.keyTools}`);
+		if (sd.additionalContext) sdParts.push(`Additional context: ${sd.additionalContext}`);
+	}
+	const systemDescriptionPrompt =
+		sdParts.length > 0
+			? `\nSystem description for ${orgName}:\n${sdParts.join('\n')}\n\nUse this system description to provide specific, tailored answers that reference the company's actual tools and infrastructure.`
+			: '';
+
+	return { orgName, isPaid, systemDescriptionPrompt, policyContext, controlContext };
 }
 
 /**
@@ -385,8 +415,8 @@ export async function processQuestionnaire(
 			return;
 		}
 
-		// 2. Load org context (name, subscription, policies, controls)
-		const { orgName, isPaid, policyContext, controlContext } =
+		// 2. Load org context (name, subscription, policies, controls, system description)
+		const { orgName, isPaid, systemDescriptionPrompt, policyContext, controlContext } =
 			await loadProcessingContext(organizationId);
 
 		// 3. Determine how many questions to process
@@ -415,7 +445,8 @@ export async function processQuestionnaire(
 						batch.map((q) => ({ id: q.id, questionText: q.questionText })),
 						orgName,
 						policyContext,
-						controlContext
+						controlContext,
+						systemDescriptionPrompt
 					)
 				)
 			);
@@ -537,7 +568,7 @@ export async function reprocessQuestionnaire(
 		}
 
 		// 4. Load processing context
-		const { orgName, isPaid, policyContext, controlContext } =
+		const { orgName, isPaid, systemDescriptionPrompt, policyContext, controlContext } =
 			await loadProcessingContext(organizationId);
 
 		// 5. Apply trial question limit to the eligible set
@@ -564,7 +595,8 @@ export async function reprocessQuestionnaire(
 						batch.map((q) => ({ id: q.id, questionText: q.questionText })),
 						orgName,
 						policyContext,
-						controlContext
+						controlContext,
+						systemDescriptionPrompt
 					)
 				)
 			);

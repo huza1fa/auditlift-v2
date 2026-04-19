@@ -294,6 +294,13 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		.orderBy(desc(activityLogs.createdAt))
 		.limit(1);
 
+	// Check if system description has been filled out
+	const sd = locals.organization?.systemDescription as Record<string, unknown> | null;
+	const hasSystemDescription = !!(
+		sd &&
+		(sd.productDescription || sd.dataFlowType || sd.keyTools)
+	);
+
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
@@ -308,6 +315,7 @@ export const load = async ({ locals, url }: Parameters<PageServerLoad>[0]) => {
 		questionnaireCoverage,
 		staleEvidenceCount,
 		nextAction,
-		lastActivity: lastActivity ?? null
+		lastActivity: lastActivity ?? null,
+		hasSystemDescription
 	};
 };
