@@ -56,3 +56,18 @@ export const ExportSchema = z.object({
 export const ImproveAnswerSchema = z.object({
 	refinementPrompt: z.string().min(1).max(500)
 });
+
+export const SystemDescriptionSchema = z.object({
+	productDescription: z.string().max(500).optional().default(''),
+	dataFlowType: z.enum(['cloud-saas', 'on-prem', 'hybrid', 'api-only', '']).optional().default(''),
+	dataStorageProviders: z.array(z.string()).optional().default([]),
+	dataStorageRegion: z.string().max(100).optional().default(''),
+	endpointManagement: z
+		.enum(['mdm', 'compliance-tool', 'manual', 'none', ''])
+		.optional()
+		.default(''),
+	endpointManagementTool: z.string().max(100).optional().default(''),
+	identityProvider: z.string().max(100).optional().default(''),
+	keyTools: z.string().max(500).optional().default(''),
+	additionalContext: z.string().max(1000).optional().default('')
+});

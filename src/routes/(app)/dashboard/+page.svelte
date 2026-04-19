@@ -7,7 +7,8 @@
 		Check,
 		X,
 		Warning,
-		ChatText
+		ChatText,
+		Notebook
 	} from 'phosphor-svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -60,6 +61,7 @@
 		questionnaireCoverage?: QuestionnaireCoverageEntry[];
 		staleEvidenceCount?: number;
 		nextAction?: NextAction | null;
+		hasSystemDescription?: boolean;
 	};
 
 	let { data }: { data: PageData } = $props();
@@ -628,6 +630,31 @@
 					<a href="/settings/billing">{m.dashboard_manage_billing()}</a>
 				</Button>
 			</div>
+		</Card>
+	{/if}
+
+	<!-- System description nudge -->
+	{#if !data.hasSystemDescription && (data.questionnaireTotal ?? 0) > 0}
+		<Card class="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center">
+			<div class="flex items-start gap-3">
+				<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand-light)]">
+					<Notebook size={18} color="var(--brand)" />
+				</div>
+				<div>
+					<p class="text-sm font-medium text-[var(--foreground)]">
+						Make your answers more accurate
+					</p>
+					<p class="mt-0.5 text-xs text-[var(--foreground-muted)]">
+						Add your system description so policies and questionnaire answers reference your actual tools, infrastructure, and environment.
+					</p>
+				</div>
+			</div>
+			<a href="/settings/system" class="shrink-0">
+				<Button size="sm" variant="secondary">
+					<Notebook size={14} />
+					Add system description
+				</Button>
+			</a>
 		</Card>
 	{/if}
 
