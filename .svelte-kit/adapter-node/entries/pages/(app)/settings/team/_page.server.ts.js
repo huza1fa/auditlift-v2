@@ -1,6 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 import { d as db, b as organizations, u as userOrganizations, a as organizationInvitations } from "../../../../../chunks/index2.js";
 import { eq, and } from "drizzle-orm";
+import { a as hasActivePaidAccess, T as TRIAL_MEMBER_LIMIT } from "../../../../../chunks/billing.js";
 const load = async ({ locals }) => {
   if (!locals.session || !locals.organizationId) {
     redirect(302, "/login");
@@ -38,6 +39,8 @@ const load = async ({ locals }) => {
       eq(organizationInvitations.status, "pending")
     )
   );
+  const isPaid = hasActivePaidAccess(locals.subscription);
+  const canInviteMore = isPaid || members.length + pendingInvites.length < TRIAL_MEMBER_LIMIT;
   return {
     organization: org,
     currentUser: {
@@ -51,7 +54,9 @@ const load = async ({ locals }) => {
       ...m,
       isCurrentUser: m.userId === locals.session?.user.id
     })),
-    pendingInvites
+    pendingInvites,
+    memberLimit: isPaid ? null : TRIAL_MEMBER_LIMIT,
+    canInviteMore
   };
 };
 export {

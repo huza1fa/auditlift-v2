@@ -169,6 +169,70 @@ const dashboard_trial_active = (
     return en_dashboard_trial_active();
   })
 );
+const en_dashboard_plan_status_title = (
+  /** @type {(inputs: Dashboard_Plan_Status_TitleInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Your Plan`
+    );
+  }
+);
+const dashboard_plan_status_title = (
+  /** @type {((inputs?: Dashboard_Plan_Status_TitleInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_Plan_Status_TitleInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_plan_status_title();
+  })
+);
+const en_dashboard_plan_active = (
+  /** @type {(inputs: Dashboard_Plan_ActiveInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Active`
+    );
+  }
+);
+const dashboard_plan_active = (
+  /** @type {((inputs?: Dashboard_Plan_ActiveInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_Plan_ActiveInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_plan_active();
+  })
+);
+const en_dashboard_plan_readiness_insight = (
+  /** @type {(inputs: Dashboard_Plan_Readiness_InsightInputs) => LocalizedString} */
+  (i) => {
+    return (
+      /** @type {LocalizedString} */
+      `You've completed ${i?.completed} of ${i?.total} controls — ${i?.remaining} to go for full ${i?.framework} readiness.`
+    );
+  }
+);
+const dashboard_plan_readiness_insight = (
+  /** @type {((inputs: Dashboard_Plan_Readiness_InsightInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_Plan_Readiness_InsightInputs, { locale?: "en" }, {}>} */
+  ((inputs, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_plan_readiness_insight(inputs);
+  })
+);
+const en_dashboard_plan_no_framework_insight = (
+  /** @type {(inputs: Dashboard_Plan_No_Framework_InsightInputs) => LocalizedString} */
+  () => {
+    return (
+      /** @type {LocalizedString} */
+      `Select a framework to start tracking your compliance journey.`
+    );
+  }
+);
+const dashboard_plan_no_framework_insight = (
+  /** @type {((inputs?: Dashboard_Plan_No_Framework_InsightInputs, options?: { locale?: "en" }) => LocalizedString) & import('../runtime.js').MessageMetadata<Dashboard_Plan_No_Framework_InsightInputs, { locale?: "en" }, {}>} */
+  ((inputs = {}, options = {}) => {
+    options.locale ?? getLocale();
+    return en_dashboard_plan_no_framework_insight();
+  })
+);
 const en_dashboard_trial_days_remaining = (
   /** @type {(inputs: Dashboard_Trial_Days_RemainingInputs) => LocalizedString} */
   (i) => {
@@ -510,7 +574,7 @@ const en_dashboard_controls_completed = (
   (i) => {
     return (
       /** @type {LocalizedString} */
-      `${i?.count} controls completed`
+      `${i?.completed} of ${i?.total} controls completed`
     );
   }
 );
@@ -574,7 +638,7 @@ const en_dashboard_score_trend = (
   (i) => {
     return (
       /** @type {LocalizedString} */
-      `+${i?.points} this month`
+      `+${i?.count} this month`
     );
   }
 );
@@ -1172,34 +1236,73 @@ function _page($$renderer, $$props) {
       $$renderer2.push("<!--[-1-->");
     }
     $$renderer2.push(`<!--]--> `);
-    Card($$renderer2, {
-      class: "flex flex-col justify-between p-6 sm:flex-row sm:items-center",
-      children: ($$renderer3) => {
-        $$renderer3.push(`<div><h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">${escape_html(dashboard_trial_status_title())}</h2> `);
-        if (data.trialDaysRemaining !== null) {
-          $$renderer3.push("<!--[0-->");
-          $$renderer3.push(`<p${attr_class(`text-3xl font-bold ${stringify(isTrialUrgent() ? "text-[var(--warning)]" : "text-[var(--foreground)]")}`)}>${escape_html(data.trialDaysRemaining)}</p> <p class="text-sm text-[var(--foreground-muted)]">${escape_html(dashboard_trial_days_remaining())}</p>`);
-        } else {
-          $$renderer3.push("<!--[-1-->");
+    if (data.isActiveSubscription) {
+      $$renderer2.push("<!--[0-->");
+      Card($$renderer2, {
+        class: "flex flex-col justify-between p-6 sm:flex-row sm:items-center",
+        children: ($$renderer3) => {
+          $$renderer3.push(`<div><h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">${escape_html(dashboard_plan_status_title())}</h2> <div class="flex items-center gap-2">`);
           Badge($$renderer3, {
             variant: "success",
             children: ($$renderer4) => {
-              $$renderer4.push(`<!---->${escape_html(dashboard_trial_active())}`);
+              $$renderer4.push(`<!---->${escape_html(dashboard_plan_active())}`);
             }
           });
-        }
-        $$renderer3.push(`<!--]--></div> <div class="mt-4 sm:mt-0">`);
-        Button($$renderer3, {
-          variant: "secondary",
-          size: "sm",
-          children: ($$renderer4) => {
-            $$renderer4.push(`<a href="/settings/billing">${escape_html(dashboard_manage_billing())}</a>`);
+          $$renderer3.push(`<!----></div> `);
+          if (data.framework) {
+            $$renderer3.push("<!--[0-->");
+            $$renderer3.push(`<p class="mt-2 text-sm text-[var(--foreground-muted)]">${escape_html(dashboard_plan_readiness_insight({
+              completed: data.readiness.completedControls,
+              total: data.readiness.totalControls,
+              remaining: data.readiness.totalControls - data.readiness.completedControls,
+              framework: data.framework.name
+            }))}</p>`);
+          } else {
+            $$renderer3.push("<!--[-1-->");
+            $$renderer3.push(`<p class="mt-2 text-sm text-[var(--foreground-muted)]">${escape_html(dashboard_plan_no_framework_insight())}</p>`);
           }
-        });
-        $$renderer3.push(`<!----></div>`);
-      }
-    });
-    $$renderer2.push(`<!---->  `);
+          $$renderer3.push(`<!--]--></div> <div class="mt-4 sm:mt-0">`);
+          Button($$renderer3, {
+            variant: "secondary",
+            size: "sm",
+            children: ($$renderer4) => {
+              $$renderer4.push(`<a href="/settings/billing">${escape_html(dashboard_manage_billing())}</a>`);
+            }
+          });
+          $$renderer3.push(`<!----></div>`);
+        }
+      });
+    } else {
+      $$renderer2.push("<!--[-1-->");
+      Card($$renderer2, {
+        class: "flex flex-col justify-between p-6 sm:flex-row sm:items-center",
+        children: ($$renderer3) => {
+          $$renderer3.push(`<div><h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">${escape_html(dashboard_trial_status_title())}</h2> `);
+          if (data.trialDaysRemaining !== null) {
+            $$renderer3.push("<!--[0-->");
+            $$renderer3.push(`<p${attr_class(`text-3xl font-bold ${stringify(isTrialUrgent() ? "text-[var(--warning)]" : "text-[var(--foreground)]")}`)}>${escape_html(data.trialDaysRemaining)}</p> <p class="text-sm text-[var(--foreground-muted)]">${escape_html(dashboard_trial_days_remaining())}</p>`);
+          } else {
+            $$renderer3.push("<!--[-1-->");
+            Badge($$renderer3, {
+              variant: "success",
+              children: ($$renderer4) => {
+                $$renderer4.push(`<!---->${escape_html(dashboard_trial_active())}`);
+              }
+            });
+          }
+          $$renderer3.push(`<!--]--></div> <div class="mt-4 sm:mt-0">`);
+          Button($$renderer3, {
+            variant: "secondary",
+            size: "sm",
+            children: ($$renderer4) => {
+              $$renderer4.push(`<a href="/settings/billing">${escape_html(dashboard_manage_billing())}</a>`);
+            }
+          });
+          $$renderer3.push(`<!----></div>`);
+        }
+      });
+    }
+    $$renderer2.push(`<!--]-->  `);
     if (data.readiness.blockers.length > 0) {
       $$renderer2.push("<!--[0-->");
       Card($$renderer2, {

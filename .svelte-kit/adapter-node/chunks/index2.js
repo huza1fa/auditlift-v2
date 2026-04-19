@@ -259,6 +259,8 @@ const questionnaires = pgTable(
     mediumCount: integer("medium_count").notNull().default(0),
     lowCount: integer("low_count").notNull().default(0),
     errorMessage: text("error_message"),
+    shareToken: text("share_token").unique(),
+    sharedAt: timestamp("shared_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull()
   },

@@ -1,10 +1,11 @@
 import { error, json } from "@sveltejs/kit";
 import { b as private_env } from "../../../../../chunks/shared-server.js";
 import { d as db, l as user, u as userOrganizations, a as organizationInvitations } from "../../../../../chunks/index2.js";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { a as requireInvitePermission } from "../../../../../chunks/auth-utils.js";
 import { sendInviteEmail } from "../../../../../chunks/email.js";
 import { b as InviteTeamMemberSchema } from "../../../../../chunks/validation.js";
+import { a as hasActivePaidAccess, T as TRIAL_MEMBER_LIMIT } from "../../../../../chunks/billing.js";
 const GET = async ({ locals }) => {
   if (!locals.session || !locals.organizationId) {
     throw error(401, "Unauthorized");
@@ -32,12 +33,15 @@ const GET = async ({ locals }) => {
       eq(organizationInvitations.status, "pending")
     )
   );
+  const isPaid = hasActivePaidAccess(locals.subscription);
   return json({
     members: members.map((m) => ({
       ...m,
       isCurrentUser: m.userId === locals.session?.user.id
     })),
-    pendingInvites
+    pendingInvites,
+    memberLimit: isPaid ? null : TRIAL_MEMBER_LIMIT,
+    canInviteMore: isPaid || members.length + pendingInvites.length < TRIAL_MEMBER_LIMIT
   });
 };
 const POST = async ({ request, locals }) => {
@@ -55,6 +59,21 @@ const POST = async ({ request, locals }) => {
     throw error(403, "You are not a member of this organization");
   }
   requireInvitePermission(userMembership.role);
+  if (!hasActivePaidAccess(locals.subscription)) {
+    const [{ value: currentMemberCount }] = await db.select({ value: count() }).from(userOrganizations).where(eq(userOrganizations.organizationId, orgId));
+    const [{ value: pendingInviteCount }] = await db.select({ value: count() }).from(organizationInvitations).where(
+      and(
+        eq(organizationInvitations.organizationId, orgId),
+        eq(organizationInvitations.status, "pending")
+      )
+    );
+    if (currentMemberCount + pendingInviteCount >= TRIAL_MEMBER_LIMIT) {
+      throw error(
+        403,
+        `Trial plans are limited to ${TRIAL_MEMBER_LIMIT} team members. Upgrade to invite more.`
+      );
+    }
+  }
   const result = InviteTeamMemberSchema.safeParse(await request.json());
   if (!result.success) throw error(400, "Invalid input");
   const body = result.data;

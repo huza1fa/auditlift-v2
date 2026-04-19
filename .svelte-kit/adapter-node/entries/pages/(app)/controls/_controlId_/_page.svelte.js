@@ -793,6 +793,7 @@ function _page($$renderer, $$props) {
     let expandedPolicyId = null;
     const suggestedTypes = derived(() => getSuggestedPolicies(data.control.code));
     let selectedPolicyType = getSuggestedPolicies(data.control.code)[0];
+    const duplicateExists = derived(() => linkedPolicies.some((p) => p.type === selectedPolicyType));
     function downloadPolicy(policy) {
       const blob = new Blob([policy.content], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
@@ -893,9 +894,16 @@ function _page($$renderer, $$props) {
             $$renderer3.push("<!--[-1-->");
           }
           $$renderer3.push(`<!--]--> `);
+          if (duplicateExists()) {
+            $$renderer3.push("<!--[0-->");
+            $$renderer3.push(`<p class="text-xs text-[var(--warning)]">A ${escape_html(POLICY_LABELS[selectedPolicyType] ?? selectedPolicyType)} already exists for this control. Select a different type or remove the existing one first.</p>`);
+          } else {
+            $$renderer3.push("<!--[-1-->");
+          }
+          $$renderer3.push(`<!--]--> `);
           Button($$renderer3, {
             onclick: generatePolicy,
-            disabled: generatingPolicy,
+            disabled: generatingPolicy || duplicateExists(),
             children: ($$renderer4) => {
               if (generatingPolicy) {
                 $$renderer4.push("<!--[0-->");

@@ -1,3 +1,4 @@
+const TRIAL_MEMBER_LIMIT = 2;
 function hasActiveAccess(subscription, trialEndsAt) {
   if (!subscription) {
     if (trialEndsAt) return trialEndsAt > /* @__PURE__ */ new Date();
@@ -18,6 +19,7 @@ function isReadOnly(subscription, trialEndsAt) {
   return !hasActiveAccess(subscription, trialEndsAt);
 }
 export {
+  TRIAL_MEMBER_LIMIT as T,
   hasActivePaidAccess as a,
   hasActiveAccess as h,
   isReadOnly as i
