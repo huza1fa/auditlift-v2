@@ -56,7 +56,7 @@
 					email: email.trim(),
 					password,
 					name: name.trim(),
-					callbackURL: '/onboarding'
+					callbackURL: isInviteFlow ? postLoginUrl : '/onboarding'
 				});
 				if (res.error) {
 					const msg = res.error.message ?? '';
@@ -70,7 +70,7 @@
 						errorMsg = msg || 'Sign up failed';
 					}
 				} else {
-					goto('/onboarding');
+					goto(isInviteFlow ? postLoginUrl : '/onboarding');
 				}
 			}
 		} catch {
