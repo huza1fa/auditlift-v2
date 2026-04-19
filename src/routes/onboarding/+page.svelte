@@ -143,8 +143,12 @@
 	function toggleDataType(value: string) {
 		if (dataTypes.includes(value)) {
 			dataTypes = dataTypes.filter((d) => d !== value);
+		} else if (value === 'business') {
+			// "Business data only" is exclusive — deselect all others
+			dataTypes = ['business'];
 		} else {
-			dataTypes = [...dataTypes, value];
+			// Selecting a sensitive type removes "business data only"
+			dataTypes = [...dataTypes.filter((d) => d !== 'business'), value];
 		}
 	}
 

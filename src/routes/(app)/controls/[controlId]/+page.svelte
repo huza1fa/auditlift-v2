@@ -123,9 +123,31 @@
 	let expandedPolicyId = $state<string | null>(null);
 	let showAllPolicies = $state(false);
 
+	// Reset local state when navigating to a different control
+	$effect(() => {
+		// Track control id to trigger reset
+		data.control.id;
+		evidenceList = [...data.evidenceList];
+		linkedPolicies = [...data.linkedPolicies];
+		showPolicyPanel = data.linkedPolicies.length === 0;
+		policyError = '';
+		expandedPolicyId = null;
+		showAllPolicies = false;
+	});
+
 	// ── Suggested policies ────────────────────────────────────────────────────
 	const suggestedTypes = $derived(getSuggestedPolicies(data.control.code));
 	let selectedPolicyType = $state(getSuggestedPolicies(data.control.code)[0]);
+
+	// Reset selected policy type when navigating to a different control
+	$effect(() => {
+		selectedPolicyType = getSuggestedPolicies(data.control.code)[0];
+	});
+
+	// Check if the selected policy type already exists for this control
+	const duplicateExists = $derived(
+		linkedPolicies.some((p) => p.type === selectedPolicyType)
+	);
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	async function deleteEvidence(id: string) {
@@ -305,7 +327,13 @@
 							</select>
 						{/if}
 
-						<Button onclick={generatePolicy} disabled={generatingPolicy}>
+						{#if duplicateExists}
+							<p class="text-xs text-[var(--warning)]">
+								A {POLICY_LABELS[selectedPolicyType] ?? selectedPolicyType} already exists for this control. Select a different type or remove the existing one first.
+							</p>
+						{/if}
+
+						<Button onclick={generatePolicy} disabled={generatingPolicy || duplicateExists}>
 							{#if generatingPolicy}
 								<Spinner size={16} class="animate-spin" />
 								{m.control_generating()}
