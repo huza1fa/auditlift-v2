@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Buildings, CreditCard, Users, ChartLine } from 'phosphor-svelte';
+	import { Buildings, CreditCard, Users, ChartLine, Notebook } from 'phosphor-svelte';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -31,6 +31,17 @@
 		>
 			<Users size={16} />
 			Team
+		</a>
+		<a
+			href="/settings/system"
+			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
+				'/settings/system'
+			)
+				? 'border-[var(--brand)] text-[var(--brand)]'
+				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
+		>
+			<Notebook size={16} />
+			System Description
 		</a>
 		<a
 			href="/settings/billing"

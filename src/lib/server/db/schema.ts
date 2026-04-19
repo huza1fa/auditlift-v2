@@ -26,6 +26,17 @@ export const organizations = pgTable('organizations', {
 	geoReach: text('geo_reach'),
 	securityTools: jsonb('security_tools').$type<string[]>(),
 	productType: text('product_type'),
+	systemDescription: jsonb('system_description').$type<{
+		productDescription?: string;
+		dataFlowType?: string;
+		dataStorageProviders?: string[];
+		dataStorageRegion?: string;
+		endpointManagement?: string;
+		endpointManagementTool?: string;
+		identityProvider?: string;
+		keyTools?: string;
+		additionalContext?: string;
+	}>(),
 	trialEndsAt: timestamp('trial_ends_at'),
 	onboardingComplete: boolean('onboarding_complete').default(false),
 	trialReminderSentAt: timestamp('trial_reminder_sent_at'),
