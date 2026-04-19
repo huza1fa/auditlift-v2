@@ -103,11 +103,25 @@
 	}
 
 	// ── SSE ───────────────────────────────────────────────────────────────────
+	const sseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
 	function connectSSE(questionnaireId: string) {
 		if (sseConnections.has(questionnaireId)) return;
 
 		const es = new EventSource(`/api/questionnaires/${questionnaireId}/stream`);
 		sseConnections.set(questionnaireId, es);
+
+		// Client-side timeout: if no result after 2 minutes, show feedback
+		const timer = setTimeout(() => {
+			es.close();
+			sseConnections.delete(questionnaireId);
+			sseTimers.delete(questionnaireId);
+			questionnaires = questionnaires.map((q) =>
+				q.id === questionnaireId ? { ...q, status: 'error' as QuestionnaireStatus } : q
+			);
+			toastError('Processing is taking too long. Please try refreshing the page or re-uploading.');
+		}, 120_000);
+		sseTimers.set(questionnaireId, timer);
 
 		es.onmessage = async (event) => {
 			let payload: { status: string };
@@ -118,18 +132,24 @@
 			}
 
 			if (payload.status === 'ready' || payload.status === 'error') {
-				// Optimistically update the status in state so the UI reacts immediately
+				clearTimeout(sseTimers.get(questionnaireId));
+				sseTimers.delete(questionnaireId);
 				questionnaires = questionnaires.map((q) =>
 					q.id === questionnaireId ? { ...q, status: payload.status as QuestionnaireStatus } : q
 				);
 				es.close();
 				sseConnections.delete(questionnaireId);
-				// Refresh to pull in final counts / score from the server
 				await fetchQuestionnaires();
+
+				if (payload.status === 'error') {
+					toastError('Questionnaire processing failed. Please try uploading again.');
+				}
 			}
 		};
 
 		es.onerror = () => {
+			clearTimeout(sseTimers.get(questionnaireId));
+			sseTimers.delete(questionnaireId);
 			es.close();
 			sseConnections.delete(questionnaireId);
 		};
@@ -140,6 +160,10 @@
 			es.close();
 		}
 		sseConnections.clear();
+		for (const timer of sseTimers.values()) {
+			clearTimeout(timer);
+		}
+		sseTimers.clear();
 	}
 
 	// ── Delete ───────────────────────────────────────────────────────────────
@@ -404,7 +428,7 @@
 							e.stopPropagation();
 							deleteQuestionnaire(q.id);
 						}}
-						class="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[var(--danger-light)]"
+						class="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--background-elevated)] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-[var(--danger-light)]"
 						title="Delete questionnaire"
 					>
 						<Trash size={14} color="var(--danger)" />
