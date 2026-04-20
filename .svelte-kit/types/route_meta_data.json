@@ -21,6 +21,9 @@
 	"/api/billing/sync": [
 		"src/routes/api/billing/sync/+server.ts"
 	],
+	"/api/consulting/request": [
+		"src/routes/api/consulting/request/+server.ts"
+	],
 	"/api/evidence/presign": [
 		"src/routes/api/evidence/presign/+server.ts"
 	],

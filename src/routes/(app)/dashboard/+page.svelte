@@ -8,11 +8,13 @@
 		X,
 		Warning,
 		ChatText,
-		Notebook
+		Notebook,
+		Handshake
 	} from 'phosphor-svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
 	import * as m from '$lib/paraglide/messages';
 
 	// ---------------------------------------------------------------------------
@@ -130,6 +132,14 @@
 
 	const showStartHere = $derived(
 		data.readiness.completedControls === 0 && data.readiness.blockers.length > 0 && !data.isReadOnly
+	);
+
+	let consultingOpen = $state(false);
+	const showAdvisoryNudge = $derived(
+		hasFramework &&
+			!data.isReadOnly &&
+			(data.readiness.blockers.length >= 5 ||
+				(data.readiness.score < 40 && data.readiness.totalControls > 0))
 	);
 
 	function formatRelativeTime(date: Date | string): string {
@@ -309,7 +319,9 @@
 		{#if data.lastActivity}
 			<p class="mt-1 text-xs text-[var(--foreground-subtle)]">
 				{m.dashboard_last_activity({
-					description: formatActivityAction(data.lastActivity.action) + (data.lastActivity.entityName ? ` "${data.lastActivity.entityName}"` : ''),
+					description:
+						formatActivityAction(data.lastActivity.action) +
+						(data.lastActivity.entityName ? ` "${data.lastActivity.entityName}"` : ''),
 					timeAgo: formatRelativeTime(data.lastActivity.createdAt)
 				})}
 			</p>
@@ -637,7 +649,9 @@
 	{#if !data.hasSystemDescription && (data.questionnaireTotal ?? 0) > 0}
 		<Card class="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center">
 			<div class="flex items-start gap-3">
-				<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand-light)]">
+				<div
+					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand-light)]"
+				>
 					<Notebook size={18} color="var(--brand)" />
 				</div>
 				<div>
@@ -645,7 +659,8 @@
 						Make your answers more accurate
 					</p>
 					<p class="mt-0.5 text-xs text-[var(--foreground-muted)]">
-						Add your system description so policies and questionnaire answers reference your actual tools, infrastructure, and environment.
+						Add your system description so policies and questionnaire answers reference your actual
+						tools, infrastructure, and environment.
 					</p>
 				</div>
 			</div>
@@ -724,6 +739,35 @@
 			{/if}
 		</Card>
 	{/if}
+
+	<!-- =========================================================== -->
+	<!-- Advisory nudge (contextual — only when struggling) -->
+	<!-- =========================================================== -->
+	{#if showAdvisoryNudge}
+		<Card class="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center">
+			<div class="flex items-start gap-3">
+				<div
+					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--brand-light)]"
+				>
+					<Handshake size={18} color="var(--brand)" />
+				</div>
+				<div>
+					<p class="text-sm font-medium text-[var(--foreground)]">
+						{m.consulting_cta_dashboard_title()}
+					</p>
+					<p class="mt-0.5 text-xs text-[var(--foreground-muted)]">
+						{m.consulting_cta_dashboard_body()}
+					</p>
+				</div>
+			</div>
+			<Button size="sm" variant="secondary" onclick={() => (consultingOpen = true)}>
+				<Handshake size={14} />
+				{m.consulting_cta_dashboard_button()}
+			</Button>
+		</Card>
+	{/if}
+
+	<ConsultingModal bind:open={consultingOpen} />
 
 	<!-- =========================================================== -->
 	<!-- Start Here guide (shown when 0 controls completed + blockers) -->

@@ -71,6 +71,13 @@
       "when": 1776627083553,
       "tag": "0009_windy_tony_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776655726662,
+      "tag": "0010_amazing_calypso",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,8 @@
 	import { onMount } from 'svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
 
@@ -132,6 +134,8 @@
 		}
 	];
 
+	let consultingOpen = $state(false);
+
 	function scrollTo(id: string) {
 		document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
 	}
@@ -173,7 +177,8 @@
 				name: 'AuditLift',
 				url: 'https://auditlift.app',
 				email: 'hello@auditlift.app',
-				description: 'Deal-enablement platform that helps teams respond to security questionnaires, map policies to frameworks, and surface gaps before they cost you a deal.'
+				description:
+					'Deal-enablement platform that helps teams respond to security questionnaires, map policies to frameworks, and surface gaps before they cost you a deal.'
 			},
 			{
 				'@type': 'WebSite',
@@ -240,7 +245,11 @@
 			<div class="eyebrow-pill">SOC 2 · PCI-DSS · ISO 27001</div>
 
 			<!-- Headline -->
-			<h1 class="hero-headline" class:headline-visible={headlineVisible} class:headline-hidden={!headlineVisible}>
+			<h1
+				class="hero-headline"
+				class:headline-visible={headlineVisible}
+				class:headline-hidden={!headlineVisible}
+			>
 				{headlines[headlineIndex].line1}<br />{headlines[headlineIndex].line2}
 			</h1>
 
@@ -478,13 +487,22 @@
 	<section class="final-cta-section">
 		<div class="final-cta-inner">
 			<h2 class="final-cta-headline">Don't let security questions kill another deal.</h2>
-			<p class="final-cta-sub">Know exactly where you stand. Respond with confidence. Close faster.</p>
+			<p class="final-cta-sub">
+				Know exactly where you stand. Respond with confidence. Close faster.
+			</p>
 			<a href="/login" class="btn-primary btn-lg">
 				Get started free
 				<ArrowRight size={16} weight="bold" />
 			</a>
+			<p class="final-cta-advisory">
+				Or <button class="advisory-link" onclick={() => (consultingOpen = true)}
+					>talk to our advisory team</button
+				> for hands-on guidance.
+			</p>
 		</div>
 	</section>
+
+	<ConsultingModal bind:open={consultingOpen} />
 
 	<!-- Footer -->
 	<footer class="site-footer">
@@ -732,7 +750,9 @@
 		line-height: 1.08;
 		color: var(--foreground);
 		margin: 0 0 1.25rem;
-		transition: opacity 0.4s ease, transform 0.4s ease;
+		transition:
+			opacity 0.4s ease,
+			transform 0.4s ease;
 	}
 	.headline-visible {
 		opacity: 1;
@@ -1351,6 +1371,29 @@
 		font-size: 1rem;
 		color: var(--foreground-muted);
 		margin: 0;
+	}
+
+	.final-cta-advisory {
+		font-size: 0.875rem;
+		color: var(--foreground-muted);
+		margin: 0.5rem 0 0;
+	}
+
+	.advisory-link {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--brand);
+		font-weight: 500;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		font-size: inherit;
+		padding: 0;
+		transition: opacity 0.15s;
+	}
+
+	.advisory-link:hover {
+		opacity: 0.8;
 	}
 
 	/* =====================

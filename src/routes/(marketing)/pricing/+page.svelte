@@ -1,17 +1,21 @@
 <script lang="ts">
-	import { Check, ArrowRight, Envelope } from 'phosphor-svelte';
+	import { Check, ArrowRight, Envelope, Handshake } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
+	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let billing = $state<'monthly' | 'yearly'>('monthly');
+	let consultingOpen = $state(false);
 
 	const plans = [
 		{
 			id: 'starter',
 			name: 'Starter',
-			description: 'For founders who need to answer security questionnaires and close their first enterprise deals.',
+			description:
+				'For founders who need to answer security questionnaires and close their first enterprise deals.',
 			monthlyPrice: 149,
 			yearlyPrice: 1431,
 			highlighted: false,
@@ -31,7 +35,8 @@
 		{
 			id: 'growth',
 			name: 'Growth',
-			description: 'For teams responding to multiple frameworks across a growing pipeline of enterprise deals.',
+			description:
+				'For teams responding to multiple frameworks across a growing pipeline of enterprise deals.',
 			monthlyPrice: 299,
 			yearlyPrice: 2870,
 			highlighted: true,
@@ -214,7 +219,8 @@
 						<span class="text-2xl font-bold text-[var(--foreground)]">Custom</span>
 					</div>
 					<p class="mt-3 text-[13px] text-[var(--foreground-muted)]">
-						For larger teams with complex security review requirements, SSO, and dedicated onboarding.
+						For larger teams with complex security review requirements, SSO, and dedicated
+						onboarding.
 					</p>
 				</div>
 
@@ -243,9 +249,36 @@
 
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
-			Vanta and Drata start at $7,500/yr and are built for post-audit maintenance.
-			AuditLift gets you <strong>deal-ready from $149/mo</strong> — focused on helping you respond and close.
+			Vanta and Drata start at $7,500/yr and are built for post-audit maintenance. AuditLift gets
+			you <strong>deal-ready from $149/mo</strong> — focused on helping you respond and close.
 		</p>
+
+		<!-- Advisory CTA -->
+		<div
+			class="mt-14 flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background-alt)] px-8 py-10 text-center sm:flex-row sm:text-left"
+		>
+			<div
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--brand-light)]"
+			>
+				<Handshake size={24} color="var(--brand)" />
+			</div>
+			<div class="flex-1">
+				<p class="text-[15px] font-semibold text-[var(--foreground)]">
+					{m.consulting_cta_pricing_headline()}
+				</p>
+				<p class="mt-1 text-[13px] text-[var(--foreground-muted)]">
+					{m.consulting_cta_pricing_body()}
+				</p>
+			</div>
+			<button
+				onclick={() => (consultingOpen = true)}
+				class="shrink-0 rounded-[var(--radius)] border border-[var(--brand)] bg-transparent px-5 py-2.5 text-[14px] font-medium text-[var(--brand)] transition-colors hover:bg-[var(--brand)] hover:text-white"
+			>
+				{m.consulting_cta_pricing_button()}
+			</button>
+		</div>
+
+		<ConsultingModal bind:open={consultingOpen} />
 	</section>
 
 	<footer class="border-t border-[var(--border)] py-8">

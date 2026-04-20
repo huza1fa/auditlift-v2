@@ -145,11 +145,7 @@ export const evidence = pgTable(
 	},
 	(table) => [
 		index('evidence_org_control_idx').on(table.organizationId, table.controlId),
-		index('evidence_org_status_deleted_idx').on(
-			table.organizationId,
-			table.status,
-			table.deletedAt
-		)
+		index('evidence_org_status_deleted_idx').on(table.organizationId, table.status, table.deletedAt)
 	]
 );
 
@@ -349,6 +345,20 @@ export const policyVersions = pgTable('policy_versions', {
 	content: text('content').notNull(),
 	savedAt: timestamp('saved_at').notNull().defaultNow(),
 	savedBy: text('saved_by').notNull()
+});
+
+// ─── Consulting Requests ─────────────────────────────────────────────────────
+
+export const consultingRequests = pgTable('consulting_requests', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	organizationId: uuid('organization_id').references(() => organizations.id),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	company: text('company'),
+	topic: text('topic').notNull(),
+	message: text('message'),
+	status: text('status').notNull().default('new'), // 'new' | 'contacted' | 'closed'
+	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 // ─── Re-export auth schema ────────────────────────────────────────────────────
