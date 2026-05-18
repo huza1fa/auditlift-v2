@@ -1,1 +1,0 @@
-import{g as t}from"./-lbl0OOQ.js";const n=()=>"Questionnaires",u=((e={},s={})=>(s.locale??t(),n())),r=()=>"Processing",_=((e={},s={})=>(s.locale??t(),r())),o=()=>"Ready",c=((e={},s={})=>(s.locale??t(),o())),a=()=>"Error",l=((e={},s={})=>(s.locale??t(),a()));export{_ as a,c as b,l as c,u as q};

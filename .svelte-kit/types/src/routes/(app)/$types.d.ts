@@ -10,8 +10,8 @@ type OutputDataShape<T> = MaybeWithVoid<Omit<App.PageData, RequiredKeys<T>> & Pa
 type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 export type Snapshot<T = any> = Kit.Snapshot<T>;
-type LayoutRouteId = RouteId | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/dashboard" | "/(app)/evidence" | "/(app)/export" | "/(app)/frameworks" | "/(app)/policies" | "/(app)/questionnaires" | "/(app)/questionnaires/[id]" | "/(app)/settings" | "/(app)/settings/activity" | "/(app)/settings/billing" | "/(app)/settings/system" | "/(app)/settings/team"
-type LayoutParams = RouteParams & { controlId?: string; id?: string }
+type LayoutRouteId = RouteId | "/(app)/settings" | "/(app)/settings/activity" | "/(app)/settings/system" | "/(app)/settings/team" | "/(app)/settings/billing" | "/(app)/questionnaires" | "/(app)/questionnaires/[id]" | "/(app)/evidence" | "/(app)/policies" | "/(app)/dashboard" | "/(app)/controls" | "/(app)/controls/[controlId]" | "/(app)/export" | "/(app)/frameworks"
+type LayoutParams = RouteParams & { id?: string; controlId?: string }
 type LayoutServerParentData = EnsureDefined<import('../$types.js').LayoutServerData>;
 type LayoutParentData = EnsureDefined<import('../$types.js').LayoutData>;
 
