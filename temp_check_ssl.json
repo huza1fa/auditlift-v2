@@ -1,0 +1,1 @@
+{"commands": ["grep -l 'ssl' /opt/auditlift/build/server/chunks/index2.js 2>/dev/null && echo 'SSL found in chunk' || echo 'SSL NOT found in chunk'", "grep 'ssl' /opt/auditlift/build/server/chunks/index2.js 2>/dev/null | head -3"]}

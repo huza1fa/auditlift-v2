@@ -1,0 +1,938 @@
+{
+  "/AuditLiftInfraStack": [
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider": [
+    {
+      "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+      "data": true
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftS3AccessKey": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftS3AccessKey"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:155:22)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/KeyName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "KeyName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:344:18)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/SsmParameterValue:--aws--service--canonical--ubuntu--server--22.04--stable--current--amd64--hvm--ebs-gp2--ami-id:C96584B6-F00A-464E-AD19-53AFF4B05118.Parameter": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "SsmParameterValueawsservicecanonicalubuntuserver2204stablecurrentamd64hvmebsgp2amiidC96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Instance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:350:19)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftCdn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftCdn"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:387:23)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Ec2PublicIp": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Ec2PublicIp"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:438:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/RdsEndpoint": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RdsEndpoint"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:443:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/S3BucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "S3BucketName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:448:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/CloudFrontDomain": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CloudFrontDomain"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:453:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/SecretArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "SecretArn"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:458:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/S3AccessKeyId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "S3AccessKeyId"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:463:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/S3SecretAccessKey": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "S3SecretAccessKey"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:468:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::CrossRegionExportReaderCustomResourceProvider": [
+    {
+      "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+      "data": true
+    }
+  ],
+  "/AuditLiftInfraStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpc285B5202"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/IGW": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcIGW7E54F8F0"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/VPCGW": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcVPCGW44FCDFE6"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftBucket/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftBucketB45884F7"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:106:17)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftS3User/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftS3User4AA09B6E"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new User2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:137:17)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/RdsSecurityGroup/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RdsSecurityGroup632A77E4"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new SecurityGroup2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:161:26)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/RdsSecurityGroup/from AuditLiftInfraStackEc2SecurityGroupA4719EEC:5432": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RdsSecurityGroupfromAuditLiftInfraStackEc2SecurityGroupA4719EEC54326BFC16B6"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...addIngressRule in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:218:18)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftDb/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftDb21732F22"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new DatabaseInstance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:167:22)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Ec2SecurityGroup/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Ec2SecurityGroup55889913"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new SecurityGroup2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:195:27)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Ec2Role/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Ec2Role2FD9A272"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Role2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:226:18)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftEnvSecret/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftEnvSecret328C652A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Secret2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:245:17)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftEc2/InstanceProfile": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftEc2InstanceProfile77BCDB91"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Instance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:350:19)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftEc2/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftEc22AE5417B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Instance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:350:19)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::CrossRegionExportReaderCustomResourceProvider/Role": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Custom::CrossRegionExportReaderCustomResourceProvider/Handler": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomCrossRegionExportReaderCustomResourceProviderHandler46647B68"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/Subnet": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet1Subnet83EED146"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/RouteTable": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet1RouteTableD0B7859B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/RouteTableAssociation": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet1RouteTableAssociation969D029A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/DefaultRoute": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet1DefaultRouteE0CCCC14"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:197 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/Subnet": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet2Subnet2F1E5B19"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/RouteTable": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet2RouteTableA815F10F"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/RouteTableAssociation": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet2RouteTableAssociation61E9F12C"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:257 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/DefaultRoute": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcpublicSubnet2DefaultRouteB320D464"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:197 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/Subnet": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet1Subnet32870A0B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/RouteTable": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet1RouteTable13CF7405"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/RouteTableAssociation": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet1RouteTableAssociationCBD0ADB6"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/Subnet": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet2Subnet2B1691DF"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/RouteTable": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet2RouteTableC59B145F"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/RouteTableAssociation": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcprivateSubnet2RouteTableAssociationB740FA08"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...C:\\Users\\Huzaifa\\auditlift-v2\\infra\\node_modules\\aws-cdk-lib\\aws-ec2\\lib\\vpc.js:1:262 in aws-cdk-lib...",
+        "forEach (:)",
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftVpc/RestrictDefaultSecurityGroupCustomResource/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftVpcRestrictDefaultSecurityGroupCustomResourceCE6ADBC9"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Vpc2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:87:14)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftBucket/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftBucketPolicy57D1678A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:106:17)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftS3User/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftS3UserDefaultPolicy46FA2B42"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...addToPolicy in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:141:9)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftDb/SubnetGroup/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftDbSubnetGroup0E0D194C"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new DatabaseInstance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:167:22)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftDb/Secret/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftInfraStackAuditLiftDbSecretF9EA6DB73fdaad7efa858a3daf9490cf0a702aeb"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new DatabaseInstance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:167:22)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/Ec2Role/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Ec2RoleDefaultPolicy99BC91F7"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...addToPolicy in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:235:10)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/ExportsReader/Resource/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ExportsReader8B249524"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftInfraStack/AuditLiftDb/Secret/Attachment/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftDbSecretAttachmentDC4DD63B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new DatabaseInstance2 in aws-cdk-lib...",
+        "new AuditLiftStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:167:22)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:21:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ]
+}

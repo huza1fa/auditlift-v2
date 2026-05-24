@@ -1,0 +1,1 @@
+{"commands": ["cat /root/.pm2/logs/auditlift-error.log | tail -20"]}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { Spinner } from 'phosphor-svelte';
 
 	type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 	type Size = 'sm' | 'md' | 'lg';
@@ -8,6 +9,7 @@
 		variant = 'primary',
 		size = 'md',
 		disabled = false,
+		loading = false,
 		type = 'button',
 		class: className = '',
 		onclick,
@@ -16,11 +18,14 @@
 		variant?: Variant;
 		size?: Size;
 		disabled?: boolean;
+		loading?: boolean;
 		type?: 'button' | 'submit' | 'reset';
 		class?: string;
 		onclick?: (e: MouseEvent) => void;
 		children: Snippet;
 	} = $props();
+
+	const isDisabled = $derived(disabled || loading);
 
 	const base =
 		'inline-flex items-center justify-center gap-2 font-medium rounded-[var(--radius)] transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)] disabled:opacity-50 disabled:pointer-events-none';
@@ -29,6 +34,12 @@
 		sm: 'px-3 py-1.5 text-sm',
 		md: 'px-4 py-2 text-sm',
 		lg: 'px-6 py-3 text-base'
+	};
+
+	const spinnerSizes: Record<Size, number> = {
+		sm: 14,
+		md: 16,
+		lg: 20
 	};
 
 	const variants: Record<Variant, string> = {
@@ -40,6 +51,14 @@
 	};
 </script>
 
-<button {type} {disabled} class="{base} {sizes[size]} {variants[variant]} {className}" {onclick}>
+<button
+	{type}
+	disabled={isDisabled}
+	class="{base} {sizes[size]} {variants[variant]} {className}"
+	{onclick}
+>
+	{#if loading}
+		<Spinner size={spinnerSizes[size]} class="animate-spin" />
+	{/if}
 	{@render children()}
 </button>

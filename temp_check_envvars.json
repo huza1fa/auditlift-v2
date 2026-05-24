@@ -1,0 +1,1 @@
+{"commands": ["cd /opt/auditlift && node -e 'process.env.DATABASE_URL = \"dummy\"; const m = require(\"./.svelte-kit/adapter-node/chunks/index2.js\");' 2>&1 | head -5"]}

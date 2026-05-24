@@ -1,0 +1,1285 @@
+{
+ "Resources": {
+  "AuditLiftVpc285B5202": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/16",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/Resource"
+   }
+  },
+  "AuditLiftVpcpublicSubnet1Subnet83EED146": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-west-2a",
+    "CidrBlock": "10.0.0.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/Subnet"
+   }
+  },
+  "AuditLiftVpcpublicSubnet1RouteTableD0B7859B": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/RouteTable"
+   }
+  },
+  "AuditLiftVpcpublicSubnet1RouteTableAssociation969D029A": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcpublicSubnet1RouteTableD0B7859B"
+    },
+    "SubnetId": {
+     "Ref": "AuditLiftVpcpublicSubnet1Subnet83EED146"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/RouteTableAssociation"
+   }
+  },
+  "AuditLiftVpcpublicSubnet1DefaultRouteE0CCCC14": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "AuditLiftVpcIGW7E54F8F0"
+    },
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcpublicSubnet1RouteTableD0B7859B"
+    }
+   },
+   "DependsOn": [
+    "AuditLiftVpcVPCGW44FCDFE6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet1/DefaultRoute"
+   }
+  },
+  "AuditLiftVpcpublicSubnet2Subnet2F1E5B19": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-west-2b",
+    "CidrBlock": "10.0.1.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/Subnet"
+   }
+  },
+  "AuditLiftVpcpublicSubnet2RouteTableA815F10F": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/RouteTable"
+   }
+  },
+  "AuditLiftVpcpublicSubnet2RouteTableAssociation61E9F12C": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcpublicSubnet2RouteTableA815F10F"
+    },
+    "SubnetId": {
+     "Ref": "AuditLiftVpcpublicSubnet2Subnet2F1E5B19"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/RouteTableAssociation"
+   }
+  },
+  "AuditLiftVpcpublicSubnet2DefaultRouteB320D464": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "AuditLiftVpcIGW7E54F8F0"
+    },
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcpublicSubnet2RouteTableA815F10F"
+    }
+   },
+   "DependsOn": [
+    "AuditLiftVpcVPCGW44FCDFE6"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/publicSubnet2/DefaultRoute"
+   }
+  },
+  "AuditLiftVpcprivateSubnet1Subnet32870A0B": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-west-2a",
+    "CidrBlock": "10.0.2.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "private"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Isolated"
+     },
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/Subnet"
+   }
+  },
+  "AuditLiftVpcprivateSubnet1RouteTable13CF7405": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet1"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/RouteTable"
+   }
+  },
+  "AuditLiftVpcprivateSubnet1RouteTableAssociationCBD0ADB6": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcprivateSubnet1RouteTable13CF7405"
+    },
+    "SubnetId": {
+     "Ref": "AuditLiftVpcprivateSubnet1Subnet32870A0B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet1/RouteTableAssociation"
+   }
+  },
+  "AuditLiftVpcprivateSubnet2Subnet2B1691DF": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-west-2b",
+    "CidrBlock": "10.0.3.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "private"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Isolated"
+     },
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/Subnet"
+   }
+  },
+  "AuditLiftVpcprivateSubnet2RouteTableC59B145F": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet2"
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/RouteTable"
+   }
+  },
+  "AuditLiftVpcprivateSubnet2RouteTableAssociationB740FA08": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "AuditLiftVpcprivateSubnet2RouteTableC59B145F"
+    },
+    "SubnetId": {
+     "Ref": "AuditLiftVpcprivateSubnet2Subnet2B1691DF"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/privateSubnet2/RouteTableAssociation"
+   }
+  },
+  "AuditLiftVpcIGW7E54F8F0": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftVpc"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/IGW"
+   }
+  },
+  "AuditLiftVpcVPCGW44FCDFE6": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "InternetGatewayId": {
+     "Ref": "AuditLiftVpcIGW7E54F8F0"
+    },
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/VPCGW"
+   }
+  },
+  "AuditLiftVpcRestrictDefaultSecurityGroupCustomResourceCE6ADBC9": {
+   "Type": "Custom::VpcRestrictDefaultSG",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+      "Arn"
+     ]
+    },
+    "DefaultSecurityGroupId": {
+     "Fn::GetAtt": [
+      "AuditLiftVpc285B5202",
+      "DefaultSecurityGroup"
+     ]
+    },
+    "Account": "676799697185"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftVpc/RestrictDefaultSecurityGroupCustomResource/Default"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+         ],
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:ec2:us-west-2:676799697185:security-group/",
+             {
+              "Fn::GetAtt": [
+               "AuditLiftVpc285B5202",
+               "DefaultSecurityGroup"
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-auditlift-assets-676799697185-us-west-2",
+     "S3Key": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group"
+   },
+   "DependsOn": [
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200",
+    "aws:asset:property": "Code"
+   }
+  },
+  "AuditLiftBucketB45884F7": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "HEAD"
+       ],
+       "AllowedOrigins": [
+        "https://auditlift.app",
+        "https://www.auditlift.app",
+        "http://localhost:5173"
+       ],
+       "MaxAge": 3600
+      }
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 7
+       },
+       "Id": "delete-incomplete-uploads",
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftBucket/Resource"
+   }
+  },
+  "AuditLiftBucketPolicy57D1678A": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "AuditLiftBucketB45884F7"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:*",
+       "Condition": {
+        "Bool": {
+         "aws:SecureTransport": "false"
+        }
+       },
+       "Effect": "Deny",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AuditLiftBucketB45884F7",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AuditLiftBucketB45884F7",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftBucket/Policy/Resource"
+   }
+  },
+  "AuditLiftS3User4AA09B6E": {
+   "Type": "AWS::IAM::User",
+   "Properties": {
+    "UserName": "auditlift-s3-user"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftS3User/Resource"
+   }
+  },
+  "AuditLiftS3UserDefaultPolicy46FA2B42": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:HeadObject",
+        "s3:ListBucket",
+        "s3:PutObject"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AuditLiftBucketB45884F7",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AuditLiftBucketB45884F7",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AuditLiftS3UserDefaultPolicy46FA2B42",
+    "Users": [
+     {
+      "Ref": "AuditLiftS3User4AA09B6E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftS3User/DefaultPolicy/Resource"
+   }
+  },
+  "AuditLiftS3AccessKey": {
+   "Type": "AWS::IAM::AccessKey",
+   "Properties": {
+    "UserName": {
+     "Ref": "AuditLiftS3User4AA09B6E"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftS3AccessKey"
+   }
+  },
+  "RdsSecurityGroup632A77E4": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Allow PostgreSQL access from EC2 only",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "255.255.255.255/32",
+      "Description": "Disallow all traffic",
+      "FromPort": 252,
+      "IpProtocol": "icmp",
+      "ToPort": 86
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/RdsSecurityGroup/Resource"
+   }
+  },
+  "RdsSecurityGroupfromAuditLiftInfraStackEc2SecurityGroupA4719EEC54326BFC16B6": {
+   "Type": "AWS::EC2::SecurityGroupIngress",
+   "Properties": {
+    "Description": "Allow EC2 to access RDS",
+    "FromPort": 5432,
+    "GroupId": {
+     "Fn::GetAtt": [
+      "RdsSecurityGroup632A77E4",
+      "GroupId"
+     ]
+    },
+    "IpProtocol": "tcp",
+    "SourceSecurityGroupId": {
+     "Fn::GetAtt": [
+      "Ec2SecurityGroup55889913",
+      "GroupId"
+     ]
+    },
+    "ToPort": 5432
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/RdsSecurityGroup/from AuditLiftInfraStackEc2SecurityGroupA4719EEC:5432"
+   }
+  },
+  "AuditLiftDbSubnetGroup0E0D194C": {
+   "Type": "AWS::RDS::DBSubnetGroup",
+   "Properties": {
+    "DBSubnetGroupDescription": "Subnet group for AuditLiftDb database",
+    "SubnetIds": [
+     {
+      "Ref": "AuditLiftVpcprivateSubnet1Subnet32870A0B"
+     },
+     {
+      "Ref": "AuditLiftVpcprivateSubnet2Subnet2B1691DF"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftDb/SubnetGroup/Default"
+   }
+  },
+  "AuditLiftInfraStackAuditLiftDbSecretF9EA6DB73fdaad7efa858a3daf9490cf0a702aeb": {
+   "Type": "AWS::SecretsManager::Secret",
+   "Properties": {
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Generated by the CDK for stack: ",
+       {
+        "Ref": "AWS::StackName"
+       }
+      ]
+     ]
+    },
+    "GenerateSecretString": {
+     "ExcludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\",
+     "GenerateStringKey": "password",
+     "PasswordLength": 30,
+     "SecretStringTemplate": "{\"username\":\"postgres\"}"
+    },
+    "Name": "auditlift-db-credentials"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftDb/Secret/Resource"
+   }
+  },
+  "AuditLiftDbSecretAttachmentDC4DD63B": {
+   "Type": "AWS::SecretsManager::SecretTargetAttachment",
+   "Properties": {
+    "SecretId": {
+     "Ref": "AuditLiftInfraStackAuditLiftDbSecretF9EA6DB73fdaad7efa858a3daf9490cf0a702aeb"
+    },
+    "TargetId": {
+     "Ref": "AuditLiftDb21732F22"
+    },
+    "TargetType": "AWS::RDS::DBInstance"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftDb/Secret/Attachment/Resource"
+   }
+  },
+  "AuditLiftDb21732F22": {
+   "Type": "AWS::RDS::DBInstance",
+   "Properties": {
+    "AllocatedStorage": "20",
+    "BackupRetentionPeriod": 0,
+    "CopyTagsToSnapshot": true,
+    "DBInstanceClass": "db.t3.micro",
+    "DBName": "auditlift",
+    "DBSubnetGroupName": {
+     "Ref": "AuditLiftDbSubnetGroup0E0D194C"
+    },
+    "DeletionProtection": false,
+    "Engine": "postgres",
+    "EngineVersion": "16",
+    "MasterUserPassword": {
+     "Fn::Join": [
+      "",
+      [
+       "{{resolve:secretsmanager:",
+       {
+        "Ref": "AuditLiftInfraStackAuditLiftDbSecretF9EA6DB73fdaad7efa858a3daf9490cf0a702aeb"
+       },
+       ":SecretString:password::}}"
+      ]
+     ]
+    },
+    "MasterUsername": "postgres",
+    "MaxAllocatedStorage": 20,
+    "PubliclyAccessible": false,
+    "StorageType": "gp2",
+    "VPCSecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "RdsSecurityGroup632A77E4",
+       "GroupId"
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftDb/Resource"
+   }
+  },
+  "Ec2SecurityGroup55889913": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Allow HTTP, HTTPS, SSH to EC2",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTP",
+      "FromPort": 80,
+      "IpProtocol": "tcp",
+      "ToPort": 80
+     },
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTPS",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     },
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow SSH",
+      "FromPort": 22,
+      "IpProtocol": "tcp",
+      "ToPort": 22
+     }
+    ],
+    "VpcId": {
+     "Ref": "AuditLiftVpc285B5202"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Ec2SecurityGroup/Resource"
+   }
+  },
+  "Ec2Role2FD9A272": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Ec2Role/Resource"
+   }
+  },
+  "Ec2RoleDefaultPolicy99BC91F7": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "AuditLiftEnvSecret328C652A"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "Ec2RoleDefaultPolicy99BC91F7",
+    "Roles": [
+     {
+      "Ref": "Ec2Role2FD9A272"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Ec2Role/DefaultPolicy/Resource"
+   }
+  },
+  "AuditLiftEnvSecret328C652A": {
+   "Type": "AWS::SecretsManager::Secret",
+   "Properties": {
+    "Description": "Environment variables for AuditLift production",
+    "GenerateSecretString": {},
+    "Name": "auditlift-prod-env"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftEnvSecret/Resource"
+   }
+  },
+  "AuditLiftEc2InstanceProfile77BCDB91": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "Ec2Role2FD9A272"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftEc2/InstanceProfile"
+   }
+  },
+  "AuditLiftEc22AE5417B": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "us-west-2a",
+    "IamInstanceProfile": {
+     "Ref": "AuditLiftEc2InstanceProfile77BCDB91"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2204stablecurrentamd64hvmebsgp2amiidC96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "m7i-flex.large",
+    "KeyName": {
+     "Ref": "KeyName"
+    },
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "Ec2SecurityGroup55889913",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetId": {
+     "Ref": "AuditLiftVpcpublicSubnet1Subnet83EED146"
+    },
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "AuditLiftInfraStack/AuditLiftEc2"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash\n#!/bin/bash\nset -e\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\nrm -rf /opt/auditlift\n\n# ── System deps ─────────────────────────────────────────────\napt-get update -qq\napt-get install -y -qq nginx jq git curl unzip python3 build-essential ca-certificates gnupg\n\n# ── Bun ─────────────────────────────────────────────────────\nexport HOME=/root\ncurl -fsSL https://bun.sh/install | bash\ncp /root/.bun/bin/bun /usr/local/bin/bun\ncp /root/.bun/bin/bunx /usr/local/bin/bunx\n\n# ── PM2 ─────────────────────────────────────────────────────\nbun install -g pm2\n\n# ── Create swap (8GB — m7i-flex.large has 8GB RAM, swap helps with builds)\nfallocate -l 4G /swapfile\nchmod 600 /swapfile\nmkswap /swapfile\nswapon /swapfile\necho \"/swapfile none swap sw 0 0\" >> /etc/fstab\n\n# ── App directory ────────────────────────────────────────────\nmkdir -p /opt/auditlift\n\n# ── Fetch secrets → .env ──────────────────────────────────────\npython3 -c \"\nimport subprocess, json\nr = subprocess.run([\"aws\", \"secretsmanager\", \"get-secret-value\", \"--secret-id\", \"auditlift-prod-env\", \"--region\", \"us-west-2\", \"--output\", \"text\", \"--query\", \"SecretString\"], capture_output=True, text=True)\nd = json.loads(r.stdout.strip())\nwith open(\"/opt/auditlift/.env\", \"w\") as f:\n    for k, v in d.items():\n        f.write(f\"{k}={v}\\n\")\n\"\n\n# ── Clone repo ───────────────────────────────────────────────\nexport GITHUB_TOKEN=$(grep ^GITHUB_TOKEN /opt/auditlift/.env | head -1 | cut -d= -f2-)\ncd /opt/auditlift\ngit clone https://${GITHUB_TOKEN}@github.com/huza1fa/auditlift-v2.git tmp\nshopt -s dotglob\nmv tmp/* . 2>/dev/null || true\nrm -rf tmp\n\n# ── Install & build ──────────────────────────────────────────\nbun install --frozen-lockfile\nbun run build\n\n# ── Run DB migrations ────────────────────────────────────────\ncd /opt/auditlift\nbun run db:push 2>&1 || echo \"Migration had issues (non-fatal, continuing)\"\n\n# ── Start app ────────────────────────────────────────────────\ncd /opt/auditlift && pm2 start /usr/local/bin/bun --name auditlift -- build/index.js\npm2 startup systemd -u root --hp /root\npm2 save\n\n# ── Nginx reverse proxy ──────────────────────────────────────\ncat > /etc/nginx/sites-available/default << 'NGINX'\nserver {\n    listen 80;\n    server_name _;\n\n    client_max_body_size 10m;\n\n    location / {\n        proxy_pass http://127.0.0.1:3000;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection \"upgrade\";\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n    }\n}\nNGINX\nsystemctl restart nginx\nsystemctl enable nginx\n\necho \"✅ User data script complete\""
+    }
+   },
+   "DependsOn": [
+    "Ec2RoleDefaultPolicy99BC91F7",
+    "Ec2Role2FD9A272"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftEc2/Resource"
+   }
+  },
+  "AuditLiftCdn": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "Aliases": [
+      "auditlift.app",
+      "www.auditlift.app"
+     ],
+     "DefaultCacheBehavior": {
+      "AllowedMethods": [
+       "DELETE",
+       "GET",
+       "HEAD",
+       "OPTIONS",
+       "PATCH",
+       "POST",
+       "PUT"
+      ],
+      "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+      "Compress": true,
+      "OriginRequestPolicyId": "216adef6-5c7f-47e4-b989-5492eafa07d3",
+      "TargetOriginId": "ec2-origin",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "DefaultRootObject": "",
+     "Enabled": true,
+     "HttpVersion": "http2",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "CustomOriginConfig": {
+        "OriginProtocolPolicy": "http-only",
+        "OriginSSLProtocols": [
+         "TLSv1.2"
+        ]
+       },
+       "DomainName": {
+        "Fn::Join": [
+         ".",
+         [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "ec2-",
+             {
+              "Fn::Join": [
+               "-",
+               [
+                {
+                 "Fn::Select": [
+                  0,
+                  {
+                   "Fn::Split": [
+                    ".",
+                    {
+                     "Fn::GetAtt": [
+                      "AuditLiftEc22AE5417B",
+                      "PublicIp"
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "Fn::Select": [
+                  1,
+                  {
+                   "Fn::Split": [
+                    ".",
+                    {
+                     "Fn::GetAtt": [
+                      "AuditLiftEc22AE5417B",
+                      "PublicIp"
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "Fn::Select": [
+                  2,
+                  {
+                   "Fn::Split": [
+                    ".",
+                    {
+                     "Fn::GetAtt": [
+                      "AuditLiftEc22AE5417B",
+                      "PublicIp"
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "Fn::Select": [
+                  3,
+                  {
+                   "Fn::Split": [
+                    ".",
+                    {
+                     "Fn::GetAtt": [
+                      "AuditLiftEc22AE5417B",
+                      "PublicIp"
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              ]
+             }
+            ]
+           ]
+          },
+          "us-west-2.compute.amazonaws.com"
+         ]
+        ]
+       },
+       "Id": "ec2-origin"
+      }
+     ],
+     "PriceClass": "PriceClass_100",
+     "ViewerCertificate": {
+      "AcmCertificateArn": {
+       "Fn::GetAtt": [
+        "ExportsReader8B249524",
+        "/cdk/exports/AuditLiftInfraStack/AuditLiftCertStackuseast1RefAuditLiftCertABED8211E2571AA1"
+       ]
+      },
+      "MinimumProtocolVersion": "TLSv1.2_2021",
+      "SslSupportMethod": "sni-only"
+     }
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/AuditLiftCdn"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/31R0W7bMAz8lr4rapF2H5A0QBHsYUbc9nWgZdpTY1MBSSUIDP/74CgEhmHY05HHk446rf3624t/eoCLrEJ7XA2x8VOtEI4OLvJzwrD20+cpuNeOPqtXV+VmiKHODaEunFUdHVJWfIdmQONRjRtwI5JCBI2JTIyu4ngGRbujoz0pMqG+geIFrnfTe7dRhfBrRFJXY8gc9frGKZ9udv8l9tQzirg9iQIFLFalnp08+2mbw7GscK8KVGmI4Wq09bOLMPrpQ5CX0Q1N2ZFVHW1CQJHveHWHVFIxNPOKUxcHnB234qcdKDQgaFNXgrE30W77J2HqGgOX1XdbOzk7ubEyAkGP7KcSySIs8A7co1qkpM4Ef0/swOzCkHLbcSL1i1kU5djk5Udnd0BJmZdks2garb29+d+jitM5tshbEHQbEdRaoY/U3zIEhhG15Psj6ynr7Ci16L/k8bx+8c/+6eFLYlxxJo0j+kPB34vuyA7PAgAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/CDKMetadata/Default"
+   }
+  },
+  "ExportsReader8B249524": {
+   "Type": "Custom::CrossRegionExportReader",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomCrossRegionExportReaderCustomResourceProviderHandler46647B68",
+      "Arn"
+     ]
+    },
+    "ReaderProps": {
+     "region": "us-west-2",
+     "prefix": "AuditLiftInfraStack",
+     "imports": {
+      "/cdk/exports/AuditLiftInfraStack/AuditLiftCertStackuseast1RefAuditLiftCertABED8211E2571AA1": "{{resolve:ssm:/cdk/exports/AuditLiftInfraStack/AuditLiftCertStackuseast1RefAuditLiftCertABED8211E2571AA1}}"
+     }
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/ExportsReader/Resource/Default"
+   }
+  },
+  "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Resource": "arn:aws:ssm:us-west-2:676799697185:parameter/cdk/exports/AuditLiftInfraStack/*",
+         "Action": [
+          "ssm:AddTagsToResource",
+          "ssm:RemoveTagsFromResource",
+          "ssm:GetParameters"
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Custom::CrossRegionExportReaderCustomResourceProvider/Role"
+   }
+  },
+  "CustomCrossRegionExportReaderCustomResourceProviderHandler46647B68": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-auditlift-assets-676799697185-us-west-2",
+     "S3Key": "f06f7035054cb2aada184c7c251ec5cb31fb6b5e975284939b9ff097603ea769.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x"
+   },
+   "DependsOn": [
+    "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "AuditLiftInfraStack/Custom::CrossRegionExportReaderCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.f06f7035054cb2aada184c7c251ec5cb31fb6b5e975284939b9ff097603ea769",
+    "aws:asset:property": "Code"
+   }
+  }
+ },
+ "Parameters": {
+  "KeyName": {
+   "Type": "String",
+   "Default": "auditlift-ec2",
+   "Description": "Name of an existing EC2 key pair for SSH access. Create with: aws ec2 create-key-pair --key-name my-key --region us-west-2 --query KeyMaterial --output text > my-key.pem"
+  },
+  "SsmParameterValueawsservicecanonicalubuntuserver2204stablecurrentamd64hvmebsgp2amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/auditlift/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Outputs": {
+  "Ec2PublicIp": {
+   "Description": "EC2 instance public IP",
+   "Value": {
+    "Fn::GetAtt": [
+     "AuditLiftEc22AE5417B",
+     "PublicIp"
+    ]
+   }
+  },
+  "RdsEndpoint": {
+   "Description": "RDS PostgreSQL endpoint",
+   "Value": {
+    "Fn::GetAtt": [
+     "AuditLiftDb21732F22",
+     "Endpoint.Address"
+    ]
+   }
+  },
+  "S3BucketName": {
+   "Description": "S3 bucket for evidence storage",
+   "Value": {
+    "Ref": "AuditLiftBucketB45884F7"
+   }
+  },
+  "CloudFrontDomain": {
+   "Description": "CloudFront distribution domain name",
+   "Value": {
+    "Fn::GetAtt": [
+     "AuditLiftCdn",
+     "DomainName"
+    ]
+   }
+  },
+  "SecretArn": {
+   "Description": "Secrets Manager ARN for env vars",
+   "Value": {
+    "Ref": "AuditLiftEnvSecret328C652A"
+   }
+  },
+  "S3AccessKeyId": {
+   "Description": "S3 IAM User Access Key ID",
+   "Value": {
+    "Ref": "AuditLiftS3AccessKey"
+   }
+  },
+  "S3SecretAccessKey": {
+   "Description": "S3 IAM User Secret Access Key",
+   "Value": {
+    "Fn::GetAtt": [
+     "AuditLiftS3AccessKey",
+     "SecretAccessKey"
+    ]
+   }
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

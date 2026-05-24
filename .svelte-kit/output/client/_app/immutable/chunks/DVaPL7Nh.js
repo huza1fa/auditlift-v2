@@ -1,0 +1,1 @@
+import{F as y,o,w as v,G as f,I as l,J as m,q as p,K as i,L as T,y as A}from"./DG-NX5-C.js";import{B as R}from"./BcensY04.js";function F(d,_,e){var s;o&&(s=A,v());var r=new R(d);y(()=>{var a=_()??null;if(o){var h=l(s),c=h===T,u=a!==null;if(c!==u){var t=m();p(t),r.anchor=t,i(!1),r.ensure(a,a&&(n=>e(n,a))),i(!0);return}}r.ensure(a,a&&(n=>e(n,a)))},f)}export{F as c};

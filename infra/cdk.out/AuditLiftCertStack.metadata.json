@@ -1,0 +1,148 @@
+{
+  "/AuditLiftCertStack": [
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/CertificateArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CertificateArn"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new CertificateStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:64:2)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/Custom::CrossRegionExportWriterCustomResourceProvider": [
+    {
+      "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+      "data": true
+    }
+  ],
+  "/AuditLiftCertStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/AuditLiftCert/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AuditLiftCertABED8211"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Certificate2 in aws-cdk-lib...",
+        "new CertificateStack (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\lib\\auditlift-stack.ts:58:21)",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15: (C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:15:1)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/Custom::CrossRegionExportWriterCustomResourceProvider/Role": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomCrossRegionExportWriterCustomResourceProviderRoleC951B1E1"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/Custom::CrossRegionExportWriterCustomResourceProvider/Handler": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomCrossRegionExportWriterCustomResourceProviderHandlerD8786E8A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ],
+  "/AuditLiftCertStack/ExportsWriteruswest209BD44F0/Resource/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ExportsWriteruswest209BD44F0A7CF058B"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...synth in aws-cdk-lib...",
+        "C:\\Users\\Huzaifa\\auditlift-v2\\infra\\bin\\auditlift-infra.ts:28 (:)",
+        "moduleEvaluation (:)",
+        "moduleEvaluation (:)",
+        "loadAndEvaluateModule (:)"
+      ]
+    }
+  ]
+}

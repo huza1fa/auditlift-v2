@@ -1,0 +1,1 @@
+{"commands": ["cat /opt/auditlift/build/server/chunks/_server.ts.js | head -30"]}

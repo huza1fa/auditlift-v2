@@ -1,0 +1,1 @@
+import{V as f,F as o,W as u,X as _,o as t,C as g,z as i,K as l,q as d,y as p,v}from"./DG-NX5-C.js";function C(n,r){let s=null,y=t;var a;if(t){s=p;for(var e=v(document.head);e!==null&&(e.nodeType!==g||e.data!==n);)e=i(e);if(e===null)l(!1);else{var E=i(e);e.remove(),d(E)}}t||(a=document.head.appendChild(f()));try{o(()=>r(a),u|_)}finally{y&&(l(!0),d(s))}}export{C as h};

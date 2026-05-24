@@ -22,11 +22,25 @@
 	const postLoginUrl = $derived(redirectTo || '/dashboard');
 
 	async function loginWithGithub() {
-		await authClient.signIn.social({ provider: 'github', callbackURL: postLoginUrl });
+		loading = true;
+		errorMsg = '';
+		try {
+			await authClient.signIn.social({ provider: 'github', callbackURL: postLoginUrl });
+		} catch {
+			errorMsg = 'GitHub sign in failed. Please try again.';
+			loading = false;
+		}
 	}
 
 	async function loginWithGoogle() {
-		await authClient.signIn.social({ provider: 'google', callbackURL: postLoginUrl });
+		loading = true;
+		errorMsg = '';
+		try {
+			await authClient.signIn.social({ provider: 'google', callbackURL: postLoginUrl });
+		} catch {
+			errorMsg = 'Google sign in failed. Please try again.';
+			loading = false;
+		}
 	}
 
 	async function handleEmailAuth() {
@@ -98,7 +112,7 @@
 	<p class="mb-8 text-[13px] text-[var(--foreground-muted)]">Get audit-ready in 30 days</p>
 
 	<div
-		class="w-full max-w-[340px] rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background-elevated)] p-8 shadow-[var(--shadow-md)]"
+		class="relative w-full max-w-[340px] rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background-elevated)] p-8 shadow-[var(--shadow-md)]"
 	>
 		<!-- Invitation banner -->
 		{#if isInviteFlow}
@@ -122,7 +136,8 @@
 					errorMsg = '';
 					infoMsg = '';
 				}}
-				class="flex-1 rounded-[var(--radius)] px-3 py-1.5 text-[13px] font-medium transition-colors {mode ===
+				disabled={loading}
+				class="flex-1 rounded-[var(--radius)] px-3 py-1.5 text-[13px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 {mode ===
 				'signin'
 					? 'bg-[var(--background)] text-[var(--foreground)] shadow-[var(--shadow)]'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}">Sign in</button
@@ -133,7 +148,8 @@
 					errorMsg = '';
 					infoMsg = '';
 				}}
-				class="flex-1 rounded-[var(--radius)] px-3 py-1.5 text-[13px] font-medium transition-colors {mode ===
+				disabled={loading}
+				class="flex-1 rounded-[var(--radius)] px-3 py-1.5 text-[13px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 {mode ===
 				'signup'
 					? 'bg-[var(--background)] text-[var(--foreground)] shadow-[var(--shadow)]'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}">Sign up</button
@@ -143,7 +159,8 @@
 		<!-- Google -->
 		<button
 			onclick={loginWithGoogle}
-			class="mb-2 flex w-full cursor-pointer items-center justify-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-[13px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--background-subtle)]"
+			disabled={loading}
+			class="mb-2 flex w-full cursor-pointer items-center justify-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-[13px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--background-subtle)] disabled:pointer-events-none disabled:opacity-60"
 		>
 			<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 				<path
@@ -169,7 +186,8 @@
 		<!-- GitHub -->
 		<button
 			onclick={loginWithGithub}
-			class="mb-4 flex w-full cursor-pointer items-center justify-center gap-3 rounded-[var(--radius)] bg-[#24292f] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1a1f24]"
+			disabled={loading}
+			class="mb-4 flex w-full cursor-pointer items-center justify-center gap-3 rounded-[var(--radius)] bg-[#24292f] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1a1f24] disabled:pointer-events-none disabled:opacity-60"
 		>
 			<GithubLogo size={16} weight="fill" />
 			Continue with GitHub
@@ -194,7 +212,8 @@
 					type="text"
 					bind:value={name}
 					placeholder="Full name"
-					class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+					disabled={loading}
+					class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					required
 				/>
 			{/if}
@@ -202,14 +221,16 @@
 				type="email"
 				bind:value={email}
 				placeholder="Email address"
-				class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+				disabled={loading}
+				class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 				required
 			/>
 			<input
 				type="password"
 				bind:value={password}
 				placeholder="Password"
-				class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+				disabled={loading}
+				class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 				required
 				minlength={8}
 			/>
@@ -240,6 +261,18 @@
 				{mode === 'signin' ? 'Sign in' : 'Create account'}
 			</button>
 		</form>
+
+		<!-- Loading overlay -->
+		{#if loading}
+			<div
+				class="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[var(--radius-xl)] bg-[var(--background-elevated)]/80 backdrop-blur-sm"
+			>
+				<Spinner size={32} class="animate-spin" color="var(--brand)" />
+				<p class="mt-3 text-[13px] font-medium text-[var(--foreground)]">
+					{mode === 'signin' ? 'Signing in…' : 'Creating account…'}
+				</p>
+			</div>
+		{/if}
 	</div>
 
 	<p class="mt-6 text-[12px] text-[var(--foreground-subtle)]">
