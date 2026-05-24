@@ -84,9 +84,6 @@
 	"/api/questionnaires/[id]": [
 		"src/routes/api/questionnaires/[id]/+server.ts"
 	],
-	"/api/questionnaires/[id]/coverage": [
-		"src/routes/api/questionnaires/[id]/coverage/+server.ts"
-	],
 	"/api/questionnaires/[id]/export": [
 		"src/routes/api/questionnaires/[id]/export/+server.ts"
 	],
