@@ -14,11 +14,7 @@ const client = postgres(process.env.DATABASE_URL);
 const db = drizzle(client);
 
 async function run() {
-	const [soc2] = await db
-		.select()
-		.from(frameworks)
-		.where(eq(frameworks.slug, 'soc2'))
-		.limit(1);
+	const [soc2] = await db.select().from(frameworks).where(eq(frameworks.slug, 'soc2')).limit(1);
 
 	if (!soc2) {
 		console.error('SOC 2 framework not found');
@@ -207,7 +203,7 @@ async function run() {
 			code: 'CC6.7',
 			title: 'Restriction of Data Movement and Output',
 			description:
-				'The organization restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity\'s objectives. Controls include data loss prevention measures, encryption of data in transit, and restrictions on the use of removable media. Output controls ensure that sensitive data is delivered only to intended recipients.',
+				"The organization restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity's objectives. Controls include data loss prevention measures, encryption of data in transit, and restrictions on the use of removable media. Output controls ensure that sensitive data is delivered only to intended recipients.",
 			whyItMatters:
 				'Data exfiltration — whether malicious or accidental — is a primary risk vector. Controls over data movement prevent sensitive information from leaving the organization through unauthorized channels.',
 			whatAuditorExpects:
@@ -219,7 +215,7 @@ async function run() {
 			code: 'CC6.8',
 			title: 'Prevention and Detection of Unauthorized or Malicious Software',
 			description:
-				'The organization implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity\'s objectives. This includes deploying endpoint protection, maintaining an allowlist of approved software, and monitoring for indicators of compromise. Detection capabilities are paired with response procedures to contain and remediate threats.',
+				"The organization implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity's objectives. This includes deploying endpoint protection, maintaining an allowlist of approved software, and monitoring for indicators of compromise. Detection capabilities are paired with response procedures to contain and remediate threats.",
 			whyItMatters:
 				'Malware and unauthorized software are common attack vectors that can compromise data confidentiality, integrity, and availability. Preventive and detective controls work together to minimize the window of exposure.',
 			whatAuditorExpects:

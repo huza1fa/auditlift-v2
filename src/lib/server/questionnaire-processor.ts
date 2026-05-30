@@ -225,7 +225,13 @@ For each question return:
 	// Fallback: process individually
 	const fallbackResults: Array<{ questionId: string; classification: QuestionClassification }> = [];
 	for (const q of questions) {
-		const classification = await classifyQuestion(q.questionText, orgName, policyContext, controlContext, systemDescriptionPrompt);
+		const classification = await classifyQuestion(
+			q.questionText,
+			orgName,
+			policyContext,
+			controlContext,
+			systemDescriptionPrompt
+		);
 		fallbackResults.push({ questionId: q.id, classification });
 	}
 	return fallbackResults;

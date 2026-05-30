@@ -200,16 +200,12 @@ export function buildSystemPrompt(ctx: RichPolicyContext): string {
 				hybrid: 'hybrid deployment (cloud + on-prem)',
 				'api-only': 'API / developer platform'
 			};
-			parts.push(
-				`**Architecture:** ${flowLabels[sd.dataFlowType] ?? sd.dataFlowType}`
-			);
+			parts.push(`**Architecture:** ${flowLabels[sd.dataFlowType] ?? sd.dataFlowType}`);
 		}
 
 		if (sd.dataStorageProviders && sd.dataStorageProviders.length > 0) {
 			const region = sd.dataStorageRegion ? ` (primary region: ${sd.dataStorageRegion})` : '';
-			parts.push(
-				`**Data storage:** ${sd.dataStorageProviders.join(', ')}${region}`
-			);
+			parts.push(`**Data storage:** ${sd.dataStorageProviders.join(', ')}${region}`);
 			parts.push(
 				'→ Reference these specific cloud providers in data residency, encryption at rest, and backup/DR sections instead of generic "cloud provider" language.'
 			);
@@ -229,7 +225,9 @@ export function buildSystemPrompt(ctx: RichPolicyContext): string {
 					'Manual device policies (no automated enforcement) — Policies should prescribe clear manual procedures and note this as an area for improvement.',
 				none: 'No endpoint management in place — Policies should recommend implementing endpoint management and include interim manual controls.'
 			};
-			parts.push(`**Endpoint management:** ${epLabels[sd.endpointManagement] ?? sd.endpointManagement}`);
+			parts.push(
+				`**Endpoint management:** ${epLabels[sd.endpointManagement] ?? sd.endpointManagement}`
+			);
 		}
 
 		if (sd.keyTools) {
@@ -239,9 +237,7 @@ export function buildSystemPrompt(ctx: RichPolicyContext): string {
 		}
 
 		if (sd.additionalContext) {
-			parts.push(
-				`**Additional context:** ${sd.additionalContext}`
-			);
+			parts.push(`**Additional context:** ${sd.additionalContext}`);
 		}
 
 		parts.push('');

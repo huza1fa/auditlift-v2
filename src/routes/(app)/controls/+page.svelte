@@ -159,7 +159,8 @@
 		<Card class="p-8 text-center">
 			<MagnifyingGlass size={32} color="var(--foreground-subtle)" class="mx-auto mb-2" />
 			<p class="text-sm text-[var(--foreground-muted)]">
-				No controls matching "<span class="font-medium text-[var(--foreground)]">{searchQuery}</span>"
+				No controls matching "<span class="font-medium text-[var(--foreground)]">{searchQuery}</span
+				>"
 			</p>
 		</Card>
 	{/if}

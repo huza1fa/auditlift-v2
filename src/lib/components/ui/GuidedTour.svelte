@@ -63,13 +63,13 @@
 <div
 	style={tooltipStyle}
 	style:z-index="50"
-	class="bg-[var(--background-elevated)] border border-[var(--border)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-5 w-72"
+	class="w-72 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background-elevated)] p-5 shadow-[var(--shadow-lg)]"
 	role="dialog"
 	aria-modal="true"
 	aria-label={steps[currentStep].title}
 >
 	<!-- Step counter -->
-	<p class="mb-2 text-[11px] font-medium text-[var(--foreground-subtle)] uppercase tracking-wide">
+	<p class="mb-2 text-[11px] font-medium tracking-wide text-[var(--foreground-subtle)] uppercase">
 		Step {currentStep + 1} of {steps.length}
 	</p>
 

@@ -25,12 +25,12 @@ This policy applies to all third-party vendors, service providers, contractors, 
 
 Vendors are classified into risk tiers based on the nature and extent of their access to {{companyName}} data and systems:
 
-| Tier | Description | Examples |
-|------|-------------|---------|
-| Critical | Access to production systems, customer PII, or financial data; outage directly impacts {{companyName}} service delivery | Cloud provider, payment processor, authentication provider |
-| High | Access to internal data or systems; outage causes significant operational disruption | Source code repositories, CI/CD platforms, security tooling |
-| Medium | Limited access to non-sensitive data; no direct production access | Marketing platforms, analytics tools, CRM |
-| Low | No access to {{companyName}} data or systems; provides commodity services | Office supplies, non-digital services |
+| Tier     | Description                                                                                                             | Examples                                                    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Critical | Access to production systems, customer PII, or financial data; outage directly impacts {{companyName}} service delivery | Cloud provider, payment processor, authentication provider  |
+| High     | Access to internal data or systems; outage causes significant operational disruption                                    | Source code repositories, CI/CD platforms, security tooling |
+| Medium   | Limited access to non-sensitive data; no direct production access                                                       | Marketing platforms, analytics tools, CRM                   |
+| Low      | No access to {{companyName}} data or systems; provides commodity services                                               | Office supplies, non-digital services                       |
 
 Tier classification is documented in the Vendor Register and reviewed annually or when vendor scope changes.
 

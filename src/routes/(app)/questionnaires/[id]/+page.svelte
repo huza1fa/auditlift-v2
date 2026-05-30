@@ -701,11 +701,7 @@
 			<div class="flex shrink-0 flex-wrap items-center gap-2">
 				<!-- Update answers button -->
 				{#if questionnaire.status === 'ready' && (gapCount > 0 || lowCount > 0 || mediumCount > 0)}
-					<Button
-						variant="secondary"
-						onclick={handleReprocess}
-						disabled={reprocessing}
-					>
+					<Button variant="secondary" onclick={handleReprocess} disabled={reprocessing}>
 						{#if reprocessing}
 							<Spinner size={14} class="animate-spin" />
 						{:else}
@@ -977,10 +973,16 @@
 								{#if (selectedQuestion.confidence === 'medium' || selectedQuestion.confidence === 'low') && getSuggestedPolicyType(selectedQuestion.domain)}
 									{@const upgradeType = getSuggestedPolicyType(selectedQuestion.domain)!}
 									{#if !existingPolicyTypes.includes(upgradeType)}
-										<div class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--brand)] bg-[var(--brand-light)] px-3 py-2.5">
+										<div
+											class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--brand)] bg-[var(--brand-light)] px-3 py-2.5"
+										>
 											<Sparkle size={14} color="var(--brand)" class="mt-0.5 shrink-0" />
 											<p class="text-xs leading-snug text-[var(--foreground-muted)]">
-												Generate a <a href="/policies?generate={upgradeType}" class="font-medium text-[var(--brand)] hover:underline">{getPolicyTitle(upgradeType)}</a> to potentially upgrade this answer to High confidence.
+												Generate a <a
+													href="/policies?generate={upgradeType}"
+													class="font-medium text-[var(--brand)] hover:underline"
+													>{getPolicyTitle(upgradeType)}</a
+												> to potentially upgrade this answer to High confidence.
 											</p>
 										</div>
 									{/if}

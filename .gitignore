@@ -149,3 +149,18 @@ nul
 .cursor/agents
 
 .vscode
+
+# === Generated build artifacts ===
+.svelte-kit/
+build/
+
+# === Migration artifacts (local only, do not commit) ===
+infrastructure/
+infra/
+MIGRATION-CHECKPOINT.md
+railway.dump
+s3-sync-temp/
+auditlift-ec2.pem
+temp_*.json
+*.dump
+cdk.out/

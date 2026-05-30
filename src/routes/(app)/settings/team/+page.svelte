@@ -77,7 +77,7 @@
 			];
 			// Re-check if trial limit is now reached
 			if (data.memberLimit !== null) {
-				canInviteMore = (data.members.length + data.pendingInvites.length) < data.memberLimit;
+				canInviteMore = data.members.length + data.pendingInvites.length < data.memberLimit;
 			}
 		} catch {
 			inviteError = 'An error occurred. Please try again.';
@@ -158,9 +158,7 @@
 				</Button>
 			{:else}
 				<a href="/settings/billing">
-					<Button variant="secondary">
-						Upgrade to invite more
-					</Button>
+					<Button variant="secondary">Upgrade to invite more</Button>
 				</a>
 			{/if}
 		{/if}
@@ -175,10 +173,13 @@
 		</div>
 
 		{#if isTrialLimited && !canInviteMore}
-			<div class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] bg-[var(--warning-light)] px-3 py-3">
+			<div
+				class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] bg-[var(--warning-light)] px-3 py-3"
+			>
 				<Warning size={16} color="var(--warning)" class="mt-0.5 shrink-0" />
 				<p class="text-xs leading-snug text-[var(--warning)]">
-					Trial plans are limited to {data.memberLimit} team members. <a href="/settings/billing" class="underline font-medium">Upgrade</a> for unlimited invites.
+					Trial plans are limited to {data.memberLimit} team members.
+					<a href="/settings/billing" class="font-medium underline">Upgrade</a> for unlimited invites.
 				</p>
 			</div>
 		{/if}

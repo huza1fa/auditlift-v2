@@ -21,25 +21,30 @@ This policy applies to personal data collected through {{companyName}}'s service
 {{companyName}} collects the following categories of personal data:
 
 ### 2.1 Account and Identity Data
+
 - Name, email address, job title, company name
 - Account credentials (passwords stored in hashed form only)
 - Profile information provided by the user
 
 ### 2.2 Usage and Product Data
+
 - Log data including IP addresses, browser type, pages visited, and feature usage
 - Error reports and diagnostic data
 - Support communications
 
 ### 2.3 Payment and Billing Data
+
 - Billing address and contact information
 - Payment method details (processed by our payment processor; {{companyName}} does not store full card numbers)
 
 ### 2.4 Employment Data (for employees and contractors)
+
 - Contact information, emergency contacts
 - Employment history, compensation records, performance data
 - Background check results (where legally permitted)
 
 ### 2.5 Data Provided by Customers
+
 In the course of using {{companyName}}'s services, customers may upload or input data that contains personal information about their own users or employees. {{companyName}} processes this data as a data processor on behalf of the customer (data controller).
 
 ## 3. Legal Basis for Processing

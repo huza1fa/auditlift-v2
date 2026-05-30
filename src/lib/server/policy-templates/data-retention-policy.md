@@ -18,24 +18,24 @@ This policy applies to all data in all forms (electronic and physical) created, 
 
 ## 3. Retention Schedule by Data Type
 
-| Data Category | Retention Period | Notes |
-|--------------|-----------------|-------|
-| Customer account data | Duration of relationship + 3 years | Retain for contract dispute resolution |
-| Customer personal data (PII) | Duration of relationship + 1 year | Subject to erasure requests under applicable privacy law |
-| Financial records (invoices, payments) | 7 years | Tax and accounting compliance (varies by jurisdiction) |
-| Contracts and agreements | 7 years after expiry | |
-| Employee records (HR) | Duration of employment + 7 years | Varies by jurisdiction; consult legal counsel |
-| Payroll records | 7 years | |
-| Security logs (authentication, access) | 12 months online; 24 months archived | Required for forensic investigation |
-| Application logs | 90 days online; 12 months archived | |
-| Audit logs (privileged actions) | 24 months | Regulatory and audit requirements |
-| Incident response records | 3 years from closure | |
-| Background check records | Duration of employment | |
-| Marketing contact data | 2 years from last interaction | Subject to opt-out and erasure requests |
-| Support tickets and communications | 3 years from closure | |
-| Change management records | 3 years | Audit trail requirements |
-| Backup data | 90 days (daily backups); 1 year (monthly snapshots) | Encrypted at rest |
-| Penetration test reports | 3 years | |
+| Data Category                          | Retention Period                                    | Notes                                                    |
+| -------------------------------------- | --------------------------------------------------- | -------------------------------------------------------- |
+| Customer account data                  | Duration of relationship + 3 years                  | Retain for contract dispute resolution                   |
+| Customer personal data (PII)           | Duration of relationship + 1 year                   | Subject to erasure requests under applicable privacy law |
+| Financial records (invoices, payments) | 7 years                                             | Tax and accounting compliance (varies by jurisdiction)   |
+| Contracts and agreements               | 7 years after expiry                                |                                                          |
+| Employee records (HR)                  | Duration of employment + 7 years                    | Varies by jurisdiction; consult legal counsel            |
+| Payroll records                        | 7 years                                             |                                                          |
+| Security logs (authentication, access) | 12 months online; 24 months archived                | Required for forensic investigation                      |
+| Application logs                       | 90 days online; 12 months archived                  |                                                          |
+| Audit logs (privileged actions)        | 24 months                                           | Regulatory and audit requirements                        |
+| Incident response records              | 3 years from closure                                |                                                          |
+| Background check records               | Duration of employment                              |                                                          |
+| Marketing contact data                 | 2 years from last interaction                       | Subject to opt-out and erasure requests                  |
+| Support tickets and communications     | 3 years from closure                                |                                                          |
+| Change management records              | 3 years                                             | Audit trail requirements                                 |
+| Backup data                            | 90 days (daily backups); 1 year (monthly snapshots) | Encrypted at rest                                        |
+| Penetration test reports               | 3 years                                             |                                                          |
 
 Retention periods listed are minimums unless otherwise noted. Data must not be retained beyond the specified period unless a legal hold is in place (see Section 5).
 
@@ -93,13 +93,13 @@ Data that must be retained beyond its active use period should be archived to re
 
 ## 8. Roles and Responsibilities
 
-| Role | Responsibility |
-|------|---------------|
-| Data Owners | Ensure data under their ownership is classified and disposed of per this policy |
-| IT / Engineering | Implement and maintain technical controls for automated retention and deletion |
-| Security Team | Define, enforce, and audit this policy; manage legal holds |
-| All Employees | Comply with retention and disposal procedures; not retain data beyond policy |
-| Legal / Compliance | Advise on legal minimums and manage legal hold process |
+| Role               | Responsibility                                                                  |
+| ------------------ | ------------------------------------------------------------------------------- |
+| Data Owners        | Ensure data under their ownership is classified and disposed of per this policy |
+| IT / Engineering   | Implement and maintain technical controls for automated retention and deletion  |
+| Security Team      | Define, enforce, and audit this policy; manage legal holds                      |
+| All Employees      | Comply with retention and disposal procedures; not retain data beyond policy    |
+| Legal / Compliance | Advise on legal minimums and manage legal hold process                          |
 
 ## 9. Review
 

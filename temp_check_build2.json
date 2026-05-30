@@ -1,1 +1,0 @@
-{"commands": ["ls -la /opt/auditlift/build/", "find /opt/auditlift/build/ -maxdepth 2 -name '*.js' | head -10", "test -f /opt/auditlift/build/index.js && echo 'index.js exists' || echo 'index.js MISSING'", "test -d /opt/auditlift/build/client && echo 'client dir exists' || echo 'client dir MISSING'"]}

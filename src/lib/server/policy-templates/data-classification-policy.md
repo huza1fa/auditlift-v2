@@ -46,15 +46,15 @@ This policy applies to all data created, processed, stored, or transmitted by {{
 
 ## 4. Handling Requirements per Classification Tier
 
-| Requirement | Public | Internal | Confidential | Restricted |
-|------------|--------|----------|-------------|------------|
-| Encryption at rest | No | Recommended | Required | Required |
-| Encryption in transit | No | Required | Required | Required |
-| Access control | Open | Role-based | Need-to-know | Named individuals only |
-| MFA required | No | Yes (company systems) | Yes | Yes |
-| Logging and monitoring | No | Yes | Yes | Yes, with alerting |
-| Third-party sharing | Permitted | Manager approval | DPA required | CISO approval + DPA required |
-| Transmission via email | Permitted | Permitted (internal) | Encrypted only | Prohibited; use secure transfer |
+| Requirement            | Public    | Internal              | Confidential   | Restricted                      |
+| ---------------------- | --------- | --------------------- | -------------- | ------------------------------- |
+| Encryption at rest     | No        | Recommended           | Required       | Required                        |
+| Encryption in transit  | No        | Required              | Required       | Required                        |
+| Access control         | Open      | Role-based            | Need-to-know   | Named individuals only          |
+| MFA required           | No        | Yes (company systems) | Yes            | Yes                             |
+| Logging and monitoring | No        | Yes                   | Yes            | Yes, with alerting              |
+| Third-party sharing    | Permitted | Manager approval      | DPA required   | CISO approval + DPA required    |
+| Transmission via email | Permitted | Permitted (internal)  | Encrypted only | Prohibited; use secure transfer |
 
 ## 5. Labeling and Marking Standards
 
@@ -69,12 +69,12 @@ Automated data loss prevention (DLP) tools are used where feasible to assist wit
 
 ## 6. Retention and Disposal Requirements
 
-| Classification | Minimum Retention | Disposal Method |
-|---------------|-------------------|----------------|
-| Public | As needed | Standard deletion |
-| Internal | 1 year | Standard deletion |
-| Confidential | 3 years (or as required by law) | Secure deletion (NIST 800-88) |
-| Restricted | Per regulatory requirement | Cryptographic erasure or physical destruction; certificate of destruction required |
+| Classification | Minimum Retention               | Disposal Method                                                                    |
+| -------------- | ------------------------------- | ---------------------------------------------------------------------------------- |
+| Public         | As needed                       | Standard deletion                                                                  |
+| Internal       | 1 year                          | Standard deletion                                                                  |
+| Confidential   | 3 years (or as required by law) | Secure deletion (NIST 800-88)                                                      |
+| Restricted     | Per regulatory requirement      | Cryptographic erasure or physical destruction; certificate of destruction required |
 
 Retention schedules are defined in detail in the Data Retention Policy.
 

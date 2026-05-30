@@ -1,1 +1,0 @@
-{"commands": ["cat /root/.pm2/logs/auditlift-error.log | grep -o 'relation.*does not exist\\|json parse\\|PARSE_ERROR\\|SyntaxError' | head -5", "cat /root/.pm2/logs/auditlift-error.log | tail -15"]}

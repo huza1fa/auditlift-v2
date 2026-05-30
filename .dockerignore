@@ -1,0 +1,17 @@
+node_modules
+.svelte-kit
+build
+cdk.out
+.cdk.staging
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+*.md
+!README.md
+Dockerfile
+.dockerignore
+infrastructure
+.drizzle
+*.log

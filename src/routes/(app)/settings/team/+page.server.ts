@@ -67,7 +67,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		);
 
 	const isPaid = hasActivePaidAccess(locals.subscription);
-	const canInviteMore = isPaid || (members.length + pendingInvites.length) < TRIAL_MEMBER_LIMIT;
+	const canInviteMore = isPaid || members.length + pendingInvites.length < TRIAL_MEMBER_LIMIT;
 
 	return {
 		organization: org,

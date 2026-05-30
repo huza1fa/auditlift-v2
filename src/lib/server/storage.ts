@@ -15,22 +15,32 @@ function getS3(): { client: S3Client; bucket: string } {
 	if (_s3Client && _bucketName) return { client: _s3Client, bucket: _bucketName };
 
 	const endpoint = process.env.BUCKET_ENDPOINT;
-	const region = process.env.BUCKET_REGION || 'auto';
+	const region = process.env.BUCKET_REGION || 'us-east-1';
 	const bucket = process.env.BUCKET_NAME;
 	const accessKey = process.env.BUCKET_ACCESS_KEY;
 	const secretKey = process.env.BUCKET_SECRET_KEY;
 
-	if (!endpoint || !bucket || !accessKey || !secretKey) {
-		throw new Error(
-			`Missing S3 configuration: ${JSON.stringify({ endpoint: !!endpoint, bucket: !!bucket, accessKey: !!accessKey, secretKey: !!secretKey })}`
-		);
+	if (!bucket) {
+		throw new Error('Missing S3 configuration: BUCKET_NAME is required');
 	}
 
-	_s3Client = new S3Client({
-		endpoint,
-		region,
-		credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
-	});
+	// Railway / S3-compatible mode: explicit endpoint + credentials
+	if (endpoint) {
+		if (!accessKey || !secretKey) {
+			throw new Error(
+				`Missing S3 credentials: BUCKET_ACCESS_KEY and BUCKET_SECRET_KEY are required when BUCKET_ENDPOINT is set`
+			);
+		}
+		_s3Client = new S3Client({
+			endpoint,
+			region,
+			credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
+		});
+	} else {
+		// AWS native mode: uses IAM instance profile or default credential chain
+		_s3Client = new S3Client({ region });
+	}
+
 	_bucketName = bucket;
 	return { client: _s3Client, bucket: _bucketName };
 }

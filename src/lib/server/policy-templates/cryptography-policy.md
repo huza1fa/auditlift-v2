@@ -46,17 +46,17 @@ This policy applies to all cryptographic mechanisms used within or on behalf of 
 
 The following algorithms are explicitly prohibited due to known cryptographic weaknesses:
 
-| Algorithm | Reason for Prohibition |
-|-----------|----------------------|
-| MD5 | Collision attacks; not acceptable for any security purpose |
-| SHA-1 | Collision attacks; deprecated for signatures and certificates |
-| DES / 3DES | Insufficient key length; vulnerable to SWEET32 attack |
-| RC4 | Multiple practical attacks; prohibited in TLS (RFC 7465) |
-| SSL 2.0 / SSL 3.0 | POODLE and other attacks |
-| TLS 1.0 / TLS 1.1 | Deprecated; weak ciphers permitted |
-| RSA < 2048-bit | Insufficient key length |
-| ECB mode (any cipher) | Does not provide semantic security |
-| Any algorithm with a known break or public exploit | As assessed by the Security Team |
+| Algorithm                                          | Reason for Prohibition                                        |
+| -------------------------------------------------- | ------------------------------------------------------------- |
+| MD5                                                | Collision attacks; not acceptable for any security purpose    |
+| SHA-1                                              | Collision attacks; deprecated for signatures and certificates |
+| DES / 3DES                                         | Insufficient key length; vulnerable to SWEET32 attack         |
+| RC4                                                | Multiple practical attacks; prohibited in TLS (RFC 7465)      |
+| SSL 2.0 / SSL 3.0                                  | POODLE and other attacks                                      |
+| TLS 1.0 / TLS 1.1                                  | Deprecated; weak ciphers permitted                            |
+| RSA < 2048-bit                                     | Insufficient key length                                       |
+| ECB mode (any cipher)                              | Does not provide semantic security                            |
+| Any algorithm with a known break or public exploit | As assessed by the Security Team                              |
 
 Use of any prohibited algorithm requires a documented exception approved by the CISO with a defined remediation plan.
 
@@ -76,13 +76,13 @@ Use of any prohibited algorithm requires a documented exception approved by the 
 
 ### 5.3 Key Rotation
 
-| Key Type | Rotation Frequency |
-|----------|------------------|
-| TLS certificates (public-facing) | Before expiry; maximum 1 year validity |
-| Database encryption keys | Annually or upon suspected compromise |
+| Key Type                            | Rotation Frequency                                       |
+| ----------------------------------- | -------------------------------------------------------- |
+| TLS certificates (public-facing)    | Before expiry; maximum 1 year validity                   |
+| Database encryption keys            | Annually or upon suspected compromise                    |
 | API keys and service account tokens | Annually minimum; immediately upon personnel offboarding |
-| Customer-facing session tokens | Per-session; maximum 24-hour lifetime |
-| Internal signing keys | Annually |
+| Customer-facing session tokens      | Per-session; maximum 24-hour lifetime                    |
+| Internal signing keys               | Annually                                                 |
 
 Automated key rotation is implemented where the platform supports it.
 
@@ -127,12 +127,12 @@ Certificates are revoked immediately upon suspected private key compromise. The 
 
 ## 7. Encryption Requirements by Data Classification
 
-| Classification | At Rest | In Transit |
-|---------------|---------|-----------|
-| Public | Not required | HTTPS preferred |
-| Internal | AES-128+ | TLS 1.2+ required |
-| Confidential | AES-256 required | TLS 1.2+ required |
-| Restricted | AES-256 required; HSM preferred | TLS 1.3 required; mTLS preferred |
+| Classification | At Rest                         | In Transit                       |
+| -------------- | ------------------------------- | -------------------------------- |
+| Public         | Not required                    | HTTPS preferred                  |
+| Internal       | AES-128+                        | TLS 1.2+ required                |
+| Confidential   | AES-256 required                | TLS 1.2+ required                |
+| Restricted     | AES-256 required; HSM preferred | TLS 1.3 required; mTLS preferred |
 
 ## 8. Exception Process
 

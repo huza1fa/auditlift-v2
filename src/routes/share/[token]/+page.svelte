@@ -27,7 +27,10 @@
 			case 'gap':
 				return { label: 'Gap', cls: 'bg-[var(--danger-light)] text-[var(--danger)]' };
 			default:
-				return { label: 'Unprocessed', cls: 'bg-[var(--background-alt)] text-[var(--foreground-muted)]' };
+				return {
+					label: 'Unprocessed',
+					cls: 'bg-[var(--background-alt)] text-[var(--foreground-muted)]'
+				};
 		}
 	}
 
@@ -66,9 +69,7 @@
 			<span class="text-lg font-semibold tracking-tight">AuditLift</span>
 		</div>
 
-		<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-			Security Questionnaire
-		</h1>
+		<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Security Questionnaire</h1>
 		<p class="mb-4 text-sm text-[var(--foreground-muted)]">
 			Prepared by <strong>{data.organizationName}</strong> · {data.questionnaire.filename} · Shared {sharedDate}
 		</p>
@@ -105,7 +106,9 @@
 
 			<div class="flex gap-4 text-sm text-[var(--foreground-muted)]">
 				<div>
-					<p class="text-lg font-semibold text-[var(--foreground)]">{data.questionnaire.answeredCount}</p>
+					<p class="text-lg font-semibold text-[var(--foreground)]">
+						{data.questionnaire.answeredCount}
+					</p>
 					<p class="text-xs">Answered</p>
 				</div>
 				<div>
@@ -113,7 +116,9 @@
 					<p class="text-xs">Gaps</p>
 				</div>
 				<div>
-					<p class="text-lg font-semibold text-[var(--foreground)]">{data.questionnaire.totalQuestions}</p>
+					<p class="text-lg font-semibold text-[var(--foreground)]">
+						{data.questionnaire.totalQuestions}
+					</p>
 					<p class="text-xs">Total</p>
 				</div>
 			</div>
@@ -123,25 +128,37 @@
 	<!-- Questions -->
 	{#each grouped as group}
 		{#if group.section}
-			<h2 class="mt-8 mb-4 border-b border-[var(--border)] pb-2 text-sm font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">
+			<h2
+				class="mt-8 mb-4 border-b border-[var(--border)] pb-2 text-sm font-semibold tracking-wider text-[var(--foreground-muted)] uppercase"
+			>
 				{group.section}
 			</h2>
 		{/if}
 
 		{#each group.questions as q (q.id)}
-			<div class="mb-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-elevated)] p-5">
+			<div
+				class="mb-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-elevated)] p-5"
+			>
 				<div class="mb-2 flex items-start justify-between gap-3">
 					<p class="text-sm font-medium text-[var(--foreground)]">
-						{#if q.questionNumber}<span class="text-[var(--foreground-subtle)]">#{q.questionNumber}</span>{/if}
+						{#if q.questionNumber}<span class="text-[var(--foreground-subtle)]"
+								>#{q.questionNumber}</span
+							>{/if}
 						{q.questionText}
 					</p>
-					<span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {confidenceBadge(q.confidence).cls}">
+					<span
+						class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {confidenceBadge(
+							q.confidence
+						).cls}"
+					>
 						{confidenceBadge(q.confidence).label}
 					</span>
 				</div>
 
 				{#if q.confidence === 'gap'}
-					<div class="flex items-start gap-2 rounded-[var(--radius)] bg-[var(--danger-light)] px-3 py-2">
+					<div
+						class="flex items-start gap-2 rounded-[var(--radius)] bg-[var(--danger-light)] px-3 py-2"
+					>
 						<XCircle size={14} color="var(--danger)" class="mt-0.5 shrink-0" />
 						<p class="text-xs text-[var(--danger)]">
 							{q.gapReason ?? 'This question requires additional documentation.'}
@@ -149,7 +166,9 @@
 					</div>
 				{:else if q.answer}
 					<div class="rounded-[var(--radius)] bg-[var(--background-alt)] px-3 py-2.5">
-						<p class="text-sm leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">{q.answer}</p>
+						<p class="text-sm leading-relaxed whitespace-pre-wrap text-[var(--foreground)]">
+							{q.answer}
+						</p>
 					</div>
 				{:else}
 					<p class="text-xs text-[var(--foreground-subtle)] italic">No answer available.</p>
@@ -162,7 +181,12 @@
 	<div class="mt-12 border-t border-[var(--border)] pt-6 text-center">
 		<div class="flex items-center justify-center gap-1.5 text-[var(--foreground-subtle)]">
 			<ShieldCheck size={14} />
-			<span class="text-xs">Powered by <a href="https://auditlift.app" class="font-medium text-[var(--brand)] hover:underline">AuditLift</a></span>
+			<span class="text-xs"
+				>Powered by <a
+					href="https://auditlift.app"
+					class="font-medium text-[var(--brand)] hover:underline">AuditLift</a
+				></span
+			>
 		</div>
 	</div>
 </div>

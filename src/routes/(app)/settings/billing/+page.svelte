@@ -237,7 +237,9 @@
 					{/if}
 				</div>
 				<p class="mb-3 text-2xl font-bold text-[var(--foreground)]">
-					${monthlyPrice}<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
+					${monthlyPrice}<span class="text-sm font-normal text-[var(--foreground-muted)]"
+						>/month</span
+					>
 				</p>
 				<ul class="mb-4 space-y-1.5 text-sm text-[var(--foreground-muted)]">
 					<li class="flex items-center gap-2">
@@ -277,9 +279,13 @@
 					<p class="font-semibold text-[var(--foreground)]">Yearly</p>
 				</div>
 				<p class="mb-1 text-2xl font-bold text-[var(--foreground)]">
-					${yearlyMonthly}<span class="text-sm font-normal text-[var(--foreground-muted)]">/month</span>
+					${yearlyMonthly}<span class="text-sm font-normal text-[var(--foreground-muted)]"
+						>/month</span
+					>
 				</p>
-				<p class="mb-3 text-sm text-[var(--foreground-muted)]">${yearlyTotal.toLocaleString()}/year billed annually</p>
+				<p class="mb-3 text-sm text-[var(--foreground-muted)]">
+					${yearlyTotal.toLocaleString()}/year billed annually
+				</p>
 				<ul class="mb-4 space-y-1.5 text-sm text-[var(--foreground-muted)]">
 					<li class="flex items-center gap-2">
 						<Check size={14} color="var(--success)" weight="bold" /> Everything in Monthly

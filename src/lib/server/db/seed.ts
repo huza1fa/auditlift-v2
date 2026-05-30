@@ -339,7 +339,7 @@ export async function seed() {
 				code: 'CC9.2',
 				title: 'Vendor and Third-Party Risk Management',
 				description:
-					'The organization assesses and manages risks associated with vendors and business partners whose services or products are part of the organization\'s system. Vendor risk management includes initial due diligence before engagement, ongoing monitoring of vendor control environments, and contractual requirements for security, confidentiality, and breach notification. Vendor access to systems and data is scoped to the minimum necessary.',
+					"The organization assesses and manages risks associated with vendors and business partners whose services or products are part of the organization's system. Vendor risk management includes initial due diligence before engagement, ongoing monitoring of vendor control environments, and contractual requirements for security, confidentiality, and breach notification. Vendor access to systems and data is scoped to the minimum necessary.",
 				whyItMatters:
 					'Your attack surface extends to every vendor with access to your systems or data. Third-party breaches are among the most frequent causes of downstream customer data exposure, making vendor risk management a critical enterprise sales requirement.',
 				whatAuditorExpects:

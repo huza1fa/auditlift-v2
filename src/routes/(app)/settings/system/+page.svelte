@@ -28,7 +28,15 @@
 		{ value: 'api-only', label: 'API / Platform', sub: 'Developer-facing service' }
 	];
 
-	const storageProviderOptions = ['AWS', 'GCP', 'Azure', 'Cloudflare', 'DigitalOcean', 'Hetzner', 'Other'];
+	const storageProviderOptions = [
+		'AWS',
+		'GCP',
+		'Azure',
+		'Cloudflare',
+		'DigitalOcean',
+		'Hetzner',
+		'Other'
+	];
 
 	const endpointOptions = [
 		{ value: 'mdm', label: 'MDM', sub: 'Jamf, Kandji, Intune, etc.' },
@@ -131,9 +139,12 @@
 		<!-- Product description -->
 		<Card class="space-y-5 p-6">
 			<div>
-				<h3 class="mb-1 text-sm font-semibold text-[var(--foreground)]">What does your product do?</h3>
+				<h3 class="mb-1 text-sm font-semibold text-[var(--foreground)]">
+					What does your product do?
+				</h3>
 				<p class="mb-2 text-xs text-[var(--foreground-muted)]">
-					A brief description of your product — like the first paragraph of a SOC 2 system description.
+					A brief description of your product — like the first paragraph of a SOC 2 system
+					description.
 				</p>
 				<textarea
 					bind:value={productDescription}
@@ -142,12 +153,16 @@
 					maxlength={500}
 					class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:ring-2 focus:ring-[var(--border-focus)] focus:outline-none"
 				></textarea>
-				<p class="mt-1 text-right text-xs text-[var(--foreground-subtle)]">{productDescription.length}/500</p>
+				<p class="mt-1 text-right text-xs text-[var(--foreground-subtle)]">
+					{productDescription.length}/500
+				</p>
 			</div>
 
 			<!-- Data flow type -->
 			<div>
-				<h3 class="mb-2 text-sm font-semibold text-[var(--foreground)]">How does your product operate?</h3>
+				<h3 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+					How does your product operate?
+				</h3>
 				<div class="grid grid-cols-2 gap-2">
 					{#each dataFlowOptions as opt (opt.value)}
 						<button
@@ -171,7 +186,9 @@
 
 			<!-- Cloud providers -->
 			<div>
-				<p class="mb-2 text-xs font-medium text-[var(--foreground-muted)]">Where is your data stored?</p>
+				<p class="mb-2 text-xs font-medium text-[var(--foreground-muted)]">
+					Where is your data stored?
+				</p>
 				<div class="flex flex-wrap gap-2">
 					{#each storageProviderOptions as provider (provider)}
 						<button
@@ -201,7 +218,9 @@
 
 			<!-- Identity provider -->
 			<div>
-				<p class="mb-2 text-xs font-medium text-[var(--foreground-muted)]">Identity provider (SSO)</p>
+				<p class="mb-2 text-xs font-medium text-[var(--foreground-muted)]">
+					Identity provider (SSO)
+				</p>
 				<div class="flex flex-wrap gap-2">
 					{#each idpOptions as idp (idp)}
 						<button
@@ -274,7 +293,9 @@
 		<!-- Additional context -->
 		<Card class="space-y-4 p-6">
 			<div>
-				<h3 class="mb-1 text-sm font-semibold text-[var(--foreground)]">Anything else an auditor should know?</h3>
+				<h3 class="mb-1 text-sm font-semibold text-[var(--foreground)]">
+					Anything else an auditor should know?
+				</h3>
 				<p class="mb-2 text-xs text-[var(--foreground-muted)]">
 					Compensating controls, upcoming changes, or context that doesn't fit above.
 				</p>
@@ -293,8 +314,8 @@
 			<Info size={16} color="var(--info)" class="mt-0.5 shrink-0" />
 			<p class="text-xs leading-snug text-[var(--info)]">
 				This information is used to tailor policy documents and questionnaire answers to your
-				specific environment. The more detail you provide, the more accurate and auditor-ready
-				the output will be.
+				specific environment. The more detail you provide, the more accurate and auditor-ready the
+				output will be.
 			</p>
 		</div>
 

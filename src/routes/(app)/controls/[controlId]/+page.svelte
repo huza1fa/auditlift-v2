@@ -92,20 +92,14 @@
 	// ── Upload guidance ───────────────────────────────────────────────────────
 	function getUploadGuidance(category: string, code: string): string {
 		const cat = category.toLowerCase();
-		if (cat.includes('access') || code.startsWith('CC6'))
-			return m.control_upload_guidance_access();
+		if (cat.includes('access') || code.startsWith('CC6')) return m.control_upload_guidance_access();
 		if (cat.includes('incident') || code.startsWith('CC7'))
 			return m.control_upload_guidance_incident();
-		if (cat.includes('change') || code.startsWith('CC8'))
-			return m.control_upload_guidance_change();
-		if (cat.includes('vendor') || code.startsWith('CC9'))
-			return m.control_upload_guidance_vendor();
-		if (cat.includes('data') || cat.includes('privacy'))
-			return m.control_upload_guidance_data();
-		if (cat.includes('physical'))
-			return m.control_upload_guidance_physical();
-		if (cat.includes('crypto'))
-			return m.control_upload_guidance_crypto();
+		if (cat.includes('change') || code.startsWith('CC8')) return m.control_upload_guidance_change();
+		if (cat.includes('vendor') || code.startsWith('CC9')) return m.control_upload_guidance_vendor();
+		if (cat.includes('data') || cat.includes('privacy')) return m.control_upload_guidance_data();
+		if (cat.includes('physical')) return m.control_upload_guidance_physical();
+		if (cat.includes('crypto')) return m.control_upload_guidance_crypto();
 		return m.control_upload_guidance_default();
 	}
 
@@ -145,9 +139,7 @@
 	});
 
 	// Check if the selected policy type already exists for this control
-	const duplicateExists = $derived(
-		linkedPolicies.some((p) => p.type === selectedPolicyType)
-	);
+	const duplicateExists = $derived(linkedPolicies.some((p) => p.type === selectedPolicyType));
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	async function deleteEvidence(id: string) {
@@ -289,13 +281,15 @@
 								{#each suggestedTypes as type, i (type)}
 									<button
 										onclick={() => (selectedPolicyType = type)}
-										class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors {selectedPolicyType === type
+										class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors {selectedPolicyType ===
+										type
 											? 'border-[var(--brand)] bg-[var(--brand)] text-white'
 											: 'border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--brand)] hover:text-[var(--brand)]'}"
 									>
 										{#if i === 0}
 											<span
-												class="rounded px-1 py-0.5 text-[10px] font-semibold {selectedPolicyType === type
+												class="rounded px-1 py-0.5 text-[10px] font-semibold {selectedPolicyType ===
+												type
 													? 'bg-white/20 text-white'
 													: 'bg-[var(--brand-light)] text-[var(--brand)]'}"
 											>
@@ -329,7 +323,8 @@
 
 						{#if duplicateExists}
 							<p class="text-xs text-[var(--warning)]">
-								A {POLICY_LABELS[selectedPolicyType] ?? selectedPolicyType} already exists for this control. Select a different type or remove the existing one first.
+								A {POLICY_LABELS[selectedPolicyType] ?? selectedPolicyType} already exists for this control.
+								Select a different type or remove the existing one first.
 							</p>
 						{/if}
 

@@ -55,8 +55,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	// Resolve policy titles from mappedPolicyIds
 	const allPolicyIds = [
 		...new Set(
-			questions
-				.flatMap(() => []) // questions don't have mappedPolicyIds in this select
+			questions.flatMap(() => []) // questions don't have mappedPolicyIds in this select
 		)
 	];
 

@@ -428,7 +428,7 @@
 							e.stopPropagation();
 							deleteQuestionnaire(q.id);
 						}}
-						class="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--background-elevated)] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-[var(--danger-light)]"
+						class="absolute right-2 bottom-2 z-10 flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--background-elevated)] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 hover:bg-[var(--danger-light)]"
 						title="Delete questionnaire"
 					>
 						<Trash size={14} color="var(--danger)" />

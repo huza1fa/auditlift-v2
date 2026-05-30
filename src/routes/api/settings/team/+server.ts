@@ -64,7 +64,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		})),
 		pendingInvites,
 		memberLimit: isPaid ? null : TRIAL_MEMBER_LIMIT,
-		canInviteMore: isPaid || (members.length + pendingInvites.length) < TRIAL_MEMBER_LIMIT
+		canInviteMore: isPaid || members.length + pendingInvites.length < TRIAL_MEMBER_LIMIT
 	});
 };
 

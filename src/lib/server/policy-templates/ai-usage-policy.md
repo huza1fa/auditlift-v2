@@ -56,12 +56,12 @@ The following uses of AI tools are strictly prohibited:
 
 ## 5. Data Classification Requirements for AI Inputs
 
-| Classification | Approved AI Tools (with DPA) | Public/Unapproved AI Tools |
-|---------------|-----------------------------|-----------------------------|
-| Public | Permitted | Permitted |
-| Internal | Permitted | Permitted with caution; avoid company-identifying details |
-| Confidential | Permitted only if vendor DPA confirmed | Prohibited |
-| Restricted | Prohibited (CISO approval required for any use) | Prohibited |
+| Classification | Approved AI Tools (with DPA)                    | Public/Unapproved AI Tools                                |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------- |
+| Public         | Permitted                                       | Permitted                                                 |
+| Internal       | Permitted                                       | Permitted with caution; avoid company-identifying details |
+| Confidential   | Permitted only if vendor DPA confirmed          | Prohibited                                                |
+| Restricted     | Prohibited (CISO approval required for any use) | Prohibited                                                |
 
 When in doubt, treat the data as one tier higher and apply the corresponding restriction.
 

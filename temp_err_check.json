@@ -1,1 +1,0 @@
-{"commands": ["cat /root/.pm2/logs/auditlift-error.log | grep -c 'SERVER_ERROR'", "cat /root/.pm2/logs/auditlift-out.log | tail -5", "cat /root/.pm2/logs/auditlift-error.log | grep -v '^$' | tail -15"]}

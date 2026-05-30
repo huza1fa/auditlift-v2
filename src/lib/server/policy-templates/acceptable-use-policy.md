@@ -32,33 +32,39 @@ Company systems, networks, and data are provided for the purpose of conducting {
 The following activities are strictly prohibited on {{companyName}} systems and networks:
 
 ### 4.1 Security Violations
+
 - Attempting to circumvent or disable security controls, firewalls, intrusion detection systems, or encryption
 - Unauthorized scanning, probing, or testing of networks or systems without explicit written authorization
 - Installing or executing malware, spyware, ransomware, keyloggers, or any other malicious software
 - Sharing access credentials or using another person's credentials to access systems
 
 ### 4.2 Data Misuse
+
 - Accessing, copying, modifying, or disclosing data without authorization or legitimate business need
 - Transmitting confidential or restricted company data to personal email accounts or unauthorized external storage
 - Using company data for personal gain or to benefit a competitor
 
 ### 4.3 Inappropriate Content
+
 - Creating, accessing, storing, or transmitting content that is obscene, sexually explicit, harassing, discriminatory, threatening, or defamatory
 - Accessing websites or services known to host illegal or harmful content
 - Using company systems for gambling, operating a personal business, or political campaigning
 
 ### 4.4 Intellectual Property and Legal Violations
+
 - Copying, distributing, or using software, media, or content in violation of applicable licenses or copyright law
 - Using company systems to engage in activities that violate local, national, or international laws
 - Reverse engineering proprietary software or systems without authorization
 
 ### 4.5 Resource Abuse
+
 - Using company resources (bandwidth, compute, storage) for cryptocurrency mining or other unauthorized resource-intensive activities
 - Intentionally degrading network or system performance
 
 ## 5. Internet and Email Usage
 
 ### 5.1 Internet Usage
+
 Internet access is provided for business purposes. Users must not:
 
 - Access or download content from sites known to host malware or illegal material
@@ -66,6 +72,7 @@ Internet access is provided for business purposes. Users must not:
 - Stream non-business media in a manner that materially impacts network performance
 
 ### 5.2 Email Usage
+
 Company email is the official communication channel of {{companyName}}. Users must:
 
 - Not use company email addresses to register for personal services or non-business mailing lists

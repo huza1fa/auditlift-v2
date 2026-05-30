@@ -20,11 +20,11 @@ This policy covers {{companyName}}'s critical business functions, technology sys
 
 Recovery Time Objective (RTO) and Recovery Point Objective (RPO) define the maximum tolerable downtime and data loss for each system tier.
 
-| System Tier | Description | RTO | RPO |
-|------------|-------------|-----|-----|
-| Tier 1 — Critical | Core product (user-facing service, authentication, billing) | 4 hours | 1 hour |
-| Tier 2 — Important | Internal tooling, admin portal, alerting systems | 24 hours | 4 hours |
-| Tier 3 — Non-critical | Marketing site, documentation, non-production environments | 72 hours | 24 hours |
+| System Tier           | Description                                                 | RTO      | RPO      |
+| --------------------- | ----------------------------------------------------------- | -------- | -------- |
+| Tier 1 — Critical     | Core product (user-facing service, authentication, billing) | 4 hours  | 1 hour   |
+| Tier 2 — Important    | Internal tooling, admin portal, alerting systems            | 24 hours | 4 hours  |
+| Tier 3 — Non-critical | Marketing site, documentation, non-production environments  | 72 hours | 24 hours |
 
 RTO and RPO targets are reviewed annually and validated through DR testing (see Section 6).
 
@@ -32,13 +32,13 @@ RTO and RPO targets are reviewed annually and validated through DR testing (see 
 
 {{companyName}} has identified the following critical business functions and their dependencies:
 
-| Business Function | Systems Required | Maximum Tolerable Downtime |
-|------------------|-----------------|---------------------------|
-| Customer access to the {{companyName}} platform | Production application, database, CDN, authentication | 4 hours |
-| Payment processing | Billing service, payment processor integration | 4 hours |
-| Customer support | Ticketing system, email, internal knowledge base | 24 hours |
-| Engineering operations | CI/CD, source code repositories, alerting | 24 hours |
-| Financial operations | Accounting system, payroll | 72 hours |
+| Business Function                               | Systems Required                                      | Maximum Tolerable Downtime |
+| ----------------------------------------------- | ----------------------------------------------------- | -------------------------- |
+| Customer access to the {{companyName}} platform | Production application, database, CDN, authentication | 4 hours                    |
+| Payment processing                              | Billing service, payment processor integration        | 4 hours                    |
+| Customer support                                | Ticketing system, email, internal knowledge base      | 24 hours                   |
+| Engineering operations                          | CI/CD, source code repositories, alerting             | 24 hours                   |
+| Financial operations                            | Accounting system, payroll                            | 72 hours                   |
 
 Key dependencies and their criticality are reviewed as part of the Vendor Management process and updated in the Business Impact Analysis document maintained by the Security Team.
 
@@ -71,12 +71,12 @@ Key dependencies and their criticality are reviewed as part of the Vendor Manage
 
 Business continuity capabilities are validated through regular testing:
 
-| Test Type | Frequency | Scope |
-|-----------|-----------|-------|
-| Tabletop exercise | Twice per year | Leadership and engineering walkthrough of a simulated disruptive scenario |
-| Backup restoration test | Quarterly | Restore a database backup to a non-production environment and verify integrity |
-| Full DR failover test | Annually | Simulate a Tier 1 system failure and execute failover to verify RTO/RPO targets are met |
-| Communication plan test | Annually | Verify all emergency contact lists are current and communication channels work |
+| Test Type               | Frequency      | Scope                                                                                   |
+| ----------------------- | -------------- | --------------------------------------------------------------------------------------- |
+| Tabletop exercise       | Twice per year | Leadership and engineering walkthrough of a simulated disruptive scenario               |
+| Backup restoration test | Quarterly      | Restore a database backup to a non-production environment and verify integrity          |
+| Full DR failover test   | Annually       | Simulate a Tier 1 system failure and execute failover to verify RTO/RPO targets are met |
+| Communication plan test | Annually       | Verify all emergency contact lists are current and communication channels work          |
 
 Test results are documented and any gaps identified are tracked as remediation items with owners and due dates. Test records are retained for a minimum of three years.
 
@@ -103,14 +103,14 @@ Where the disruptive event constitutes a personal data breach or otherwise trigg
 
 ## 8. Roles and Responsibilities
 
-| Role | Responsibility |
-|------|---------------|
-| CISO / Security Lead | Own this policy; oversee BCP program; declare major incidents |
+| Role                                       | Responsibility                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| CISO / Security Lead                       | Own this policy; oversee BCP program; declare major incidents    |
 | Incident Commander (rotating on-call lead) | Coordinate technical and communication response during incidents |
-| Engineering Leads | Own system-specific recovery runbooks; lead technical recovery |
-| All Engineers | Respond to on-call alerts; execute runbooks; escalate as needed |
-| Customer Success / Support | Communicate with customers during outages |
-| Legal / Finance | Address regulatory notifications and financial continuity |
+| Engineering Leads                          | Own system-specific recovery runbooks; lead technical recovery   |
+| All Engineers                              | Respond to on-call alerts; execute runbooks; escalate as needed  |
+| Customer Success / Support                 | Communicate with customers during outages                        |
+| Legal / Finance                            | Address regulatory notifications and financial continuity        |
 
 ## 9. Review
 

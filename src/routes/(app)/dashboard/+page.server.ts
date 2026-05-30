@@ -295,10 +295,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	// Check if system description has been filled out
 	const sd = (locals.organization?.systemDescription ?? null) as Record<string, unknown> | null;
-	const hasSystemDescription = !!(
-		sd &&
-		(sd.productDescription || sd.dataFlowType || sd.keyTools)
-	);
+	const hasSystemDescription = !!(sd && (sd.productDescription || sd.dataFlowType || sd.keyTools));
 
 	return {
 		readiness,

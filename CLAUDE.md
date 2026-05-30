@@ -64,6 +64,7 @@ control are often the same underlying work, done once, expressed differently.
 AuditLift makes that connection visible and automatic.
 
 **User journey:**
+
 1. Founder receives a security questionnaire from an enterprise prospect
 2. Uploads it → AI drafts answers from existing policies + controls in minutes
 3. Gaps trigger policy generation — each policy also satisfies framework controls
@@ -71,6 +72,7 @@ AuditLift makes that connection visible and automatic.
 5. When the time is right, they formalise toward full certification
 
 **Core value props:**
+
 - "Close this deal" — answer any security questionnaire in minutes with AI
 - "Build as you sell" — every questionnaire + policy = real SOC2/ISO27001 progress
 - "Know where you stand" — Deal Readiness Score per questionnaire + framework coverage %
@@ -250,11 +252,13 @@ The onboarding wizard is two-path and **questionnaire-first**. Steps 1–3 are s
 step 4 branches based on the user's intent.
 
 **Shared steps (all users):**
+
 1. Company setup — name, website, industry → `POST /api/onboarding/organization`
 2. Team size → `POST /api/onboarding/team`
 3. Tech stack (multi-select) → `POST /api/onboarding/stack`
 
 **Step 4 — Path choice:**
+
 - **"I have a security questionnaire to answer"** (Path A — deal-first)
   - Complete onboarding immediately, no framework required
   - `POST /api/onboarding/complete` with `{ intent: 'questionnaire' }`
@@ -267,8 +271,8 @@ step 4 branches based on the user's intent.
 Framework is **optional** for questionnaire-first users — they can add one later from the
 Frameworks page. The questionnaire processor already handles zero-framework orgs gracefully.
 
-After questionnaire processing, always show: *"This questionnaire covered X SOC2 controls
-— want to continue toward SOC2 certification?"* as a nudge toward framework adoption.
+After questionnaire processing, always show: _"This questionnaire covered X SOC2 controls
+— want to continue toward SOC2 certification?"_ as a nudge toward framework adoption.
 
 ---
 
@@ -277,6 +281,7 @@ After questionnaire processing, always show: *"This questionnaire covered X SOC2
 The dashboard leads with **deal enablement**, not compliance configuration.
 
 **Layout (top to bottom):**
+
 1. Header — "Welcome back, {name}"
 2. Deal stats row — questionnaires answered, avg deal readiness %, policies generated
 3. Active questionnaires — most recent 2–3 with deal readiness scores + links
@@ -286,6 +291,7 @@ The dashboard leads with **deal enablement**, not compliance configuration.
 6. Quick actions — Upload questionnaire, Generate policy, Add evidence
 
 **The "coverage from all work" calculation:**
+
 - For each org framework, count controls that have EITHER:
   - At least 1 evidence upload, OR
   - An attached policy, OR
@@ -294,6 +300,7 @@ The dashboard leads with **deal enablement**, not compliance configuration.
 
 **Empty state (new user, no questionnaires, no policies):**
 Show the two-option quick-start card:
+
 - "I have a questionnaire to answer right now" → link to /questionnaires
 - "I want to start building policies" → link to /policies
 
@@ -309,7 +316,7 @@ This connection must be surfaced everywhere:
   Call `GET /api/questionnaires/[id]/coverage` — returns coverage grouped by framework.
 
 - **Gap remediation CTAs:** When generating a policy to fix a gap, show:
-  *"This also satisfies CC6.1, CC6.2 for SOC2"* — so founders understand the dual value.
+  _"This also satisfies CC6.1, CC6.2 for SOC2"_ — so founders understand the dual value.
 
 - **Policy page:** Show which framework controls each policy is linked to.
 
@@ -317,15 +324,17 @@ This connection must be surfaced everywhere:
   ```ts
   // GET /api/questionnaires/[id]/coverage
   {
-    coverageByFramework: [{
-      frameworkId: string,
-      frameworkName: string,
-      frameworkSlug: string,
-      controlsCovered: number,
-      totalControls: number,
-      coveragePct: number,
-      coveredControls: [{ id, code, title, category }]
-    }]
+  	coverageByFramework: [
+  		{
+  			frameworkId: string,
+  			frameworkName: string,
+  			frameworkSlug: string,
+  			controlsCovered: number,
+  			totalControls: number,
+  			coveragePct: number,
+  			coveredControls: [{ id, code, title, category }]
+  		}
+  	];
   }
   ```
 

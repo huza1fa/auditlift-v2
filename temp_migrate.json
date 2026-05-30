@@ -1,1 +1,0 @@
-{"commands": ["cd /opt/auditlift && NODE_OPTIONS='--max-old-space-size=512' npx drizzle-kit push 2>&1 | tail -20"]}
