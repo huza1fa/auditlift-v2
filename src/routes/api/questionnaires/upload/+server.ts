@@ -56,21 +56,30 @@ function validateMagicNumbers(buffer: Buffer, format: string): boolean {
 
 function getS3Client(): { client: S3Client; bucket: string } {
 	const endpoint = env.BUCKET_ENDPOINT;
-	const region = env.BUCKET_REGION || 'auto';
-	const bucket = env.BUCKET_NAME;
+	const region = env.BUCKET_REGION || 'us-east-1';
+	const bucket = env.BUCKET_NAME || env.S3_BUCKET_NAME;
 	const accessKey = env.BUCKET_ACCESS_KEY;
 	const secretKey = env.BUCKET_SECRET_KEY;
 
-	if (!endpoint || !bucket || !accessKey || !secretKey) {
+	if (!bucket) {
 		throw error(503, 'Storage is not configured');
 	}
 
-	const client = new S3Client({
-		endpoint,
-		region,
-		credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
-	});
+	// Railway / S3-compatible mode: explicit endpoint + credentials
+	if (endpoint) {
+		if (!accessKey || !secretKey) {
+			throw error(503, 'Storage is not configured');
+		}
+		const client = new S3Client({
+			endpoint,
+			region,
+			credentials: { accessKeyId: accessKey, secretAccessKey: secretKey }
+		});
+		return { client, bucket };
+	}
 
+	// AWS native mode: uses IAM instance profile or default credential chain
+	const client = new S3Client({ region });
 	return { client, bucket };
 }
 

@@ -35,18 +35,74 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 > Deal enablement and compliance foundation tool for pre-compliance startups.
 > Close enterprise deals faster by answering security questionnaires intelligently.
-> Build SOC2/ISO27001 readiness as a natural byproduct of winning those deals.
+> Build SOC2/ISO27001 readiness as a a natural byproduct of winning those deals.
 
 ## Stack
 
-- Frontend: SvelteKit + Svelte 5 (runes), TailwindCSS, Prettier
-- Backend: SvelteKit server routes (+server.ts / +page.server.ts), MCP
-- DB: Drizzle ORM + PostgreSQL
-- Auth: Better Auth (email/password + Google OAuth)
-- i18n: Paraglide
-- File storage: (local in dev, S3-compatible in prod — e.g. Cloudflare R2)
-- PDF export: (puppeteer or @react-pdf/renderer — TBD)
-- Payments: Stripe (monthly subscription + 10-day trial)
+- **Frontend**: SvelteKit + Svelte 5 (runes), TailwindCSS, Prettier
+- **Backend**: SvelteKit server routes (+server.ts / +page.server.ts), MCP
+- **DB**: Drizzle ORM + PostgreSQL (AWS RDS)
+- **Auth**: Better Auth (email/password + Google OAuth + GitHub OAuth)
+- **i18n**: Paraglide
+- **File storage**: AWS S3 (`auditlift-storage-{account}-us-east-1`)
+- **PDF export**: (puppeteer or @react-pdf/renderer — TBD)
+- **Payments**: Stripe (monthly subscription + 10-day trial)
+
+## Infrastructure & Deployment
+
+> **Primary platform: AWS (us-east-1, account 676799697185)**
+
+| Layer | Service | Details |
+|-------|---------|---------|
+| **App Hosting** | AWS Elastic Beanstalk (Docker on AL2023) | Single-instance t3.micro, no ALB |
+| **Container Registry** | Amazon ECR | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
+| **Database** | Amazon RDS (PostgreSQL 16) | db.t3.micro, Single-AZ, SSL required |
+| **Object Storage** | Amazon S3 | `auditlift-storage-676799697185-us-east-1` |
+| **Secrets** | AWS Systems Manager (SSM) Parameter Store | `/prod/app/*` as `SecureString` |
+| **DNS** | Cloudflare (Porkbun registrar) | CNAME → Beanstalk, SSL Flexible |
+| **CDN/SSL** | Cloudflare | Flexible SSL termination (HTTP origin) |
+| **Logging** | CloudWatch Logs | App stdout, nginx, eb-engine |
+
+### Beanstalk Deployment Flow
+1. Build Docker image locally: `docker build --platform linux/amd64 -t auditlift:latest .`
+2. Tag and push to ECR: `docker tag ... && docker push ...`
+3. Create application version from `Dockerrun.aws.json`
+4. Update Beanstalk environment to new version
+5. Beanstalk pulls image from ECR, starts container on port 3000
+
+### Nginx Proxy Buffer Fix
+The app uses Better Auth which can send large `Set-Cookie` headers. Beanstalk's nginx default 4k buffer causes `502 upstream sent too big header`. This is fixed via `.ebextensions/proxy.config` which sets:
+```
+proxy_buffer_size 128k;
+proxy_buffers 4 256k;
+proxy_busy_buffers_size 256k;
+```
+**This config must be included in every source bundle ZIP deployed to Beanstalk.**
+
+### Environment Variables (Beanstalk)
+All secrets are injected via Beanstalk environment option settings (`aws:elasticbeanstalk:application:environment`):
+- `DATABASE_URL` — RDS connection string with `?ssl=require`
+- `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` — Auth config
+- `S3_BUCKET_NAME` — S3 bucket for file storage
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — Payments
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — OAuth
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — OAuth
+- `OPEN_ROUTER_API_KEY` — AI policy generation
+- `RESEND_API_KEY` — Transactional email
+- `ORIGIN` — `https://auditlift.app`
+
+### Storage Configuration (S3)
+The app uses AWS SDK v3 (`@aws-sdk/client-s3`).
+- **AWS mode** (production): When `BUCKET_ENDPOINT` is absent, the S3 client uses the default AWS credential chain (IAM instance profile on Beanstalk EC2).
+- **S3-compatible mode** (dev/local): When `BUCKET_ENDPOINT` is set, uses explicit endpoint + access keys.
+- The bucket name is read from `BUCKET_NAME` with fallback to `S3_BUCKET_NAME`.
+
+### RDS SSL
+RDS requires SSL. The connection is configured with:
+```ts
+ssl: { rejectUnauthorized: false }
+```
+in `src/lib/server/db/index.ts`, and `?ssl=require` appended to `DATABASE_URL`.
 
 ---
 
@@ -91,6 +147,7 @@ Pricing: 10-day free trial → monthly subscription.
 - **frontend agent**: Svelte components, pages, layouts, Paraglide strings, Tailwind
 - **backend agent**: API routes, auth guards, Stripe webhooks, policy generation logic
 - **database agent**: Drizzle schema, migrations, service functions
+- **infrastructure agent**: CDK stacks, Beanstalk config, Docker builds, ECR pushes, SSM secrets
 
 ---
 
@@ -168,7 +225,7 @@ src/
 │   │   └── settings/         # Org settings, billing, team members
 │   └── api/
 │       ├── policies/generate/ # AI/template policy generation endpoint
-│       ├── evidence/upload/   # File upload → R2 storage
+│       ├── evidence/upload/   # File upload → S3 storage
 │       ├── score/             # Readiness score computation
 │       └── webhooks/stripe/   # Stripe webhook handler
 ├── lib/
@@ -187,7 +244,7 @@ src/
 │       │   ├── policies.ts
 │       │   └── subscriptions.ts
 │       ├── billing.ts        # Stripe helpers, hasActiveAccess()
-│       ├── storage.ts        # R2 upload/download helpers
+│       ├── storage.ts        # S3 upload/download helpers
 │       └── score.ts          # Readiness score computation logic
 ```
 
@@ -206,7 +263,7 @@ src/
 
 ## Evidence Locker Rules
 
-- Files upload to R2 (or local `/uploads` in dev) via `src/routes/api/evidence/upload/`
+- Files upload to AWS S3 (or local `/uploads` in dev) via `src/routes/api/evidence/upload/`
 - Store file metadata in DB (filename, size, mimeType, storageKey, controlId, orgId)
 - Max file size: 10MB per file
 - Allowed types: PDF, PNG, JPG, CSV, DOCX

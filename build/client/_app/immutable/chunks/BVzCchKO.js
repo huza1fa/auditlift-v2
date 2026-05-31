@@ -1,1 +1,0 @@
-import{Q as o,R as a,e as t,T as c,j as l}from"./DG-NX5-C.js";function f(e){t===null&&o(),c&&t.l!==null?u(t).m.push(e):a(()=>{const n=l(e);if(typeof n=="function")return n})}function u(e){var n=e.l;return n.u??={a:[],b:[],m:[]}}export{f as o};

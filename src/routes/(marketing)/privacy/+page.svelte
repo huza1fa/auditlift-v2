@@ -99,8 +99,8 @@
 		<section class="mt-10">
 			<h2>Data storage and security</h2>
 			<p>
-				AuditLift is hosted on <strong>Railway</strong> (US-based infrastructure). Uploaded evidence
-				files are stored on <strong>Cloudflare R2</strong> object storage. Data is encrypted in transit
+				AuditLift is hosted on <strong>AWS</strong> (US-based infrastructure). Uploaded evidence
+				files are stored on <strong>AWS S3</strong> object storage. Data is encrypted in transit
 				(TLS) and at rest. Access to production systems is limited to the engineering team and protected
 				by MFA.
 			</p>
@@ -116,8 +116,8 @@
 			<ul>
 				<li><strong>Stripe</strong> — payment processing (stripe.com/privacy)</li>
 				<li><strong>Resend</strong> — transactional email delivery (resend.com/privacy)</li>
-				<li><strong>Railway</strong> — application hosting (railway.app/legal/privacy)</li>
-				<li><strong>Cloudflare</strong> — file storage (cloudflare.com/privacypolicy)</li>
+				<li><strong>AWS</strong> — application hosting and file storage (aws.com/privacy)</li>
+				<li><strong>Cloudflare</strong> — DNS and DDoS protection (cloudflare.com/privacypolicy)</li>
 				<li><strong>GitHub</strong> — optional OAuth sign-in (docs.github.com/privacy)</li>
 			</ul>
 			<p>Each of these providers has their own privacy policy governing how they handle data.</p>

@@ -16,7 +16,7 @@ function getS3(): { client: S3Client; bucket: string } {
 
 	const endpoint = process.env.BUCKET_ENDPOINT;
 	const region = process.env.BUCKET_REGION || 'us-east-1';
-	const bucket = process.env.BUCKET_NAME;
+	const bucket = process.env.BUCKET_NAME || process.env.S3_BUCKET_NAME;
 	const accessKey = process.env.BUCKET_ACCESS_KEY;
 	const secretKey = process.env.BUCKET_SECRET_KEY;
 
