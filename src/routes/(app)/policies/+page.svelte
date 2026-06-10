@@ -24,6 +24,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { POLICY_DESCRIPTIONS } from '$lib/policy-descriptions';
 	import { page } from '$app/state';
+	import { captureEvent } from '$lib/posthog';
 
 	// ── Types ────────────────────────────────────────────────────────────────
 	type Policy = (typeof data.policies)[0];
@@ -132,6 +133,7 @@
 	}
 
 	function downloadPolicy(policy: Policy) {
+		captureEvent('policy_downloaded', { policy_id: policy.id, policy_type: policy.type });
 		window.open(`/api/policies/${policy.id}/download`, '_blank');
 	}
 
@@ -250,11 +252,13 @@
 	}
 
 	async function generateStandard() {
+		captureEvent('policy_generate_clicked', { policy_type: selectedType, tab: 'standard' });
 		await callGenerate({ policyType: selectedType });
 	}
 
 	async function generateCustom() {
 		if (!customTitle.trim() || !customPrompt.trim()) return;
+		captureEvent('policy_generate_clicked', { policy_type: 'custom', tab: 'custom' });
 		await callGenerate({
 			policyType: 'custom',
 			customTitle: customTitle.trim(),
@@ -265,6 +269,7 @@
 	}
 
 	async function regenerate(policy: Policy) {
+		captureEvent('policy_regenerate_clicked', { policy_id: policy.id, policy_type: policy.type });
 		const body: Record<string, string> = { policyType: policy.type };
 		if (policy.isCustom && policy.customPrompt) {
 			body.policyType = 'custom';
@@ -277,6 +282,7 @@
 	function startEdit(policy: Policy) {
 		editingId = policy.id;
 		editContent = policy.content;
+		captureEvent('policy_edit_opened', { policy_id: policy.id, policy_type: policy.type });
 	}
 
 	function cancelEdit() {
@@ -299,6 +305,7 @@
 			);
 			editingId = null;
 			editContent = '';
+			captureEvent('policy_edited', { policy_id: policy.id });
 		} catch {
 			toastError('Failed to save policy');
 		} finally {
@@ -308,6 +315,7 @@
 
 	async function archivePolicy(policy: Policy) {
 		archivingId = policy.id;
+		captureEvent('policy_archived', { policy_id: policy.id, policy_type: policy.type });
 		try {
 			const res = await fetch(`/api/policies/${policy.id}`, { method: 'DELETE' });
 			if (!res.ok) throw new Error('Failed to archive');

@@ -9,6 +9,7 @@ import { hasActivePaidAccess } from '$lib/server/billing';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { parseQuestionnaire } from '$lib/server/questionnaire-parser';
 import { processQuestionnaire } from '$lib/server/questionnaire-processor';
+import { captureServerEvent } from '$lib/server/posthog';
 
 const MAX_QUESTIONNAIRE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -209,7 +210,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// 10. Fire-and-forget: process questionnaire with AI
 	processQuestionnaire(questionnaire.id, orgId).catch(console.error);
 
-	// 11. Return initial state
+	// 11. Analytics
+	captureServerEvent({
+		event: 'questionnaire_uploaded',
+		distinctId: locals.session.user.id,
+		properties: {
+			org_id: orgId,
+			format,
+			question_count: parsedQuestions.length,
+			file_size_bytes: file.size,
+			is_trial: !hasActivePaidAccess(locals.subscription)
+		},
+		groups: { organization: orgId }
+	});
+
+	// 12. Return initial state
 	return json(
 		{
 			id: questionnaire.id,

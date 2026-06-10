@@ -57,6 +57,8 @@
 		"marked": "^18.0.0",
 		"pdf-lib": "^1.17.1",
 		"phosphor-svelte": "^3.1.0",
+		"posthog-js": "^1.384.0",
+		"posthog-node": "^5.36.9",
 		"resend": "^6.10.0",
 		"stripe": "^21.0.1",
 		"unpdf": "^1.4.0",

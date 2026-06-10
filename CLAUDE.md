@@ -52,18 +52,19 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 > **Primary platform: AWS (us-east-1, account 676799697185)**
 
-| Layer | Service | Details |
-|-------|---------|---------|
-| **App Hosting** | AWS Elastic Beanstalk (Docker on AL2023) | Single-instance t3.micro, no ALB |
-| **Container Registry** | Amazon ECR | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
-| **Database** | Amazon RDS (PostgreSQL 16) | db.t3.micro, Single-AZ, SSL required |
-| **Object Storage** | Amazon S3 | `auditlift-storage-676799697185-us-east-1` |
-| **Secrets** | AWS Systems Manager (SSM) Parameter Store | `/prod/app/*` as `SecureString` |
-| **DNS** | Cloudflare (Porkbun registrar) | CNAME → Beanstalk, SSL Flexible |
-| **CDN/SSL** | Cloudflare | Flexible SSL termination (HTTP origin) |
-| **Logging** | CloudWatch Logs | App stdout, nginx, eb-engine |
+| Layer                  | Service                                   | Details                                                         |
+| ---------------------- | ----------------------------------------- | --------------------------------------------------------------- |
+| **App Hosting**        | AWS Elastic Beanstalk (Docker on AL2023)  | Single-instance t3.micro, no ALB                                |
+| **Container Registry** | Amazon ECR                                | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
+| **Database**           | Amazon RDS (PostgreSQL 16)                | db.t3.micro, Single-AZ, SSL required                            |
+| **Object Storage**     | Amazon S3                                 | `auditlift-storage-676799697185-us-east-1`                      |
+| **Secrets**            | AWS Systems Manager (SSM) Parameter Store | `/prod/app/*` as `SecureString`                                 |
+| **DNS**                | Cloudflare (Porkbun registrar)            | CNAME → Beanstalk, SSL Flexible                                 |
+| **CDN/SSL**            | Cloudflare                                | Flexible SSL termination (HTTP origin)                          |
+| **Logging**            | CloudWatch Logs                           | App stdout, nginx, eb-engine                                    |
 
 ### Beanstalk Deployment Flow
+
 1. Build Docker image locally: `docker build --platform linux/amd64 -t auditlift:latest .`
 2. Tag and push to ECR: `docker tag ... && docker push ...`
 3. Create application version from `Dockerrun.aws.json`
@@ -71,16 +72,21 @@ After completing the code, ask the user if they want a playground link. Only cal
 5. Beanstalk pulls image from ECR, starts container on port 3000
 
 ### Nginx Proxy Buffer Fix
+
 The app uses Better Auth which can send large `Set-Cookie` headers. Beanstalk's nginx default 4k buffer causes `502 upstream sent too big header`. This is fixed via `.ebextensions/proxy.config` which sets:
+
 ```
 proxy_buffer_size 128k;
 proxy_buffers 4 256k;
 proxy_busy_buffers_size 256k;
 ```
+
 **This config must be included in every source bundle ZIP deployed to Beanstalk.**
 
 ### Environment Variables (Beanstalk)
+
 All secrets are injected via Beanstalk environment option settings (`aws:elasticbeanstalk:application:environment`):
+
 - `DATABASE_URL` — RDS connection string with `?ssl=require`
 - `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` — Auth config
 - `S3_BUCKET_NAME` — S3 bucket for file storage
@@ -90,18 +96,27 @@ All secrets are injected via Beanstalk environment option settings (`aws:elastic
 - `OPEN_ROUTER_API_KEY` — AI policy generation
 - `RESEND_API_KEY` — Transactional email
 - `ORIGIN` — `https://auditlift.app`
+- `PUBLIC_POSTHOG_KEY` — PostHog project API key (client-side)
+- `PUBLIC_POSTHOG_HOST` — PostHog instance URL (default: `https://us.i.posthog.com`)
 
 ### Storage Configuration (S3)
+
 The app uses AWS SDK v3 (`@aws-sdk/client-s3`).
+
 - **AWS mode** (production): When `BUCKET_ENDPOINT` is absent, the S3 client uses the default AWS credential chain (IAM instance profile on Beanstalk EC2).
 - **S3-compatible mode** (dev/local): When `BUCKET_ENDPOINT` is set, uses explicit endpoint + access keys.
 - The bucket name is read from `BUCKET_NAME` with fallback to `S3_BUCKET_NAME`.
 
 ### RDS SSL
+
 RDS requires SSL. The connection is configured with:
+
 ```ts
-ssl: { rejectUnauthorized: false }
+ssl: {
+	rejectUnauthorized: false;
+}
 ```
+
 in `src/lib/server/db/index.ts`, and `?ssl=require` appended to `DATABASE_URL`.
 
 ---

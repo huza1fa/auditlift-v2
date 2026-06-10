@@ -16,6 +16,7 @@
 	import Toast from '$lib/components/ui/Toast.svelte';
 	import GuidedTour from '$lib/components/ui/GuidedTour.svelte';
 	import { createAuthClient } from 'better-auth/svelte';
+	import { identifyUser } from '$lib/posthog';
 
 	const authClient = createAuthClient();
 
@@ -25,6 +26,23 @@
 	}
 
 	let { data, children } = $props();
+
+	$effect(() => {
+		if (data.user?.id) {
+			identifyUser(
+				data.user.id,
+				data.user.email ?? '',
+				data.user.name,
+				data.organization ? { id: data.organization.id, name: data.organization.name } : undefined,
+				{
+					plan: data.subscription?.status ?? 'trial',
+					trial_days_remaining: data.organization?.trialEndsAt
+						? Math.ceil((new Date(data.organization.trialEndsAt).getTime() - Date.now()) / 86400000)
+						: null
+				}
+			);
+		}
+	});
 
 	let sidebarOpen = $state(false);
 	let showTour = $state(false);

@@ -3,8 +3,9 @@ import type { RequestHandler } from './$types';
 import type Stripe from 'stripe';
 import { constructWebhookEvent, stripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
-import { subscriptions } from '$lib/server/db/schema';
+import { subscriptions, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { captureServerEvent } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.text();
@@ -41,6 +42,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	return json({ received: true });
 };
+
+async function getOrgOwnerId(orgId: string): Promise<string | null> {
+	const [userOrg] = await db
+		.select()
+		.from(userOrganizations)
+		.where(eq(userOrganizations.organizationId, orgId))
+		.limit(1);
+	return userOrg?.userId ?? null;
+}
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
 	const organizationId = session.metadata?.organizationId;
@@ -89,6 +99,25 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 	}
 
 	console.log(`[Stripe] Subscription activated for org ${organizationId}`);
+
+	// Analytics
+	const ownerId = await getOrgOwnerId(organizationId);
+	if (ownerId) {
+		const amount = stripeSub.items.data[0]?.plan?.amount ?? 0;
+		captureServerEvent({
+			event: 'subscription_created',
+			distinctId: ownerId,
+			properties: {
+				org_id: organizationId,
+				stripe_subscription_id: stripeSub.id,
+				amount: amount / 100,
+				currency: stripeSub.currency?.toUpperCase() ?? 'USD',
+				interval: stripeSub.items.data[0]?.plan?.interval ?? 'month',
+				mrr: stripeSub.items.data[0]?.plan?.interval === 'year' ? amount / 100 / 12 : amount / 100
+			},
+			groups: { organization: organizationId }
+		});
+	}
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -105,6 +134,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 	}
 
 	const organizationId = existingSub.organizationId;
+	const previousStatus = existingSub.status;
 	const status = mapStripeStatus(subscription.status);
 	const currentPeriodEnd = subscription.items.data[0]?.current_period_end
 		? new Date(subscription.items.data[0].current_period_end * 1000)
@@ -123,6 +153,23 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 	console.log(
 		`[Stripe] Subscription updated for org ${organizationId}: status=${status}, cancelAtPeriodEnd=${subscription.cancel_at_period_end}`
 	);
+
+	// Analytics
+	const ownerId = await getOrgOwnerId(organizationId);
+	if (ownerId && previousStatus !== status) {
+		captureServerEvent({
+			event: 'subscription_updated',
+			distinctId: ownerId,
+			properties: {
+				org_id: organizationId,
+				stripe_subscription_id: subscription.id,
+				previous_status: previousStatus,
+				new_status: status,
+				cancel_at_period_end: subscription.cancel_at_period_end
+			},
+			groups: { organization: organizationId }
+		});
+	}
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -147,6 +194,21 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 		.where(eq(subscriptions.organizationId, existingSub.organizationId));
 
 	console.log(`[Stripe] Subscription canceled for org ${existingSub.organizationId}`);
+
+	// Analytics
+	const ownerId = await getOrgOwnerId(existingSub.organizationId);
+	if (ownerId) {
+		captureServerEvent({
+			event: 'subscription_canceled',
+			distinctId: ownerId,
+			properties: {
+				org_id: existingSub.organizationId,
+				stripe_subscription_id: subscription.id,
+				previous_status: existingSub.status
+			},
+			groups: { organization: existingSub.organizationId }
+		});
+	}
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -173,6 +235,23 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 		.where(eq(subscriptions.organizationId, sub.organizationId));
 
 	console.log(`[Stripe] Payment failed for org ${sub.organizationId}`);
+
+	// Analytics
+	const ownerId = await getOrgOwnerId(sub.organizationId);
+	if (ownerId) {
+		captureServerEvent({
+			event: 'payment_failed',
+			distinctId: ownerId,
+			properties: {
+				org_id: sub.organizationId,
+				stripe_customer_id: customerId,
+				amount: (invoice.amount_due ?? 0) / 100,
+				currency: invoice.currency?.toUpperCase() ?? 'USD',
+				attempt_count: invoice.attempt_count ?? 1
+			},
+			groups: { organization: sub.organizationId }
+		});
+	}
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
@@ -201,6 +280,23 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 			.where(eq(subscriptions.organizationId, sub.organizationId));
 
 		console.log(`[Stripe] Payment recovered for org ${sub.organizationId}`);
+
+		// Analytics
+		const ownerId = await getOrgOwnerId(sub.organizationId);
+		if (ownerId) {
+			captureServerEvent({
+				event: 'payment_recovered',
+				distinctId: ownerId,
+				properties: {
+					org_id: sub.organizationId,
+					stripe_customer_id: customerId,
+					amount: (invoice.amount_paid ?? 0) / 100,
+					currency: invoice.currency?.toUpperCase() ?? 'USD',
+					previous_status: sub.status
+				},
+				groups: { organization: sub.organizationId }
+			});
+		}
 	}
 }
 

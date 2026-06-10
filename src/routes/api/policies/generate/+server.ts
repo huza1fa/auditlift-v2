@@ -17,6 +17,7 @@ import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
 import { GeneratePolicySchema } from '$lib/server/validation';
 import { buildSystemPrompt, buildRichContext } from '$lib/server/policy-context';
+import { captureServerEvent } from '$lib/server/posthog';
 
 // ─── Template fallback ────────────────────────────────────────────────────────
 
@@ -528,6 +529,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		entityId: policy.id,
 		entityName: policy.title
 	}).catch(console.error);
+
+	captureServerEvent({
+		event: 'policy_generated',
+		distinctId: locals.session.user.id,
+		properties: {
+			org_id: orgId,
+			policy_type: policyType,
+			is_custom: isCustom,
+			framework_id: frameworkId,
+			framework_name: frameworkName,
+			ai_used: content.length > 0
+		},
+		groups: { organization: orgId }
+	});
 
 	if (frameworkId) {
 		computeReadinessScore(orgId, frameworkId).catch(console.error);

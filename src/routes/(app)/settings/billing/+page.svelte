@@ -3,6 +3,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
+	import { captureEvent } from '$lib/posthog';
 
 	let { data } = $props();
 
@@ -45,6 +46,7 @@
 	async function startCheckout(interval: 'monthly' | 'yearly') {
 		loading = interval;
 		errorMsg = '';
+		captureEvent('checkout_started', { plan: selectedPlan, interval });
 		try {
 			const res = await fetch('/api/billing/checkout', {
 				method: 'POST',
@@ -63,6 +65,7 @@
 	async function openPortal() {
 		loading = 'portal';
 		errorMsg = '';
+		captureEvent('billing_portal_opened');
 		try {
 			const res = await fetch('/api/billing/portal', { method: 'POST' });
 			const body = await res.json();

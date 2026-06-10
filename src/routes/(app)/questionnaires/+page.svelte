@@ -17,6 +17,7 @@
 	import { toastError, toastSuccess } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { goto } from '$app/navigation';
+	import { captureEvent } from '$lib/posthog';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type QuestionnaireStatus = 'processing' | 'ready' | 'error';
@@ -169,6 +170,7 @@
 	// ── Delete ───────────────────────────────────────────────────────────────
 	async function deleteQuestionnaire(id: string) {
 		if (!confirm('Delete this questionnaire? This cannot be undone.')) return;
+		captureEvent('questionnaire_deleted', { questionnaire_id: id });
 		try {
 			const res = await fetch(`/api/questionnaires/${id}`, { method: 'DELETE' });
 			if (!res.ok) throw new Error();
@@ -202,6 +204,7 @@
 
 		uploading = true;
 		uploadingFilename = file.name;
+		captureEvent('questionnaire_upload_clicked', { file_name: file.name, file_size: file.size });
 		try {
 			const formData = new FormData();
 			formData.append('file', file);

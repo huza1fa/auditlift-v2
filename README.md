@@ -31,41 +31,44 @@ AuditLift makes that connection visible and automatic.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | SvelteKit + Svelte 5 (runes), TailwindCSS, Prettier |
-| **Backend** | SvelteKit server routes (+server.ts / +page.server.ts) |
-| **Database** | PostgreSQL 16 (AWS RDS) + Drizzle ORM |
-| **Auth** | Better Auth (email/password + Google OAuth + GitHub OAuth) |
-| **i18n** | Paraglide |
-| **Storage** | AWS S3 |
-| **Payments** | Stripe (monthly subscription + 10-day trial) |
-| **AI** | OpenRouter API for policy generation |
-| **Email** | Resend |
+| Layer         | Technology                                                  |
+| ------------- | ----------------------------------------------------------- |
+| **Frontend**  | SvelteKit + Svelte 5 (runes), TailwindCSS, Prettier         |
+| **Backend**   | SvelteKit server routes (+server.ts / +page.server.ts)      |
+| **Database**  | PostgreSQL 16 (AWS RDS) + Drizzle ORM                       |
+| **Auth**      | Better Auth (email/password + Google OAuth + GitHub OAuth)  |
+| **i18n**      | Paraglide                                                   |
+| **Storage**   | AWS S3                                                      |
+| **Payments**  | Stripe (monthly subscription + 10-day trial)                |
+| **AI**        | OpenRouter API for policy generation                        |
+| **Email**     | Resend                                                      |
+| **Analytics** | PostHog (client + server-side tracking, session recordings) |
 
 ## Infrastructure
 
 > **Primary platform: AWS (us-east-1, account 676799697185)**
 
-| Component | Service | Details |
-|-----------|---------|---------|
-| **App Hosting** | AWS Elastic Beanstalk (Docker on AL2023) | Single-instance t3.micro, no ALB |
-| **Container Registry** | Amazon ECR | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
-| **Database** | Amazon RDS (PostgreSQL 16) | db.t3.micro, Single-AZ, SSL required |
-| **Object Storage** | Amazon S3 | `auditlift-storage-676799697185-us-east-1` |
-| **Secrets** | AWS SSM Parameter Store | `/prod/app/*` as `SecureString` |
-| **DNS** | Cloudflare (Porkbun registrar) | CNAME → Beanstalk, SSL Flexible |
-| **CDN/SSL** | Cloudflare | Flexible SSL termination (HTTP origin) |
-| **Logging** | CloudWatch Logs | App stdout, nginx, eb-engine |
+| Component              | Service                                  | Details                                                         |
+| ---------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| **App Hosting**        | AWS Elastic Beanstalk (Docker on AL2023) | Single-instance t3.micro, no ALB                                |
+| **Container Registry** | Amazon ECR                               | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
+| **Database**           | Amazon RDS (PostgreSQL 16)               | db.t3.micro, Single-AZ, SSL required                            |
+| **Object Storage**     | Amazon S3                                | `auditlift-storage-676799697185-us-east-1`                      |
+| **Secrets**            | AWS SSM Parameter Store                  | `/prod/app/*` as `SecureString`                                 |
+| **DNS**                | Cloudflare (Porkbun registrar)           | CNAME → Beanstalk, SSL Flexible                                 |
+| **CDN/SSL**            | Cloudflare                               | Flexible SSL termination (HTTP origin)                          |
+| **Logging**            | CloudWatch Logs                          | App stdout, nginx, eb-engine                                    |
 
 ### Deployment Flow
 
 1. **Build** Docker image locally:
+
    ```bash
    docker build --platform linux/amd64 -t auditlift:latest .
    ```
 
 2. **Push** to ECR:
+
    ```bash
    docker tag auditlift:latest 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest
    docker push 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest
@@ -147,6 +150,45 @@ src/
 │       ├── storage.ts        # S3 upload/download helpers
 │       └── score.ts          # Readiness score logic
 ```
+
+## Analytics
+
+AuditLift uses **PostHog** for product analytics. Both client-side and server-side tracking are enabled, with session recordings active.
+
+### What's Tracked
+
+**User Identification:**
+
+- User ID, email, name, organization, plan status, trial days remaining
+
+**Client-Side Events:**
+
+- Onboarding step completion, intent selection, completion
+- Questionnaire upload, delete, view, answer edits, AI improvements
+- Policy generation, edit, download, archive, regenerate
+- Dashboard quick actions (upload evidence, generate policy, export)
+- Billing actions (checkout started, billing portal opened)
+- Consulting modal opens and form submissions
+
+**Server-Side Events:**
+
+- `user_signed_up` — when onboarding completes for the first time
+- `questionnaire_uploaded` — file format, question count, trial status
+- `policy_generated` — policy type, framework, AI vs template
+- `evidence_uploaded` — control code, file type, size
+- `export_created` — number of policies, evidence, controls included
+- `consulting_requested` — topic, logged-in status
+- `subscription_created` — amount, currency, interval, MRR
+- `subscription_updated` / `subscription_canceled` — status changes
+- `payment_failed` / `payment_recovered` — Stripe billing events
+
+### Organization Groups
+
+PostHog groups are set by `organization_id`, so you can view feature adoption and revenue at the **company level** rather than just individual users.
+
+### Session Recordings
+
+Enabled in PostHog Cloud (free tier: 1M events/month, 5k recordings). Password fields are masked automatically.
 
 ## Key Features
 

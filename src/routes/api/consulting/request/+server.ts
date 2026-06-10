@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { consultingRequests } from '$lib/server/db/schema';
+import { captureServerEvent } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const body = await request.json();
@@ -40,6 +41,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		company: company?.trim() || null,
 		topic,
 		message: message?.trim() || null
+	});
+
+	const userId = locals.session?.user?.id ?? email;
+	captureServerEvent({
+		event: 'consulting_requested',
+		distinctId: userId,
+		properties: {
+			name: name.trim(),
+			email: email.trim().toLowerCase(),
+			company: company?.trim() || null,
+			topic,
+			org_id: organizationId,
+			is_logged_in: !!locals.session
+		},
+		groups: organizationId ? { organization: organizationId } : undefined
 	});
 
 	return json({ success: true });

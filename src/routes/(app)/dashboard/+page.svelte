@@ -16,6 +16,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { captureEvent } from '$lib/posthog';
 
 	// ---------------------------------------------------------------------------
 	// Types (fields being added by backend in parallel — marked optional)
@@ -135,6 +136,11 @@
 	);
 
 	let consultingOpen = $state(false);
+	$effect(() => {
+		if (consultingOpen) {
+			captureEvent('consulting_modal_opened', { source: 'dashboard' });
+		}
+	});
 	const showAdvisoryNudge = $derived(
 		hasFramework &&
 			!data.isReadOnly &&
@@ -844,7 +850,11 @@
 			{m.dashboard_quick_actions_title()}
 		</h2>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-			<a href="/evidence" class="group">
+			<a
+				href="/evidence"
+				class="group"
+				onclick={() => captureEvent('quick_action_clicked', { action: 'upload_evidence' })}
+			>
 				<Card class="cursor-pointer p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
 					<div class="flex items-center gap-3">
 						<div class="rounded-[var(--radius)] bg-[var(--brand-light)] p-2">
@@ -861,7 +871,11 @@
 					</div>
 				</Card>
 			</a>
-			<a href="/policies" class="group">
+			<a
+				href="/policies"
+				class="group"
+				onclick={() => captureEvent('quick_action_clicked', { action: 'generate_policy' })}
+			>
 				<Card class="cursor-pointer p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
 					<div class="flex items-center gap-3">
 						<div class="rounded-[var(--radius)] bg-[var(--success-light)] p-2">
@@ -878,7 +892,11 @@
 					</div>
 				</Card>
 			</a>
-			<a href="/export" class="group">
+			<a
+				href="/export"
+				class="group"
+				onclick={() => captureEvent('quick_action_clicked', { action: 'export' })}
+			>
 				<Card class="cursor-pointer p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
 					<div class="flex items-center gap-3">
 						<div class="rounded-[var(--radius)] bg-[var(--warning-light)] p-2">

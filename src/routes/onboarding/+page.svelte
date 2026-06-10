@@ -20,6 +20,7 @@
 	import Input from '$lib/components/ui/Input.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { PageData } from './$types';
+	import { captureEvent } from '$lib/posthog';
 
 	// 1. Props
 	let { data }: { data: PageData } = $props();
@@ -191,6 +192,7 @@
 					body: JSON.stringify({ name: companyName, website: website.trim() || null, industry })
 				});
 				if (!res.ok) throw new Error('Failed to save');
+				captureEvent('onboarding_step_completed', { step: 1, step_name: 'company_setup' });
 			} else if (step === 2) {
 				if (!teamSize) {
 					errorMsg = m.onboarding_error_team_required();
@@ -202,6 +204,7 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ teamSize })
 				});
+				captureEvent('onboarding_step_completed', { step: 2, step_name: 'team_size' });
 			} else if (step === 3) {
 				// Tech stack — optional, just save and proceed
 				await fetch('/api/onboarding/stack', {
@@ -209,6 +212,7 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ stack })
 				});
+				captureEvent('onboarding_step_completed', { step: 3, step_name: 'tech_stack', stack });
 			} else if (step === 4) {
 				// NEW: Data & Customers — validate and save
 				if (!customerType || !geoReach || !productType) {
@@ -221,12 +225,24 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ dataTypes, customerType, geoReach, productType })
 				});
+				captureEvent('onboarding_step_completed', {
+					step: 4,
+					step_name: 'data_customers',
+					customerType,
+					geoReach,
+					productType
+				});
 			} else if (step === 5) {
 				// NEW: Security posture — optional, just save
 				await fetch('/api/onboarding/posture', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ securityTools })
+				});
+				captureEvent('onboarding_step_completed', {
+					step: 5,
+					step_name: 'security_posture',
+					securityTools
 				});
 			} else if (step === 6) {
 				// Intent choice (was step 4)
@@ -235,6 +251,7 @@
 					loading = false;
 					return;
 				}
+				captureEvent('onboarding_intent_selected', { intent });
 				if (intent === 'questionnaire') {
 					// Path A: skip framework, go straight to completion
 					step = completionStep;
@@ -249,6 +266,7 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ frameworkSlug: framework })
 				});
+				captureEvent('onboarding_step_completed', { step: 7, step_name: 'framework', framework });
 			} else if (isCompletionStep) {
 				// Completion — call complete endpoint and redirect
 				const res = await fetch('/api/onboarding/complete', {
@@ -258,6 +276,7 @@
 				});
 				if (!res.ok) throw new Error('Failed to complete');
 				const completionData = await res.json();
+				captureEvent('onboarding_completed', { intent });
 				goto(completionData.redirectTo ?? '/dashboard');
 				return;
 			}

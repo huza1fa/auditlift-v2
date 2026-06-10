@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { organizations, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendWelcomeEmail } from '$lib/server/email';
+import { captureServerEvent, identifyUserServer } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
@@ -39,6 +40,46 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			organizationName: org.name,
 			trialEndsAt: org.trialEndsAt ?? null
 		}).catch(console.error);
+
+		// Analytics: first-time onboarding completion
+		identifyUserServer({
+			distinctId: locals.session.user.id,
+			properties: {
+				email: locals.session.user.email,
+				name: locals.session.user.name,
+				org_id: org.id,
+				org_name: org.name,
+				industry: org.industry,
+				team_size: org.teamSize,
+				intent
+			}
+		});
+
+		captureServerEvent({
+			event: 'user_signed_up',
+			distinctId: locals.session.user.id,
+			properties: {
+				intent,
+				org_id: org.id,
+				org_name: org.name,
+				industry: org.industry,
+				team_size: org.teamSize,
+				auth_method: locals.session.user.emailVerified ? 'oauth' : 'email'
+			},
+			groups: { organization: org.id }
+		});
+
+		captureServerEvent({
+			event: 'onboarding_completed',
+			distinctId: locals.session.user.id,
+			properties: {
+				intent,
+				steps_completed: intent === 'questionnaire' ? 6 : 7,
+				org_id: org.id,
+				org_name: org.name
+			},
+			groups: { organization: org.id }
+		});
 	}
 
 	const redirectTo = intent === 'questionnaire' ? '/questionnaires?tour=1' : '/dashboard?tour=1';

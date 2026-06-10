@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { fileExists, deleteFile } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
+import { captureServerEvent } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -62,6 +63,19 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			entityName: existingEvidence.filename,
 			controlCode: ctrl?.code ?? null
 		}).catch(console.error);
+
+		captureServerEvent({
+			event: 'evidence_uploaded',
+			distinctId: locals.session.user.id,
+			properties: {
+				org_id: orgId,
+				control_id: existingEvidence.controlId,
+				control_code: ctrl?.code ?? null,
+				file_type: existingEvidence.mimeType,
+				file_size: existingEvidence.sizeBytes
+			},
+			groups: { organization: orgId }
+		});
 
 		if (ctrl) {
 			computeReadinessScore(orgId, ctrl.frameworkId).catch(console.error);

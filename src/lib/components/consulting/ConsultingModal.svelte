@@ -5,6 +5,7 @@
 	import Input from '$lib/components/ui/Input.svelte';
 	import { Check } from 'phosphor-svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { captureEvent } from '$lib/posthog';
 
 	let {
 		open = $bindable(false),
@@ -48,6 +49,7 @@
 		e.preventDefault();
 		submitting = true;
 		errorMessage = '';
+		captureEvent('consulting_form_submitted', { topic, has_company: !!company.trim() });
 
 		try {
 			const res = await fetch('/api/consulting/request', {

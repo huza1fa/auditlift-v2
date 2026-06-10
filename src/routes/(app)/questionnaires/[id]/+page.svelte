@@ -26,6 +26,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { page } from '$app/state';
 	import { getSuggestedPolicyType, getPolicyTitle } from '$lib/domain-policy-map';
+	import { captureEvent } from '$lib/posthog';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type Confidence = 'high' | 'medium' | 'low' | 'gap' | null;
@@ -333,6 +334,10 @@
 				q.id === selectedQuestion.id ? { ...q, userEditedAnswer: answerDraft } : q
 			);
 			showSaved();
+			captureEvent('questionnaire_answer_edited', {
+				questionnaire_id: id,
+				question_id: selectedQuestion.id
+			});
 		} catch {
 			toastError('Failed to save answer');
 		} finally {
@@ -353,6 +358,10 @@
 		if (!selectedQuestion || !refinementPrompt.trim()) return;
 		improving = true;
 		improveError = '';
+		captureEvent('questionnaire_answer_improved', {
+			questionnaire_id: id,
+			question_id: selectedQuestion.id
+		});
 		try {
 			const res = await fetch(
 				`/api/questionnaires/${id}/questions/${selectedQuestion.id}/improve`,
@@ -386,6 +395,7 @@
 	async function handleExport() {
 		if (!data.hasActivePaidAccess) return;
 		exporting = true;
+		captureEvent('questionnaire_export_clicked', { questionnaire_id: id });
 		try {
 			window.open(`/api/questionnaires/${id}/export`, '_blank');
 		} finally {
@@ -396,6 +406,7 @@
 	// ── Reprocess ─────────────────────────────────────────────────────────────
 	async function handleReprocess() {
 		reprocessing = true;
+		captureEvent('questionnaire_reprocess_clicked', { questionnaire_id: id });
 		try {
 			const res = await fetch(`/api/questionnaires/${id}/reprocess`, { method: 'POST' });
 			if (!res.ok) {
@@ -425,6 +436,7 @@
 			}
 			const result = await res.json();
 			shareToken = result.shareToken;
+			captureEvent('questionnaire_share_toggled', { questionnaire_id: id, enabled: !!shareToken });
 			toastSuccess(shareToken ? 'Sharing enabled' : 'Sharing disabled');
 		} catch {
 			toastError('Failed to toggle sharing.');
@@ -438,6 +450,7 @@
 		const url = `${window.location.origin}/share/${shareToken}`;
 		await navigator.clipboard.writeText(url);
 		shareCopied = true;
+		captureEvent('questionnaire_share_link_copied', { questionnaire_id: id });
 		setTimeout(() => (shareCopied = false), 2000);
 	}
 

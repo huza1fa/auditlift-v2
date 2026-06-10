@@ -14,6 +14,7 @@ import { ExportSchema } from '$lib/server/validation';
 import archiver from 'archiver';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { downloadFile } from '$lib/server/storage';
+import { captureServerEvent } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
@@ -129,6 +130,18 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	});
 
 	const buffer = Buffer.concat(chunks);
+
+	captureServerEvent({
+		event: 'export_created',
+		distinctId: locals.session.user.id,
+		properties: {
+			org_id: orgId,
+			policy_count: allPolicies.length,
+			evidence_count: allEvidence.length,
+			control_count: allControls.length
+		},
+		groups: { organization: orgId }
+	});
 
 	return new Response(buffer, {
 		headers: {
