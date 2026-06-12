@@ -114,7 +114,9 @@ Instructions:
 - gapReason: why this cannot be answered even generically (only for gap). null otherwise.
 - gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium/low confidence.
 - mappedPolicyIds: array of policy IDs you used (from the list above, empty if none)
-- mappedControlIds: array of control IDs you used (from the list above, empty if none)`;
+- mappedControlIds: array of control IDs you used (from the list above, empty if none)
+
+IMPORTANT: If the item above is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
 	const result = await generateObject({
 		model: openrouter('openai/gpt-4o-mini'),
@@ -192,10 +194,12 @@ For each question return:
 - domain: one of access_control, data_security, incident_response, vendor_management, business_continuity, cryptography, physical_security, vulnerability_management, change_management, privacy, remote_work, ai_usage, data_retention, general, other
 - confidence: high | medium | low | gap
 - answer: draft answer (null only for gaps)
-- gapReason: why it can't be answered (null unless gap)
+- gapReason: why it can't be answered (null unless gap). If the item is a section heading or non-question fluff, set gapReason to "Not a question — this is a section heading or non-question text."
 - gapRemediation: action to fix the gap (null unless gap)
 - mappedPolicyIds: policy IDs used (from list above)
-- mappedControlIds: control IDs used (from list above)`;
+- mappedControlIds: control IDs used (from list above)
+
+IMPORTANT: If an item is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result for it, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
 	try {
 		const result = await generateObject({
@@ -335,14 +339,11 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 /**
  * Re-fetches all questions for the questionnaire, computes summary stats
  * (high/medium/low/gap counts and deal readiness score), and writes them
- * back to the questionnaires row. The processedCount parameter is used as
- * the denominator for the deal readiness score — it should equal the number
- * of questions that were actually sent to the AI (respecting trial limits).
+ * back to the questionnaires row.
  */
 async function computeAndSaveStats(
 	questionnaireId: string,
-	organizationId: string,
-	processedCount: number
+	organizationId: string
 ): Promise<void> {
 	const processedQuestions = await db
 		.select({ confidence: questionnaireQuestions.confidence })
@@ -370,10 +371,10 @@ async function computeAndSaveStats(
 	const answeredCount = highCount + mediumCount + lowCount;
 
 	const dealReadinessScore =
-		processedCount > 0
+		totalQuestions > 0
 			? Math.min(
 					100,
-					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / processedCount)
+					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / totalQuestions)
 				)
 			: 0;
 
@@ -459,6 +460,17 @@ export async function processQuestionnaire(
 			for (const result of batchResults) {
 				if (result.status === 'fulfilled') {
 					for (const { questionId, classification } of result.value) {
+						// If the AI identified this as a non-question (section heading / fluff), delete it
+						if (
+							classification.gapReason &&
+							classification.gapReason.toLowerCase().includes('not a question')
+						) {
+							await db
+								.delete(questionnaireQuestions)
+								.where(eq(questionnaireQuestions.id, questionId));
+							continue;
+						}
+
 						const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
 							validPolicyIds.has(id)
 						);
@@ -501,7 +513,7 @@ export async function processQuestionnaire(
 		}
 
 		// 5. Compute and persist summary stats
-		await computeAndSaveStats(questionnaireId, organizationId, processLimit);
+		await computeAndSaveStats(questionnaireId, organizationId);
 	} catch (err) {
 		console.error('[questionnaire-processor] Fatal error:', err);
 		await db
@@ -608,6 +620,22 @@ export async function reprocessQuestionnaire(
 			for (const result of batchResults) {
 				if (result.status === 'fulfilled') {
 					for (const { questionId, classification } of result.value) {
+						// If the AI identified this as a non-question (section heading / fluff), delete it
+						if (
+							classification.gapReason &&
+							classification.gapReason.toLowerCase().includes('not a question')
+						) {
+							await db
+								.delete(questionnaireQuestions)
+								.where(
+									and(
+										eq(questionnaireQuestions.id, questionId),
+										eq(questionnaireQuestions.organizationId, organizationId)
+									)
+								);
+							continue;
+						}
+
 						const safePolicyIds = classification.mappedPolicyIds.filter((id) =>
 							validPolicyIds.has(id)
 						);
@@ -659,8 +687,7 @@ export async function reprocessQuestionnaire(
 		}
 
 		// 7. Recompute summary stats across all questions (not just reprocessed ones)
-		//    Use total all-question count as denominator to keep score consistent
-		await computeAndSaveStats(questionnaireId, organizationId, allQuestions.length);
+		await computeAndSaveStats(questionnaireId, organizationId);
 	} catch (err) {
 		console.error('[questionnaire-processor] reprocess fatal error:', err);
 		await db

@@ -16,12 +16,19 @@ export async function sendInviteEmail(opts: {
 	const { Resend } = await import('resend');
 	const resend = new Resend(env.RESEND_API_KEY);
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: 'AuditLift <invites@auditlift.app>',
 		to: opts.to,
 		subject: `You're invited to join ${opts.organizationName} on AuditLift`,
 		html: buildInviteHtml(opts)
 	});
+
+	if (result.error) {
+		console.error('[email] Invite email failed:', result.error);
+		throw new Error(
+			`Failed to send invite email: ${result.error.name} — ${result.error.message}`
+		);
+	}
 }
 
 export async function sendWelcomeEmail(opts: {
@@ -38,12 +45,19 @@ export async function sendWelcomeEmail(opts: {
 	const { Resend } = await import('resend');
 	const resend = new Resend(env.RESEND_API_KEY);
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: `Welcome to AuditLift — let's get ${opts.organizationName} audit-ready`,
 		html: buildWelcomeHtml(opts)
 	});
+
+	if (result.error) {
+		console.error('[email] Welcome email failed:', result.error);
+		throw new Error(
+			`Failed to send welcome email: ${result.error.name} — ${result.error.message}`
+		);
+	}
 }
 
 export async function sendTrialExpiringEmail(opts: {
@@ -61,12 +75,19 @@ export async function sendTrialExpiringEmail(opts: {
 	const { Resend } = await import('resend');
 	const resend = new Resend(env.RESEND_API_KEY);
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: `Your AuditLift trial ends in ${opts.daysLeft} day${opts.daysLeft === 1 ? '' : 's'}`,
 		html: buildTrialExpiringHtml(opts)
 	});
+
+	if (result.error) {
+		console.error('[email] Trial expiring email failed:', result.error);
+		throw new Error(
+			`Failed to send trial expiring email: ${result.error.name} — ${result.error.message}`
+		);
+	}
 }
 
 export async function sendTrialExpiredEmail(opts: {
@@ -82,12 +103,19 @@ export async function sendTrialExpiredEmail(opts: {
 	const { Resend } = await import('resend');
 	const resend = new Resend(env.RESEND_API_KEY);
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: 'Your AuditLift trial has ended',
 		html: buildTrialExpiredHtml(opts)
 	});
+
+	if (result.error) {
+		console.error('[email] Trial expired email failed:', result.error);
+		throw new Error(
+			`Failed to send trial expired email: ${result.error.name} — ${result.error.message}`
+		);
+	}
 }
 
 export async function sendPasswordResetEmail(opts: {
@@ -103,12 +131,19 @@ export async function sendPasswordResetEmail(opts: {
 	const { Resend } = await import('resend');
 	const resend = new Resend(env.RESEND_API_KEY);
 
-	await resend.emails.send({
+	const result = await resend.emails.send({
 		from: 'AuditLift <hello@auditlift.app>',
 		to: opts.to,
 		subject: 'Reset your AuditLift password',
 		html: buildPasswordResetHtml(opts)
 	});
+
+	if (result.error) {
+		console.error('[email] Password reset email failed:', result.error);
+		throw new Error(
+			`Failed to send password reset email: ${result.error.name} — ${result.error.message}`
+		);
+	}
 }
 
 function buildWelcomeHtml(opts: {

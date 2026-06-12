@@ -224,12 +224,27 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		groups: { organization: orgId }
 	});
 
-	// 12. Return initial state
+	// 12. Return the full questionnaire so the frontend can render it immediately
 	return json(
 		{
 			id: questionnaire.id,
+			organizationId: orgId,
+			filename: file.name,
+			storageKey,
+			sourceFormat: format,
+			status: 'processing' as const,
 			totalQuestions: parsedQuestions.length,
-			status: 'processing'
+			answeredCount: 0,
+			gapCount: 0,
+			dealReadinessScore: 0,
+			highCount: 0,
+			mediumCount: 0,
+			lowCount: 0,
+			errorMessage: null,
+			shareToken: null,
+			sharedAt: null,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
 		},
 		{ status: 201 }
 	);

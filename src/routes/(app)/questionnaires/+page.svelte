@@ -226,7 +226,7 @@
 
 			const newQ: Questionnaire = await res.json();
 			questionnaires = [newQ, ...questionnaires];
-			toastSuccess('Questionnaire uploaded successfully');
+			toastSuccess('Questionnaire uploaded — AI is analyzing your questions now. This may take a minute.');
 
 			if (newQ.status === 'processing') {
 				connectSSE(newQ.id);
@@ -363,6 +363,18 @@
 	{#if uploadError}
 		<div class="rounded-[var(--radius)] bg-[var(--danger-light)] px-4 py-3">
 			<p class="text-sm text-[var(--danger)]">{uploadError}</p>
+		</div>
+	{/if}
+
+	<!-- Processing banner -->
+	{#if hasProcessing}
+		<div
+			class="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--info)] bg-[var(--info-light)] px-4 py-3"
+		>
+			<Spinner size={18} class="animate-spin" color="var(--info)" />
+			<p class="text-sm text-[var(--info)]">
+				One or more questionnaires are being analyzed by AI. Results will appear automatically — no need to refresh.
+			</p>
 		</div>
 	{/if}
 

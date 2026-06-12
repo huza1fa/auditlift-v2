@@ -30,6 +30,13 @@ function looksLikeSectionHeader(line: string): boolean {
 	if (/^Section\s+\d+/i.test(line)) return true;
 	if (/^Part\s+\d+/i.test(line)) return true;
 	if (/^[A-Z]\.\s+\w/.test(line)) return true; // "A. Section Name"
+	// Numbered headings that are clearly not questions (e.g. "1. Introduction")
+	if (
+		/^\d+[.):\s]\s*(Introduction|Overview|Background|Scope|Summary|Conclusion|Notes|References|Appendix|Table of Contents|Document Control|Revision History|Purpose|Definitions|Policy|Procedure|Guidelines|Standards|Framework|Requirements|Compliance|Audit|Assessment|Review|Findings|Glossary|General|Security|Information|Management|Access|Data|Incident|Vendor|Business|Cryptography|Physical|Vulnerability|Change|Privacy|Remote|AI|Retention|Disaster|Recovery|BCP|DRP|DLP|IAM|MFA|SSO|VPN|IDS|IPS|SIEM|SOAR|EDR|XDR|NIST|ISO|SOC|PCI|HIPAA|GDPR|CCPA|SOX|ITIL|COBIT|CSF|RMF|SP|800|FISMA|FedRAMP|CMMC|CCM|CSA|CAIQ|SIG|VSA|SAQ|ROC|AOC|KRI|KPI|SLA|OLA|UC|BIA|RA|TA|VA|PenTest|RedTeam|BlueTeam|PurpleTeam|Threat|Intel|OSINT|CTI|IOA|IOC|TTP|MITRE|ATT&CK|KillChain|Diamond|Model|Cyber|Kill|Chain|Lockheed|Martin|ATT&CK|Framework|MaGMa|Matrix|VERIS|VCDB|DBIR|BREACH|COST|Factor|Analysis|Risk|Quantification|FAIR|CRISC|CISM|CISSP|CISA|GIAC|SANS|SEC|FOR|AUD|GCIH|GCIA|GCIH|GPPA|GSTRT|GSLC|GSNA|GLEG|GMOB|GCPM|GISP|GWEB|GPN|GWAPT|GXPN|GAWN|GCPM|GSTRT|GSLC|GSNA|GLEG|GMOB|GCPM|GISP|GWEB|GPN|GWAPT|GXPN|GAWN)/i.test(
+			line
+		)
+	)
+		return true;
 	return false;
 }
 
