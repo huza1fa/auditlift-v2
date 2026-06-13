@@ -26,6 +26,12 @@ const BRAND = {
 	danger: '#b84040'
 };
 
+const SHIELD_LOGO = `<svg width="28" height="28" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+  <path d="M10 1L19 5V14L10 23L1 14V5L10 1Z" fill="${BRAND.green}"/>
+  <path d="M10 5L15.5 7.5V13L10 18.5L4.5 13V7.5L10 5Z" fill="#ffffff" opacity="0.15"/>
+  <path d="M10 8.5L12.5 11L10 13.5L7.5 11L10 8.5Z" fill="#ffffff" opacity="0.5"/>
+</svg>`;
+
 function emailWrapper(title: string, bodyHtml: string): string {
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -52,7 +58,7 @@ function emailWrapper(title: string, bodyHtml: string): string {
             <td align="center" style="padding-bottom:28px;">
               <a href="https://auditlift.app" style="text-decoration:none;display:inline-block;">
                 <span style="display:inline-flex;align-items:center;gap:8px;">
-                  <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:${BRAND.green};border-radius:7px;color:#ffffff;font-size:15px;font-weight:700;">A</span>
+                  ${SHIELD_LOGO}
                   <span style="font-size:17px;font-weight:700;color:${BRAND.foreground};letter-spacing:-0.3px;">AuditLift</span>
                 </span>
               </a>
@@ -356,8 +362,8 @@ export async function sendConsultingRequestNotification(opts: {
 }): Promise<void> {
 	const advisoryEmail = env.ADVISORY_TEAM_EMAIL;
 	if (!advisoryEmail) {
-		console.log(
-			`[DEV] Advisory notification → ${opts.name} <${opts.email}> | topic: ${opts.topic}`
+		console.warn(
+			`[email] ADVISORY_TEAM_EMAIL is not set — advisory request from ${opts.name} <${opts.email}> was not forwarded to the team`
 		);
 		return;
 	}

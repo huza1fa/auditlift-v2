@@ -136,6 +136,7 @@ All secrets are injected via Beanstalk environment option settings (`aws:elastic
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — OAuth
 - `OPEN_ROUTER_API_KEY` — AI policy generation
 - `RESEND_API_KEY` — Transactional email
+- `ADVISORY_TEAM_EMAIL` — Receives "Talk to advisory team" consultation requests (e.g. `founder@auditlift.app`)
 - `ORIGIN` — `https://auditlift.app`
 - `PUBLIC_POSTHOG_KEY` — PostHog project API key (client-side)
 - `PUBLIC_POSTHOG_HOST` — PostHog instance URL (default: `https://us.i.posthog.com`)
