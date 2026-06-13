@@ -67,13 +67,25 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 1. Build Docker image locally: `docker build --platform linux/amd64 -t auditlift:latest .`
 2. Tag and push to ECR: `docker tag ... && docker push ...`
-3. Create application version from `Dockerrun.aws.json`
-4. Update Beanstalk environment to new version
-5. Beanstalk pulls image from ECR, starts container on port 3000
+3. Create a source bundle ZIP containing `Dockerrun.aws.json`, `.ebextensions/`, and `.platform/` (see "Nginx Proxy Buffer Fix" above)
+4. Create application version from the source bundle ZIP
+5. Update Beanstalk environment to new version
+6. Beanstalk pulls image from ECR, starts container on port 3000
 
-### Nginx Proxy Buffer Fix
+### Nginx Proxy Buffer Fix (Beanstalk 502 on sign-in)
 
-The app uses Better Auth which can send large `Set-Cookie` headers. Beanstalk's nginx default 4k buffer causes `502 upstream sent too big header`. This is fixed via `.ebextensions/proxy.config` which sets:
+The app uses Better Auth, which sends large `Set-Cookie` headers during sign-in and sign-up. Beanstalk's default nginx proxy buffer (4 kB) causes:
+
+```
+502 Bad Gateway — upstream sent too big header
+```
+
+This is fixed by increasing the proxy buffer size. Two config locations are used so the fix works across Beanstalk platform versions:
+
+1. **Legacy `.ebextensions`** — `.ebextensions/proxy.config` writes `/etc/nginx/conf.d/proxy.conf`.
+2. **AL2023 `.platform`** — `.platform/nginx/conf.d/proxy.conf` is auto-included by the AL2023 platform.
+
+Both files set:
 
 ```
 proxy_buffer_size 128k;
@@ -81,7 +93,36 @@ proxy_buffers 4 256k;
 proxy_busy_buffers_size 256k;
 ```
 
-**This config must be included in every source bundle ZIP deployed to Beanstalk.**
+#### The hurdle: source bundle, not just the Docker image
+
+Updating only the Docker image in ECR is **not enough**. Beanstalk applies nginx config from the **source bundle ZIP**, not from the container image. If you deploy a new image but reuse an old source bundle — or a bundle missing `.ebextensions` and `.platform/nginx/conf.d/proxy.conf` — the 502 will persist on sign-in.
+
+**Every source bundle ZIP must contain:**
+
+```
+source-bundle.zip
+├── Dockerrun.aws.json
+├── .ebextensions/
+│   └── proxy.config
+└── .platform/
+    └── nginx/
+        └── conf.d/
+            └── proxy.conf
+```
+
+Create the application version from this ZIP, then update the environment. Do not create the application version from `Dockerrun.aws.json` alone.
+
+Quick way to build the bundle (PowerShell):
+
+```powershell
+Compress-Archive -Path Dockerrun.aws.json,.ebextensions,.platform -DestinationPath auditlift-source-bundle.zip -Force
+```
+
+Or on macOS/Linux:
+
+```bash
+zip -r auditlift-source-bundle.zip Dockerrun.aws.json .ebextensions .platform
+```
 
 ### Environment Variables (Beanstalk)
 
