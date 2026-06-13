@@ -3,8 +3,10 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { consultingRequests } from '$lib/server/db/schema';
 import { captureServerEvent } from '$lib/server/posthog';
+import { checkRateLimit } from '$lib/server/rate-limit';
+import { sendConsultingRequestNotification, sendConsultingConfirmation } from '$lib/server/email';
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, getClientAddress }) => {
 	const body = await request.json();
 
 	const { name, email, company, topic, message } = body;
@@ -31,25 +33,32 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, 'Invalid topic');
 	}
 
+	// Rate limit: 3 submissions per IP per hour
+	const ip = getClientAddress();
+	if (!checkRateLimit(`consulting:${ip}`, 3, 60 * 60 * 1000)) {
+		throw error(429, 'Too many requests. Please try again later.');
+	}
+
 	// Optionally link to org if user is logged in
 	const organizationId = locals.organizationId ?? null;
+	const normalizedEmail = email.trim().toLowerCase();
 
 	await db.insert(consultingRequests).values({
 		organizationId,
 		name: name.trim(),
-		email: email.trim().toLowerCase(),
+		email: normalizedEmail,
 		company: company?.trim() || null,
 		topic,
 		message: message?.trim() || null
 	});
 
-	const userId = locals.session?.user?.id ?? email;
+	const userId = locals.session?.user?.id ?? normalizedEmail;
 	captureServerEvent({
 		event: 'consulting_requested',
 		distinctId: userId,
 		properties: {
 			name: name.trim(),
-			email: email.trim().toLowerCase(),
+			email: normalizedEmail,
 			company: company?.trim() || null,
 			topic,
 			org_id: organizationId,
@@ -57,6 +66,23 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		},
 		groups: organizationId ? { organization: organizationId } : undefined
 	});
+
+	// Notify advisory team and confirm to requester (fire-and-forget)
+	sendConsultingRequestNotification({
+		name: name.trim(),
+		email: normalizedEmail,
+		company: company?.trim() || null,
+		topic,
+		message: message?.trim() || null,
+		organizationId,
+		isLoggedIn: !!locals.session
+	}).catch((err) => console.error('[consulting] Advisory notification failed:', err));
+
+	sendConsultingConfirmation({
+		to: normalizedEmail,
+		name: name.trim(),
+		topic
+	}).catch((err) => console.error('[consulting] Confirmation email failed:', err));
 
 	return json({ success: true });
 };

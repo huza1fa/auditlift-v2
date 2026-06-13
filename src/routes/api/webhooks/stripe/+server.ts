@@ -37,7 +37,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 	} catch (err) {
 		console.error(`[Stripe] Error handling ${event.type}:`, err);
-		return json({ received: true, warning: `Handler error: ${event.type}` });
+		// Return a non-2xx status so Stripe retries the webhook.
+		throw error(500, `Handler error: ${event.type}`);
 	}
 
 	return json({ received: true });

@@ -32,6 +32,12 @@ export const PresignEvidenceSchema = z.object({
 		.max(10 * 1024 * 1024)
 });
 
+export const StackSchema = z.object({
+	stack: z
+		.array(z.enum(['AWS', 'GCP', 'Azure', 'GitHub', 'GitLab', 'Vercel', 'Cloudflare', 'Other']))
+		.default([])
+});
+
 export const OrganizationSchema = z.object({
 	name: z.string().min(1).max(100).trim(),
 	website: z

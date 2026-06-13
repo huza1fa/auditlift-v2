@@ -17,7 +17,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		if (!pathname.startsWith('/api/webhooks/')) {
 			const origin = event.request.headers.get('origin');
 			const expectedOrigin = env.ORIGIN;
-			if (origin && expectedOrigin && origin !== expectedOrigin) {
+			// Require a non-empty Origin header that matches the expected origin.
+			// Requests with a missing or mismatched Origin are rejected.
+			if (!origin || !expectedOrigin || origin !== expectedOrigin) {
 				return new Response('Forbidden', { status: 403 });
 			}
 		}

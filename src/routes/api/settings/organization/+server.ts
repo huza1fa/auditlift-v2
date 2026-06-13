@@ -11,12 +11,14 @@ import {
 	readinessScores,
 	readinessSnapshots,
 	activityLogs,
-	subscriptions
+	subscriptions,
+	questionnaires
 } from '$lib/server/db/schema';
 import { user } from '$lib/server/db/auth.schema';
 import { eq, and } from 'drizzle-orm';
 import { requireOrgDeletionPermission } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
+import { deleteFilesByPrefix } from '$lib/server/storage';
 
 export const DELETE: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -51,10 +53,19 @@ export const DELETE: RequestHandler = async ({ locals }) => {
 		await tx.delete(readinessScores).where(eq(readinessScores.organizationId, orgId));
 		await tx.delete(organizationFrameworks).where(eq(organizationFrameworks.organizationId, orgId));
 		await tx.delete(subscriptions).where(eq(subscriptions.organizationId, orgId));
+		await tx.delete(questionnaires).where(eq(questionnaires.organizationId, orgId));
 		await tx.delete(userOrganizations).where(eq(userOrganizations.organizationId, orgId));
 		// Organization row must be last — all FK children are deleted above
 		await tx.delete(organizations).where(eq(organizations.id, orgId));
 	});
+
+	// Best-effort cleanup of S3 files owned by this org
+	try {
+		await deleteFilesByPrefix(`${orgId}/`);
+		await deleteFilesByPrefix(`questionnaires/${orgId}/`);
+	} catch (err) {
+		console.error(`[org-delete] Failed to clean up S3 files for org ${orgId}:`, err);
+	}
 
 	// Delete the owner's user account — sessions/accounts cascade automatically via FK
 	await db.delete(user).where(eq(user.id, userId));

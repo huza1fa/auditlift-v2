@@ -12,7 +12,9 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 	const orgId = locals.organizationId;
 
-	// Try to find by existing stripeCustomerId first
+	// Only resolve subscriptions from the org's existing subscription record.
+	// Never search Stripe by email — that would let a user activate a different
+	// org using any subscription associated with their email address.
 	const [existingSub] = await db
 		.select()
 		.from(subscriptions)
@@ -45,54 +47,6 @@ export const POST: RequestHandler = async ({ locals }) => {
 				.where(eq(subscriptions.organizationId, orgId));
 
 			return json({ status: 'active', synced: true });
-		}
-	} else {
-		// Search by customer email
-		const email = locals.session.user.email;
-		const escapedEmail = email.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-		const customers = await stripe.customers.search({
-			query: `email:"${escapedEmail}"`
-		});
-
-		if (customers.data.length > 0) {
-			const customer = customers.data[0];
-			const stripeSubs = await stripe.subscriptions.list({
-				customer: customer.id,
-				status: 'active',
-				limit: 1
-			});
-
-			if (stripeSubs.data.length > 0) {
-				const stripeSub = stripeSubs.data[0];
-				const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
-					? new Date(stripeSub.items.data[0].current_period_end * 1000)
-					: null;
-
-				if (existingSub) {
-					await db
-						.update(subscriptions)
-						.set({
-							status: 'active',
-							stripeCustomerId: customer.id,
-							stripeSubscriptionId: stripeSub.id,
-							currentPeriodEnd,
-							cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-							updatedAt: new Date()
-						})
-						.where(eq(subscriptions.organizationId, orgId));
-				} else {
-					await db.insert(subscriptions).values({
-						organizationId: orgId,
-						status: 'active',
-						stripeCustomerId: customer.id,
-						stripeSubscriptionId: stripeSub.id,
-						currentPeriodEnd,
-						cancelAtPeriodEnd: stripeSub.cancel_at_period_end
-					});
-				}
-
-				return json({ status: 'active', synced: true });
-			}
 		}
 	}
 

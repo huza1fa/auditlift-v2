@@ -3,6 +3,8 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { organizationFrameworks, frameworks, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireMinimumRole } from '$lib/server/auth-utils';
+import type { UserRole } from '$lib/server/db/schema';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
@@ -14,6 +16,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		.where(eq(userOrganizations.userId, locals.session.user.id))
 		.limit(1);
 	if (!userOrg) throw error(400, 'No organization found');
+
+	// Only owners/admins can change the compliance framework
+	requireMinimumRole(userOrg.role as UserRole, 'admin', 'Only admins can change frameworks');
 
 	const [framework] = await db
 		.select()

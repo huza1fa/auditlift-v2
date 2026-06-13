@@ -90,8 +90,8 @@
 				{/if}
 
 				<p class="text-[12px] text-[var(--foreground-subtle)]">
-					Note: password reset only works for accounts created with email & password.
-					If you signed up with Google or GitHub, sign in using that provider instead.
+					Note: password reset only works for accounts created with email & password. If you signed
+					up with Google or GitHub, sign in using that provider instead.
 				</p>
 
 				<button

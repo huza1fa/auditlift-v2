@@ -226,7 +226,9 @@
 
 			const newQ: Questionnaire = await res.json();
 			questionnaires = [newQ, ...questionnaires];
-			toastSuccess('Questionnaire uploaded — AI is analyzing your questions now. This may take a minute.');
+			toastSuccess(
+				'Questionnaire uploaded — AI is analyzing your questions now. This may take a minute.'
+			);
 
 			if (newQ.status === 'processing') {
 				connectSSE(newQ.id);
@@ -373,7 +375,8 @@
 		>
 			<Spinner size={18} class="animate-spin" color="var(--info)" />
 			<p class="text-sm text-[var(--info)]">
-				One or more questionnaires are being analyzed by AI. Results will appear automatically — no need to refresh.
+				One or more questionnaires are being analyzed by AI. Results will appear automatically — no
+				need to refresh.
 			</p>
 		</div>
 	{/if}

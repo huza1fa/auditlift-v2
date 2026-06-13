@@ -12,6 +12,7 @@ import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { ExportSchema } from '$lib/server/validation';
 import archiver from 'archiver';
+import { stringify } from 'csv-stringify/sync';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { downloadFile } from '$lib/server/storage';
 import { captureServerEvent } from '$lib/server/posthog';
@@ -86,16 +87,24 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const folderName = `AuditLift-Export-${org.slug}-${date}`;
 
 	// control-mapping.csv
-	const csvLines = ['Control ID,Code,Title,Category,Status,Evidence Count,Policy Count'];
+	const csvRows = [
+		['Control ID', 'Code', 'Title', 'Category', 'Status', 'Evidence Count', 'Policy Count']
+	];
 	for (const control of allControls) {
 		const ev = allEvidence.filter((e) => e.controlId === control.id);
 		const pol = allPolicies.filter((p) => p.controlId === control.id);
 		const status = ev.length > 0 || pol.length > 0 ? 'Complete' : 'Incomplete';
-		csvLines.push(
-			`${control.id},"${control.code}","${control.title}","${control.category}",${status},${ev.length},${pol.length}`
-		);
+		csvRows.push([
+			control.id,
+			control.code,
+			control.title,
+			control.category,
+			status,
+			String(ev.length),
+			String(pol.length)
+		]);
 	}
-	archive.append(csvLines.join('\n'), { name: `${folderName}/control-mapping.csv` });
+	archive.append(stringify(csvRows), { name: `${folderName}/control-mapping.csv` });
 
 	// Policies as PDF
 	const companyName = org.name ?? 'AuditLift';

@@ -5,6 +5,8 @@ import { organizations, userOrganizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendWelcomeEmail } from '$lib/server/email';
 import { captureServerEvent, identifyUserServer } from '$lib/server/posthog';
+import { requireMinimumRole } from '$lib/server/auth-utils';
+import type { UserRole } from '$lib/server/db/schema';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
@@ -18,6 +20,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		.where(eq(userOrganizations.userId, locals.session.user.id))
 		.limit(1);
 	if (!userOrg) throw error(400, 'No organization found');
+
+	// Only owners/admins can complete onboarding for the organization
+	requireMinimumRole(userOrg.role as UserRole, 'admin', 'Only admins can complete onboarding');
 
 	const [org] = await db
 		.select()

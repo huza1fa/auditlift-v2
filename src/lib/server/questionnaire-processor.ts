@@ -341,10 +341,7 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
  * (high/medium/low/gap counts and deal readiness score), and writes them
  * back to the questionnaires row.
  */
-async function computeAndSaveStats(
-	questionnaireId: string,
-	organizationId: string
-): Promise<void> {
+async function computeAndSaveStats(questionnaireId: string, organizationId: string): Promise<void> {
 	const processedQuestions = await db
 		.select({ confidence: questionnaireQuestions.confidence })
 		.from(questionnaireQuestions)

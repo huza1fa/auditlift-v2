@@ -3,7 +3,9 @@ import {
 	PutObjectCommand,
 	DeleteObjectCommand,
 	HeadObjectCommand,
-	GetObjectCommand
+	GetObjectCommand,
+	ListObjectsV2Command,
+	DeleteObjectsCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { error } from '@sveltejs/kit';
@@ -133,4 +135,34 @@ export async function downloadFile(storageKey: string): Promise<Buffer> {
 	if (!response.Body) throw error(404, `File not found: ${storageKey}`);
 	const bytes = await response.Body.transformToByteArray();
 	return Buffer.from(bytes);
+}
+
+export async function deleteFilesByPrefix(prefix: string): Promise<void> {
+	const { client, bucket } = getS3();
+	let continuationToken: string | undefined;
+
+	do {
+		const listResponse = await client.send(
+			new ListObjectsV2Command({
+				Bucket: bucket,
+				Prefix: prefix,
+				ContinuationToken: continuationToken
+			})
+		);
+
+		const objects = listResponse.Contents?.filter((obj) => obj.Key).map((obj) => ({
+			Key: obj.Key!
+		}));
+
+		if (objects && objects.length > 0) {
+			await client.send(
+				new DeleteObjectsCommand({
+					Bucket: bucket,
+					Delete: { Objects: objects }
+				})
+			);
+		}
+
+		continuationToken = listResponse.NextContinuationToken;
+	} while (continuationToken);
 }

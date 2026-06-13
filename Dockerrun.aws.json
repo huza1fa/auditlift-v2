@@ -1,12 +1,12 @@
 {
-  "AWSEBDockerrunVersion": "1",
-  "Image": {
-    "Name": "676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest",
-    "Update": "true"
-  },
-  "Ports": [
-    {
-      "ContainerPort": "3000"
-    }
-  ]
+	"AWSEBDockerrunVersion": "1",
+	"Image": {
+		"Name": "676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest",
+		"Update": "true"
+	},
+	"Ports": [
+		{
+			"ContainerPort": "3000"
+		}
+	]
 }
