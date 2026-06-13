@@ -112,10 +112,10 @@ source-bundle.zip
 
 Create the application version from this ZIP, then update the environment. Do not create the application version from `Dockerrun.aws.json` alone.
 
-Quick way to build the bundle (PowerShell):
+Quick way to build the bundle (PowerShell — `Compress-Archive` uses backslashes which break Linux `unzip`, so use Python instead):
 
 ```powershell
-Compress-Archive -Path Dockerrun.aws.json,.ebextensions,.platform -DestinationPath auditlift-source-bundle.zip -Force
+python -c "import zipfile, os; zf = zipfile.ZipFile('auditlift-source-bundle.zip', 'w', zipfile.ZIP_DEFLATED); zf.write('Dockerrun.aws.json', 'Dockerrun.aws.json'); [zf.write(p, p.replace('\\', '/')) for d in ['.ebextensions', '.platform'] for root, _, files in os.walk(d) for p in [os.path.join(root, f)]]; zf.close()"
 ```
 
 Or on macOS/Linux:
