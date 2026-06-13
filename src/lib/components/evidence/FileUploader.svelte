@@ -22,8 +22,25 @@
 	let uploading = $state(false);
 	let queue = $state<FileEntry[]>([]);
 
+	function setEntryProgress(entry: FileEntry, progress: number) {
+		entry.progress = progress;
+		queue = [...queue];
+	}
+
+	function markEntryDone(entry: FileEntry) {
+		entry.progress = 100;
+		entry.done = true;
+		queue = [...queue];
+	}
+
+	function markEntryError(entry: FileEntry, message: string) {
+		entry.error = message;
+		entry.progress = 0;
+		queue = [...queue];
+	}
+
 	async function uploadOne(entry: FileEntry): Promise<void> {
-		entry.progress = 10;
+		setEntryProgress(entry, 10);
 
 		try {
 			const presignRes = await fetch('/api/evidence/presign', {
@@ -43,7 +60,7 @@
 			}
 
 			const { evidenceId, uploadUrl } = await presignRes.json();
-			entry.progress = 30;
+			setEntryProgress(entry, 30);
 
 			const uploadRes = await fetch(uploadUrl, {
 				method: 'PUT',
@@ -52,7 +69,7 @@
 			});
 
 			if (!uploadRes.ok) throw new Error('Failed to upload file to storage');
-			entry.progress = 70;
+			setEntryProgress(entry, 70);
 
 			const confirmRes = await fetch(`/api/evidence/${evidenceId}/confirm`, { method: 'POST' });
 			if (!confirmRes.ok) {
@@ -60,13 +77,14 @@
 				throw new Error((err as { message?: string }).message || 'Failed to confirm upload');
 			}
 
-			entry.progress = 100;
-			entry.done = true;
+			markEntryDone(entry);
 
 			onUploadSuccess({ id: evidenceId, filename: entry.file.name, sizeBytes: entry.file.size });
 		} catch (err) {
-			entry.error = err instanceof Error ? err.message : 'Upload failed. Please try again.';
-			entry.progress = 0;
+			markEntryError(
+				entry,
+				err instanceof Error ? err.message : 'Upload failed. Please try again.'
+			);
 		}
 	}
 
