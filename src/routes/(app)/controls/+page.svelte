@@ -85,7 +85,7 @@
 				<p class="text-[13px] text-[var(--foreground-muted)]">
 					{m.controls_empty_no_frameworks_body()}
 				</p>
-				<a href="/settings" class="text-[13px] text-[var(--brand)] hover:underline">
+				<a href="/frameworks" class="text-[13px] text-[var(--brand)] hover:underline">
 					{m.controls_empty_no_frameworks_link()}
 				</a>
 			</div>

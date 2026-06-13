@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Buildings, CreditCard, Users, ChartLine, Notebook } from 'phosphor-svelte';
+	import { Buildings, CreditCard, Users, Notebook } from 'phosphor-svelte';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -53,17 +53,6 @@
 		>
 			<CreditCard size={16} />
 			Billing
-		</a>
-		<a
-			href="/settings/activity"
-			class="flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors {currentPath.includes(
-				'/settings/activity'
-			)
-				? 'border-[var(--brand)] text-[var(--brand)]'
-				: 'border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
-		>
-			<ChartLine size={16} />
-			Activity
 		</a>
 	</div>
 
