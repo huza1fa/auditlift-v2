@@ -9,27 +9,49 @@
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
 	let deleteError = $state('');
+	let confirmError = $state('');
+	let confirmInput = $state('');
+
+	const org = data.organization!;
+
+	function openDeleteConfirm() {
+		showDeleteConfirm = true;
+		deleteError = '';
+		confirmError = '';
+		confirmInput = '';
+	}
+
+	function closeDeleteConfirm() {
+		showDeleteConfirm = false;
+		deleteError = '';
+		confirmError = '';
+		confirmInput = '';
+	}
 
 	async function deleteOrganization() {
 		deleteError = '';
+		confirmError = '';
+
+		if (confirmInput.trim() !== org.name) {
+			confirmError = 'Organization name does not match.';
+			return;
+		}
+
 		deleting = true;
 		try {
 			const res = await fetch('/api/settings/organization', { method: 'DELETE' });
 			if (res.ok) {
 				window.location.href = '/login';
-			} else {
-				const json = await res.json();
-				deleteError = json.message || 'Failed to delete organization';
+				return;
 			}
+			const json = await res.json().catch(() => ({}));
+			deleteError = json.message || `Failed to delete organization (${res.status})`;
 		} catch {
 			deleteError = 'An unexpected error occurred. Please try again.';
 		} finally {
 			deleting = false;
-			showDeleteConfirm = false;
 		}
 	}
-
-	const org = data.organization!;
 </script>
 
 <div class="space-y-4">
@@ -90,24 +112,27 @@
 			policies, and settings will be permanently deleted.
 		</p>
 
-		{#if !showDeleteConfirm}
-			<Button variant="danger" onclick={() => (showDeleteConfirm = true)}>
+		{#if data.userRole !== 'owner'}
+			<p class="text-sm text-[var(--foreground-muted)]">
+				Only the organization owner can delete the organization. Contact your owner if you believe
+				this organization should be removed.
+			</p>
+		{:else if !showDeleteConfirm}
+			<Button variant="danger" onclick={openDeleteConfirm}>
 				<Trash size={16} />
 				Delete Organization
 			</Button>
 		{:else}
 			<div class="rounded-[var(--radius)] bg-[var(--danger-light)] p-4">
-				{#if data.userRole === 'owner'}
-					<div
-						class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] p-3"
-					>
-						<Warning size={16} class="mt-0.5 shrink-0 text-[var(--danger)]" />
-						<p class="text-sm text-[var(--danger)]">
-							<strong>Your account will also be deleted.</strong> As the organization owner, removing
-							this organization permanently deletes your AuditLift account. You will be signed out.
-						</p>
-					</div>
-				{/if}
+				<div
+					class="mb-3 flex items-start gap-2 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] p-3"
+				>
+					<Warning size={16} class="mt-0.5 shrink-0 text-[var(--danger)]" />
+					<p class="text-sm text-[var(--danger)]">
+						<strong>Your account will also be deleted.</strong> As the organization owner, removing
+						this organization permanently deletes your AuditLift account. You will be signed out.
+					</p>
+				</div>
 				<p class="mb-3 text-sm font-medium text-[var(--danger)]">
 					Are you sure? This action cannot be undone.
 				</p>
@@ -117,24 +142,18 @@
 				<input
 					type="text"
 					placeholder="Type organization name"
+					bind:value={confirmInput}
 					class="mb-3 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)]"
-					id="confirmDelete"
 				/>
+				{#if confirmError}
+					<p class="mb-2 text-sm text-[var(--danger)]">{confirmError}</p>
+				{/if}
 				{#if deleteError}
-					<p class="text-sm text-[var(--danger)]">{deleteError}</p>
+					<p class="mb-2 text-sm text-[var(--danger)]">{deleteError}</p>
 				{/if}
 				<div class="flex gap-2">
-					<Button variant="secondary" onclick={() => (showDeleteConfirm = false)}>Cancel</Button>
-					<Button
-						variant="danger"
-						onclick={() => {
-							const input = document.getElementById('confirmDelete') as HTMLInputElement;
-							if (input.value === org.name) {
-								deleteOrganization();
-							}
-						}}
-						disabled={deleting}
-					>
+					<Button variant="secondary" onclick={closeDeleteConfirm}>Cancel</Button>
+					<Button variant="danger" onclick={deleteOrganization} disabled={deleting}>
 						{deleting ? 'Deleting...' : 'Yes, Delete'}
 					</Button>
 				</div>

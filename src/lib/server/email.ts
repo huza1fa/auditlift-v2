@@ -444,3 +444,63 @@ ${callout('If your request is urgent, reply to this email and we&rsquo;ll priori
 		);
 	}
 }
+
+export async function sendLeadMagnetNotification(opts: {
+	name: string;
+	email: string;
+	company: string | null;
+	resource: string;
+	organizationId: string | null;
+	isLoggedIn: boolean;
+}): Promise<void> {
+	const advisoryEmail = env.ADVISORY_TEAM_EMAIL;
+	if (!advisoryEmail) {
+		console.warn(
+			`[email] ADVISORY_TEAM_EMAIL is not set — lead magnet download from ${opts.name} <${opts.email}> was not forwarded`
+		);
+		return;
+	}
+
+	if (!env.RESEND_API_KEY) {
+		console.log(
+			`[DEV] Lead magnet notification → ${opts.name} <${opts.email}> | resource: ${opts.resource}`
+		);
+		return;
+	}
+
+	const { Resend } = await import('resend');
+	const resend = new Resend(env.RESEND_API_KEY);
+
+	const resourceLabels: Record<string, string> = {
+		'soc2-checklist': 'SOC 2 Checklist for SaaS Startups',
+		'security-review-template': '10-Question Enterprise Security Review Template'
+	};
+
+	const body = `
+${heading('New lead magnet download')}
+${paragraph('Someone downloaded a free resource from the AuditLift homepage.')}
+<div style="background:${BRAND.greenLight};border-radius:8px;padding:18px;margin:0 0 24px;">
+  <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Name:</strong> ${escapeHtml(opts.name)}</p>
+  <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Email:</strong> <a href="mailto:${escapeHtml(opts.email)}" style="color:${BRAND.green};text-decoration:underline;">${escapeHtml(opts.email)}</a></p>
+  ${opts.company ? `<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Company:</strong> ${escapeHtml(opts.company)}</p>` : ''}
+  <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Resource:</strong> ${escapeHtml(resourceLabels[opts.resource] ?? opts.resource)}</p>
+  <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Logged in:</strong> ${opts.isLoggedIn ? 'Yes' : 'No'}</p>
+  ${opts.organizationId ? `<p style="margin:0;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Organization ID:</strong> ${escapeHtml(opts.organizationId)}</p>` : ''}
+</div>
+${paragraph(`Reply directly to this email to reach ${escapeHtml(opts.name)} at ${escapeHtml(opts.email)}.`)}`;
+
+	const result = await resend.emails.send({
+		from: 'AuditLift <hello@auditlift.app>',
+		to: advisoryEmail,
+		subject: `New lead magnet download — ${resourceLabels[opts.resource] ?? opts.resource}`,
+		replyTo: opts.email,
+		html: emailWrapper('New lead magnet download', body)
+	});
+
+	if (result.error) {
+		console.error('[email] Lead magnet notification failed:', result.error);
+		throw new Error(
+			`Failed to send lead magnet notification: ${result.error.name} — ${result.error.message}`
+		);
+	}
+}

@@ -7,12 +7,15 @@
 		FolderOpen,
 		DownloadSimple,
 		Users,
-		ChartBar
+		ChartBar,
+		Quotes,
+		Download
 	} from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
+	import LeadMagnetModal from '$lib/components/consulting/LeadMagnetModal.svelte';
 	import * as m from '$lib/paraglide/messages';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
@@ -80,7 +83,7 @@
 			icon: FileText,
 			title: 'Policy Generator',
 			description:
-				'Generate the policies buyers actually ask for — tailored to your stack in minutes, editable in-browser.',
+				'Generate the policies buyers actually ask for - tailored to your stack in minutes, editable in-browser.',
 			iconBg: 'feature-icon-success'
 		},
 		{
@@ -101,14 +104,14 @@
 			icon: Users,
 			title: 'Team Collaboration',
 			description:
-				'Assign controls to the right owners — engineering, HR, legal. Everyone works from the same source of truth.',
+				'Assign controls to the right owners - engineering, HR, legal. Everyone works from the same source of truth.',
 			iconBg: 'feature-icon-brand'
 		},
 		{
 			icon: DownloadSimple,
 			title: 'Security Package Export',
 			description:
-				'One-click export of a clean, organized package — for auditors, prospects, or enterprise security reviews.',
+				'One-click export of a clean, organized package - for auditors, prospects, or enterprise security reviews.',
 			iconBg: 'feature-icon-success'
 		}
 	];
@@ -118,7 +121,7 @@
 			number: '01',
 			title: 'Map your security posture',
 			description:
-				'Select the frameworks your prospects care about. Every requirement is pre-loaded — no setup from scratch.'
+				'Select the frameworks your prospects care about. Every requirement is pre-loaded - no setup from scratch.'
 		},
 		{
 			number: '02',
@@ -135,6 +138,13 @@
 	];
 
 	let consultingOpen = $state(false);
+	let leadMagnetOpen = $state(false);
+	let leadMagnetResource = $state<'soc2-checklist' | 'security-review-template' | null>(null);
+
+	function openLeadMagnet(resource: 'soc2-checklist' | 'security-review-template') {
+		leadMagnetResource = resource;
+		leadMagnetOpen = true;
+	}
 
 	function scrollTo(id: string) {
 		document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -142,7 +152,7 @@
 </script>
 
 <svelte:head>
-	<title>AuditLift — Win Deals Faster with Security Readiness</title>
+	<title>AuditLift - Win Deals Faster with Security Readiness</title>
 	<meta
 		name="description"
 		content="Stop losing deals to unanswered security questionnaires. AuditLift maps your policies to SOC 2, PCI-DSS, and ISO 27001, surfaces gaps, and gives you the confidence to respond. From $149/mo."
@@ -152,7 +162,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app" />
 	<meta property="og:site_name" content="AuditLift" />
-	<meta property="og:title" content="AuditLift — Win Deals Faster with Security Readiness" />
+	<meta property="og:title" content="AuditLift - Win Deals Faster with Security Readiness" />
 	<meta
 		property="og:description"
 		content="Stop losing deals to unanswered security questionnaires. Map your policies, surface gaps, and respond with confidence. No consultant needed."
@@ -161,7 +171,7 @@
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@auditlift" />
-	<meta name="twitter:title" content="AuditLift — Win Deals Faster with Security Readiness" />
+	<meta name="twitter:title" content="AuditLift - Win Deals Faster with Security Readiness" />
 	<meta
 		name="twitter:description"
 		content="Stop losing deals to unanswered security questionnaires. Map policies, surface gaps, respond with confidence. From $149/mo."
@@ -226,6 +236,7 @@
 		<div class="nav-links">
 			<button class="nav-link" onclick={() => scrollTo('#features')}>Features</button>
 			<button class="nav-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+			<a href="/blog" class="nav-link">Blog</a>
 		</div>
 		<div class="nav-actions">
 			<ThemeToggle />
@@ -256,7 +267,7 @@
 			<!-- Subheadline -->
 			<p class="hero-subheadline">
 				AuditLift maps your policies to the frameworks buyers care about, surfaces exactly where
-				you're ready and where you're not — so you can respond to security questionnaires with
+				you're ready and where you're not - so you can respond to security questionnaires with
 				confidence, not guesswork.
 			</p>
 
@@ -342,6 +353,19 @@
 		</div>
 	</section>
 
+	<!-- Trusted by -->
+	<section class="trusted-bar">
+		<div class="trusted-inner">
+			<p class="trusted-label">Trusted by teams at</p>
+			<div class="trusted-logos">
+				<span class="trusted-logo">Devrex</span>
+				<span class="trusted-logo">AWFCA</span>
+				<span class="trusted-logo">Getherap</span>
+				<span class="trusted-logo">Outcome</span>
+			</div>
+		</div>
+	</section>
+
 	<!-- Stats bar -->
 	<section class="stats-bar">
 		<div class="stats-inner">
@@ -358,6 +382,95 @@
 			<div class="stat-item">
 				<p class="stat-value">SOC 2 + PCI + ISO</p>
 				<p class="stat-label">All major frameworks</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Testimonials -->
+	<section class="testimonials-section">
+		<div class="section-inner">
+			<div class="section-header">
+				<p class="section-label">Beta feedback</p>
+				<h2 class="section-headline">What early users are saying</h2>
+			</div>
+			<div class="testimonials-grid">
+				<div class="testimonial-card">
+					<Quotes size={20} class="testimonial-quote-icon" />
+					<p class="testimonial-text">
+						"AuditLift turned what used to be a two-week fire drill into a single afternoon. We
+						answered a 60-question security review in under three hours and closed the deal."
+					</p>
+					<div class="testimonial-author">
+						<p class="testimonial-name">Morgan</p>
+						<p class="testimonial-role">Northeastern University</p>
+					</div>
+				</div>
+				<div class="testimonial-card">
+					<Quotes size={20} class="testimonial-quote-icon" />
+					<p class="testimonial-text">
+						"The policy generator alone saved us thousands in consultant fees. We had draft SOC 2
+						policies tailored to our stack within an hour."
+					</p>
+					<div class="testimonial-author">
+						<p class="testimonial-name">Ahmad</p>
+						<p class="testimonial-role">Data analytics firm</p>
+					</div>
+				</div>
+				<div class="testimonial-card">
+					<Quotes size={20} class="testimonial-quote-icon" />
+					<p class="testimonial-text">
+						"We are selling into health tech - the compliance bar is brutal. AuditLift helped us
+						understand exactly what we needed before the buyer even asked."
+					</p>
+					<div class="testimonial-author">
+						<p class="testimonial-name">Stephen</p>
+						<p class="testimonial-role">Health tech startup</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Lead Magnet -->
+	<section class="lead-magnet-section">
+		<div class="section-inner">
+			<div class="section-header">
+				<p class="section-label">Free resources</p>
+				<h2 class="section-headline">Downloadable guides to get you started</h2>
+			</div>
+			<div class="lead-magnet-grid">
+				<div class="lead-magnet-card">
+					<div class="lead-magnet-icon-box">
+						<FileText size={24} />
+					</div>
+					<h3 class="lead-magnet-title">SOC 2 Checklist for SaaS Startups</h3>
+					<p class="lead-magnet-description">
+						A practical 47-point checklist covering the policies, evidence, and controls you need
+						before your first SOC 2 audit.
+					</p>
+					<button type="button" class="lead-magnet-btn" onclick={() => openLeadMagnet('soc2-checklist')}>
+						<Download size={16} />
+						Download free
+					</button>
+				</div>
+				<div class="lead-magnet-card">
+					<div class="lead-magnet-icon-box">
+						<CheckSquare size={24} />
+					</div>
+					<h3 class="lead-magnet-title">10-Question Enterprise Security Review</h3>
+					<p class="lead-magnet-description">
+						The exact 10 questions every enterprise buyer asks first. Pre-answer them before the
+						full questionnaire lands.
+					</p>
+					<button
+						type="button"
+						class="lead-magnet-btn"
+						onclick={() => openLeadMagnet('security-review-template')}
+					>
+						<Download size={16} />
+						Download free
+					</button>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -495,14 +608,15 @@
 				<ArrowRight size={16} weight="bold" />
 			</a>
 			<p class="final-cta-advisory">
-				Or <button class="advisory-link" onclick={() => (consultingOpen = true)}
-					>talk to our advisory team</button
-				> for hands-on guidance.
+				Or grab our <button type="button" class="advisory-link" onclick={() => openLeadMagnet('soc2-checklist')}
+					>free SOC 2 checklist</button
+				> to get started today.
 			</p>
 		</div>
 	</section>
 
 	<ConsultingModal bind:open={consultingOpen} />
+	<LeadMagnetModal bind:open={leadMagnetOpen} bind:resource={leadMagnetResource} />
 
 	<!-- Footer -->
 	<footer class="site-footer">
@@ -516,6 +630,7 @@
 				<a href="/" class="footer-link">Home</a>
 				<button class="footer-link" onclick={() => scrollTo('#features')}>Features</button>
 				<button class="footer-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+				<a href="/blog" class="footer-link">Blog</a>
 				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/terms" class="footer-link">Terms</a>
 				<a href="/login" class="footer-link">Sign in</a>
@@ -1394,6 +1509,169 @@
 
 	.advisory-link:hover {
 		opacity: 0.8;
+	}
+
+	/* =====================
+	   TRUSTED BY
+	   ===================== */
+	.trusted-bar {
+		border-bottom: 1px solid var(--border);
+		background: var(--background-subtle);
+		padding: 1.5rem;
+	}
+	.trusted-inner {
+		max-width: 48rem;
+		margin: 0 auto;
+		text-align: center;
+	}
+	.trusted-label {
+		font-size: 0.6875rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--foreground-subtle);
+		margin: 0 0 0.75rem;
+	}
+	.trusted-logos {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 2.5rem;
+		flex-wrap: wrap;
+	}
+	.trusted-logo {
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		color: var(--foreground-muted);
+		opacity: 0.7;
+		transition: opacity 0.2s;
+	}
+	.trusted-logo:hover {
+		opacity: 1;
+	}
+
+	/* =====================
+	   TESTIMONIALS
+	   ===================== */
+	.testimonials-section {
+		padding: 5rem 1.5rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--background);
+	}
+	.testimonials-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+		gap: 1.5rem;
+	}
+	.testimonial-card {
+		padding: 1.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl, 1rem);
+		background: var(--background-elevated);
+		transition: border-color 0.2s, box-shadow 0.2s;
+	}
+	.testimonial-card:hover {
+		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
+		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 8%, transparent);
+	}
+	.testimonial-quote-icon {
+		color: var(--brand);
+		margin-bottom: 0.75rem;
+		opacity: 0.6;
+	}
+	.testimonial-text {
+		font-size: 0.9375rem;
+		line-height: 1.65;
+		color: var(--foreground);
+		margin: 0 0 1.25rem;
+	}
+	.testimonial-author {
+		border-top: 1px solid var(--border);
+		padding-top: 1rem;
+	}
+	.testimonial-name {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--foreground);
+		margin: 0;
+	}
+	.testimonial-role {
+		font-size: 0.8125rem;
+		color: var(--foreground-muted);
+		margin: 0.125rem 0 0;
+	}
+
+	/* =====================
+	   LEAD MAGNET
+	   ===================== */
+	.lead-magnet-section {
+		padding: 5rem 1.5rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--background-subtle);
+	}
+	.lead-magnet-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+		max-width: 52rem;
+		margin: 0 auto;
+	}
+	@media (max-width: 640px) {
+		.lead-magnet-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+	.lead-magnet-card {
+		padding: 1.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl, 1rem);
+		background: var(--background-elevated);
+		transition: border-color 0.2s, box-shadow 0.2s;
+	}
+	.lead-magnet-card:hover {
+		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
+		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 8%, transparent);
+	}
+	.lead-magnet-icon-box {
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: var(--radius-lg, 0.75rem);
+		background: color-mix(in srgb, var(--brand) 15%, transparent);
+		color: var(--brand);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 1rem;
+	}
+	.lead-magnet-title {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--foreground);
+		margin: 0 0 0.5rem;
+	}
+	.lead-magnet-description {
+		font-size: 0.875rem;
+		line-height: 1.6;
+		color: var(--foreground-muted);
+		margin: 0 0 1.25rem;
+	}
+	.lead-magnet-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.5rem 1rem;
+		background: var(--brand);
+		color: #fff;
+		border: none;
+		border-radius: var(--radius);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	.lead-magnet-btn:hover {
+		background: var(--brand-hover, color-mix(in srgb, var(--brand) 85%, #000));
 	}
 
 	/* =====================

@@ -90,6 +90,22 @@ export function generateStorageKey(orgId: string, controlId: string, mimeType: s
 	return `${orgId}/${controlId}/${uuid}.${ext}`;
 }
 
+export async function uploadBuffer(
+	storageKey: string,
+	buffer: Buffer,
+	mimeType: string
+): Promise<void> {
+	const { client, bucket } = getS3();
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: storageKey,
+			Body: buffer,
+			ContentType: mimeType
+		})
+	);
+}
+
 export async function getPresignedUploadUrl(
 	storageKey: string,
 	mimeType: string,
