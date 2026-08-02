@@ -1,0 +1,69 @@
+name: Deploy Lightsail
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Existing ECR image tag to deploy (leave empty to build this commit)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift
+  IMAGE_TAG: ${{ inputs.image_tag || format('sha-{0}', github.sha) }}
+  LIGHTSAIL_USER: ubuntu
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::676799697185:role/auditlift-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and publish image
+        if: ${{ !inputs.image_tag }}
+        run: |
+          docker build --platform linux/amd64 -t "$ECR_REPOSITORY:$IMAGE_TAG" -t "$ECR_REPOSITORY:main" .
+          docker push "$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REPOSITORY:main"
+
+      - name: Pull rollback image
+        if: ${{ inputs.image_tag }}
+        run: docker pull "$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Configure Lightsail SSH access
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s' "$LIGHTSAIL_SSH_PRIVATE_KEY" > ~/.ssh/lightsail
+          chmod 600 ~/.ssh/lightsail
+          ssh-keyscan -H "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
+
+      - name: Transfer and deploy image
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+        run: |
+          docker save "$ECR_REPOSITORY:$IMAGE_TAG" | gzip | ssh -i ~/.ssh/lightsail "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" 'gzip -d | sudo docker load'
+          scp -i ~/.ssh/lightsail deploy/lightsail/docker-compose.yml "$LIGHTSAIL_USER@$LIGHTSAIL_HOST:/tmp/auditlift-compose.yml"
+          ssh -i ~/.ssh/lightsail "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "sudo install -m 644 /tmp/auditlift-compose.yml /opt/auditlift/deploy/lightsail/docker-compose.yml && sudo env APP_IMAGE='$ECR_REPOSITORY:$IMAGE_TAG' docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait app && curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null"
