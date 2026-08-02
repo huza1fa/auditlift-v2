@@ -9,7 +9,8 @@ const client = postgres(env.DATABASE_URL, {
 	max: 10,
 	idle_timeout: 20,
 	connect_timeout: 10,
-	ssl: { rejectUnauthorized: false }
+	// Docker Compose keeps Postgres on a private network; managed databases still use TLS by default.
+	ssl: env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
 export const db = drizzle(client, { schema });
