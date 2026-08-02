@@ -5,10 +5,10 @@ import { dev } from '$app/environment';
 import { markPostHogInitialized } from '$lib/posthog';
 
 export async function init() {
-	if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) {
+	if (!env.PUBLIC_POSTHOG_KEY) {
 		if (dev) {
 			throw new Error(
-				'PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured'
+				'PUBLIC_POSTHOG_KEY variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_KEY is configured'
 			);
 		}
 		return;
@@ -22,17 +22,26 @@ export async function init() {
 		return;
 	}
 
-	posthog.init(env.PUBLIC_POSTHOG_PROJECT_TOKEN, {
+	posthog.init(env.PUBLIC_POSTHOG_KEY, {
 		api_host: env.PUBLIC_POSTHOG_HOST,
 		ui_host: env.PUBLIC_POSTHOG_HOST,
+		person_profiles: 'always',
+		autocapture: false,
+		mask_all_text: true,
+		capture_pageview: false,
+		capture_pageleave: true,
 		capture_exceptions: true,
-		tracing_headers: [window.location.hostname]
+		tracing_headers: [window.location.hostname],
+		session_recording: {
+			maskAllInputs: true,
+			maskTextSelector: '*'
+		}
 	});
 	markPostHogInitialized();
 }
 
 export const handleError: HandleClientError = async ({ error, status, message }) => {
-	if (env.PUBLIC_POSTHOG_PROJECT_TOKEN && env.PUBLIC_POSTHOG_HOST) {
+	if (env.PUBLIC_POSTHOG_KEY && env.PUBLIC_POSTHOG_HOST) {
 		posthog.captureException(error);
 	}
 
