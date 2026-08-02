@@ -140,9 +140,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const buffer = Buffer.concat(chunks);
 
-	captureServerEvent({
+	await captureServerEvent({
 		event: 'export_created',
-		distinctId: locals.session.user.id,
 		properties: {
 			org_id: orgId,
 			policy_count: allPolicies.length,

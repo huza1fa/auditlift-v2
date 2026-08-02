@@ -436,7 +436,6 @@
 			}
 			const result = await res.json();
 			shareToken = result.shareToken;
-			captureEvent('questionnaire_share_toggled', { questionnaire_id: id, enabled: !!shareToken });
 			toastSuccess(shareToken ? 'Sharing enabled' : 'Sharing disabled');
 		} catch {
 			toastError('Failed to toggle sharing.');

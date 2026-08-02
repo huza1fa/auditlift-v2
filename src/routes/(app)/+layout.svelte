@@ -16,12 +16,13 @@
 	import Toast from '$lib/components/ui/Toast.svelte';
 	import GuidedTour from '$lib/components/ui/GuidedTour.svelte';
 	import { createAuthClient } from 'better-auth/svelte';
-	import { identifyUser } from '$lib/posthog';
+	import { identifyUser, resetPostHog } from '$lib/posthog';
 
 	const authClient = createAuthClient();
 
 	async function signOut() {
 		await authClient.signOut();
+		resetPostHog();
 		window.location.href = '/login';
 	}
 

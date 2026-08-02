@@ -52,14 +52,9 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		message: message?.trim() || null
 	});
 
-	const userId = locals.session?.user?.id ?? normalizedEmail;
-	captureServerEvent({
+	await captureServerEvent({
 		event: 'consulting_requested',
-		distinctId: userId,
 		properties: {
-			name: name.trim(),
-			email: normalizedEmail,
-			company: company?.trim() || null,
 			topic,
 			org_id: organizationId,
 			is_logged_in: !!locals.session

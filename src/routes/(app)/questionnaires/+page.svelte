@@ -204,7 +204,7 @@
 
 		uploading = true;
 		uploadingFilename = file.name;
-		captureEvent('questionnaire_upload_clicked', { file_name: file.name, file_size: file.size });
+		captureEvent('questionnaire_upload_clicked', { file_size_bytes: file.size });
 		try {
 			const formData = new FormData();
 			formData.append('file', file);

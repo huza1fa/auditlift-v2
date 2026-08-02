@@ -105,12 +105,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 	const ownerId = await getOrgOwnerId(organizationId);
 	if (ownerId) {
 		const amount = stripeSub.items.data[0]?.plan?.amount ?? 0;
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'subscription_created',
 			distinctId: ownerId,
 			properties: {
 				org_id: organizationId,
-				stripe_subscription_id: stripeSub.id,
 				amount: amount / 100,
 				currency: stripeSub.currency?.toUpperCase() ?? 'USD',
 				interval: stripeSub.items.data[0]?.plan?.interval ?? 'month',
@@ -158,12 +157,11 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 	// Analytics
 	const ownerId = await getOrgOwnerId(organizationId);
 	if (ownerId && previousStatus !== status) {
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'subscription_updated',
 			distinctId: ownerId,
 			properties: {
 				org_id: organizationId,
-				stripe_subscription_id: subscription.id,
 				previous_status: previousStatus,
 				new_status: status,
 				cancel_at_period_end: subscription.cancel_at_period_end
@@ -199,12 +197,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 	// Analytics
 	const ownerId = await getOrgOwnerId(existingSub.organizationId);
 	if (ownerId) {
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'subscription_canceled',
 			distinctId: ownerId,
 			properties: {
 				org_id: existingSub.organizationId,
-				stripe_subscription_id: subscription.id,
 				previous_status: existingSub.status
 			},
 			groups: { organization: existingSub.organizationId }
@@ -240,12 +237,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 	// Analytics
 	const ownerId = await getOrgOwnerId(sub.organizationId);
 	if (ownerId) {
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'payment_failed',
 			distinctId: ownerId,
 			properties: {
 				org_id: sub.organizationId,
-				stripe_customer_id: customerId,
 				amount: (invoice.amount_due ?? 0) / 100,
 				currency: invoice.currency?.toUpperCase() ?? 'USD',
 				attempt_count: invoice.attempt_count ?? 1
@@ -285,12 +281,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 		// Analytics
 		const ownerId = await getOrgOwnerId(sub.organizationId);
 		if (ownerId) {
-			captureServerEvent({
+			await captureServerEvent({
 				event: 'payment_recovered',
 				distinctId: ownerId,
 				properties: {
 					org_id: sub.organizationId,
-					stripe_customer_id: customerId,
 					amount: (invoice.amount_paid ?? 0) / 100,
 					currency: invoice.currency?.toUpperCase() ?? 'USD',
 					previous_status: sub.status

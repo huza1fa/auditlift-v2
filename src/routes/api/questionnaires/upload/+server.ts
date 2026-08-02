@@ -211,9 +211,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	processQuestionnaire(questionnaire.id, orgId).catch(console.error);
 
 	// 11. Analytics
-	captureServerEvent({
+	await captureServerEvent({
 		event: 'questionnaire_uploaded',
-		distinctId: locals.session.user.id,
 		properties: {
 			org_id: orgId,
 			format,
