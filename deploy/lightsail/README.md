@@ -32,7 +32,7 @@ Add these repository secrets:
 - `LIGHTSAIL_HOST`: the VM static public IP or hostname.
 - `LIGHTSAIL_SSH_PRIVATE_KEY`: the private key authorized for the `ubuntu` user on the VM.
 
-The workflow assumes `arn:aws:iam::676799697185:role/auditlift-github-actions`. Its GitHub OIDC trust and least-privilege ECR policy are in `iam/`; apply those files to the role before the first deployment.
+The workflow assumes `arn:aws:iam::676799697185:role/auditlift-github-actions`. Its GitHub OIDC trust and least-privilege ECR policy are in `iam/`; apply those files to the role before the first deployment. In GitHub, configure the `production` environment to allow deployments from the `main` branch only. The OIDC role trusts this protected environment.
 
 Each push to `main` creates immutable `sha-<commit>` and moving `main` image tags. Deployment is serialized so two commits cannot deploy concurrently.
 
