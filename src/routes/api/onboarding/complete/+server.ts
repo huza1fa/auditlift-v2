@@ -47,7 +47,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}).catch(console.error);
 
 		// Analytics: first-time onboarding completion
-		identifyUserServer({
+		await identifyUserServer({
 			distinctId: locals.session.user.id,
 			properties: {
 				email: locals.session.user.email,
@@ -60,9 +60,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}
 		});
 
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'user_signed_up',
-			distinctId: locals.session.user.id,
 			properties: {
 				intent,
 				org_id: org.id,
@@ -74,9 +73,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			groups: { organization: org.id }
 		});
 
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'onboarding_completed',
-			distinctId: locals.session.user.id,
 			properties: {
 				intent,
 				steps_completed: intent === 'questionnaire' ? 6 : 7,

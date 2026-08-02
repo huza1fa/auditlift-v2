@@ -273,13 +273,10 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		message: `Lead magnet download requested: ${resource}`
 	});
 
-	const userId = locals.session?.user?.id ?? normalizedEmail;
-	captureServerEvent({
+	await captureServerEvent({
 		event: 'lead_magnet_downloaded',
-		distinctId: userId,
 		properties: {
 			resource,
-			email: normalizedEmail,
 			org_id: organizationId,
 			is_logged_in: !!locals.session
 		},

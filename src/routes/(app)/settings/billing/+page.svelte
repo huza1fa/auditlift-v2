@@ -46,7 +46,6 @@
 	async function startCheckout(interval: 'monthly' | 'yearly') {
 		loading = interval;
 		errorMsg = '';
-		captureEvent('checkout_started', { plan: selectedPlan, interval });
 		try {
 			const res = await fetch('/api/billing/checkout', {
 				method: 'POST',

@@ -3,7 +3,7 @@
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import { onMount } from 'svelte';
 	import { theme } from '$lib/stores/theme.svelte';
-	import { initPostHog, posthog } from '$lib/posthog';
+	import { captureEvent } from '$lib/posthog';
 	import './layout.css';
 	import favicon from '/favicon.ico';
 
@@ -11,11 +11,10 @@
 
 	onMount(() => {
 		theme.init();
-		initPostHog();
 	});
 
 	$effect(() => {
-		posthog.capture('$pageview', { $current_url: page.url.href });
+		captureEvent('$pageview', { $current_url: page.url.href });
 	});
 </script>
 

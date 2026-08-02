@@ -1,6 +1,7 @@
 import { auth } from '$lib/server/auth';
 import { sequence } from '@sveltejs/kit/hooks';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
+import { getPostHogClient } from '$lib/server/posthog';
 import { db } from '$lib/server/db';
 import { userOrganizations, organizations, subscriptions } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -62,7 +63,20 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const response = await resolve(event);
+	const posthog = getPostHogClient();
+	const response =
+		session?.user && posthog
+			? await posthog.withContext(
+					{
+						distinctId: session.user.id,
+						properties: {
+							email: session.user.email,
+							name: session.user.name ?? undefined
+						}
+					},
+					() => resolve(event)
+				)
+			: await resolve(event);
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -78,6 +92,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 			[
 				"default-src 'self'",
 				"script-src 'self' 'unsafe-inline' https://us-assets.i.posthog.com https://static.cloudflareinsights.com",
+				"worker-src 'self' blob: data:",
 				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 				"font-src 'self' https://fonts.gstatic.com",
 				"img-src 'self' data: https:",
@@ -102,3 +117,15 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 	);
 
 export const handle = sequence(paraglideHandle, authHandle);
+
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+	const posthog = getPostHogClient();
+
+	if (posthog) {
+		const distinctId = event.locals.session?.user?.id ?? 'server';
+		posthog.captureException(error, distinctId);
+		await posthog.flush();
+	}
+
+	return { message, status };
+};

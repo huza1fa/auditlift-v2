@@ -530,9 +530,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		entityName: policy.title
 	}).catch(console.error);
 
-	captureServerEvent({
+	await captureServerEvent({
 		event: 'policy_generated',
-		distinctId: locals.session.user.id,
 		properties: {
 			org_id: orgId,
 			policy_type: policyType,

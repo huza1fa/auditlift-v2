@@ -64,9 +64,8 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			controlCode: ctrl?.code ?? null
 		}).catch(console.error);
 
-		captureServerEvent({
+		await captureServerEvent({
 			event: 'evidence_uploaded',
-			distinctId: locals.session.user.id,
 			properties: {
 				org_id: orgId,
 				control_id: existingEvidence.controlId,

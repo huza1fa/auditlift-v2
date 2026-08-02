@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { questionnaires } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
+import { captureServerEvent } from '$lib/server/posthog';
 
 type ShareResponse = {
 	shareToken: string | null;
@@ -64,6 +65,16 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 		.update(questionnaires)
 		.set({ shareToken, sharedAt })
 		.where(and(eq(questionnaires.id, id), eq(questionnaires.organizationId, orgId)));
+
+	await captureServerEvent({
+		event: 'questionnaire_share_toggled',
+		properties: {
+			questionnaire_id: id,
+			enabled: shareToken !== null,
+			org_id: orgId
+		},
+		groups: { organization: orgId }
+	});
 
 	const response: ShareResponse = { shareToken, sharedAt };
 	return json(response);

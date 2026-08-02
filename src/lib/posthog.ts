@@ -1,27 +1,10 @@
 import posthog from 'posthog-js';
 import { browser } from '$app/environment';
-import { PUBLIC_POSTHOG_KEY, PUBLIC_POSTHOG_HOST } from '$env/static/public';
 
-export function initPostHog() {
-	if (!browser) return;
-	if (!PUBLIC_POSTHOG_KEY || PUBLIC_POSTHOG_KEY === 'dummy-key') return;
+let initialized = false;
 
-	posthog.init(PUBLIC_POSTHOG_KEY, {
-		api_host: PUBLIC_POSTHOG_HOST,
-		person_profiles: 'always',
-		capture_pageview: false,
-		capture_pageleave: true,
-		session_recording: {
-			maskAllInputs: false,
-			maskInputOptions: { password: true }
-		},
-		on_request_error: () => {},
-		loaded: (posthog) => {
-			if (location.hostname === 'localhost') {
-				posthog.opt_out_capturing();
-			}
-		}
-	});
+export function markPostHogInitialized() {
+	initialized = true;
 }
 
 export function identifyUser(
@@ -31,7 +14,7 @@ export function identifyUser(
 	org: { id: string; name: string } | null | undefined,
 	extra: Record<string, unknown> = {}
 ) {
-	if (!browser) return;
+	if (!browser || !initialized) return;
 	posthog.identify(userId, {
 		email,
 		name: name ?? '',
@@ -43,8 +26,11 @@ export function identifyUser(
 }
 
 export function captureEvent(event: string, properties: Record<string, unknown> = {}) {
-	if (!browser) return;
+	if (!browser || !initialized) return;
 	posthog.capture(event, properties);
 }
 
-export { posthog };
+export function resetPostHog() {
+	if (!browser || !initialized) return;
+	posthog.reset();
+}

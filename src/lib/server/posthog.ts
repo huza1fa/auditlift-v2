@@ -1,67 +1,69 @@
 import { PostHog } from 'posthog-node';
-import { env } from '$env/dynamic/private';
+import { env } from '$env/dynamic/public';
+import { dev } from '$app/environment';
 
-let posthogInstance: PostHog | null = null;
+let posthogClient: PostHog | null = null;
 
-function getPostHog(): PostHog | null {
-	if (posthogInstance) return posthogInstance;
-	const apiKey = env.PUBLIC_POSTHOG_KEY;
-	const host = env.PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
-	if (!apiKey) {
-		console.warn('[PostHog] PUBLIC_POSTHOG_KEY not set — server-side analytics disabled');
+export function getPostHogClient() {
+	if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) {
+		if (dev) {
+			throw new Error(
+				'PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_PROJECT_TOKEN is configured'
+			);
+		}
 		return null;
 	}
-	posthogInstance = new PostHog(apiKey, { host, flushAt: 1, flushInterval: 0 });
-	return posthogInstance;
+	if (!env.PUBLIC_POSTHOG_HOST) {
+		if (dev) {
+			throw new Error(
+				'PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_HOST is configured'
+			);
+		}
+		return null;
+	}
+
+	if (!posthogClient) {
+		posthogClient = new PostHog(env.PUBLIC_POSTHOG_PROJECT_TOKEN, {
+			host: env.PUBLIC_POSTHOG_HOST,
+			flushAt: 1,
+			flushInterval: 0,
+			enableExceptionAutocapture: true
+		});
+	}
+
+	return posthogClient;
 }
 
-export function captureServerEvent({
-	event,
-	distinctId,
-	properties = {},
-	groups = {}
-}: {
+type ServerEvent = {
 	event: string;
-	distinctId: string;
+	distinctId?: string;
 	properties?: Record<string, unknown>;
 	groups?: Record<string, string>;
-}) {
-	const client = getPostHog();
-	if (!client) return;
-	try {
-		client.capture({
-			distinctId,
-			event,
-			properties,
-			groups
-		});
-	} catch (err) {
-		console.error('[PostHog] capture error:', err);
-	}
+};
+
+export async function captureServerEvent({ event, distinctId, properties, groups }: ServerEvent) {
+	const posthog = getPostHogClient();
+	if (!posthog) return;
+
+	posthog.capture({
+		event,
+		...(distinctId ? { distinctId } : {}),
+		...(properties ? { properties } : {}),
+		...(groups ? { groups } : {})
+	});
+	await posthog.flush();
 }
 
-export function identifyUserServer({
+export async function identifyUserServer({
 	distinctId,
-	properties = {}
+	properties
 }: {
 	distinctId: string;
-	properties?: Record<string, unknown>;
+	properties: Record<string, unknown>;
 }) {
-	const client = getPostHog();
-	if (!client) return;
-	try {
-		client.identify({
-			distinctId,
-			properties
-		});
-	} catch (err) {
-		console.error('[PostHog] identify error:', err);
-	}
-}
+	const posthog = getPostHogClient();
+	if (!posthog) return;
 
-export function shutdownPostHog() {
-	if (posthogInstance) {
-		posthogInstance.shutdown();
-		posthogInstance = null;
-	}
+	posthog.identify({ distinctId, properties });
+	await posthog.flush();
 }
