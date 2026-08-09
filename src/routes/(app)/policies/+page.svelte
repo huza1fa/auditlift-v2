@@ -51,7 +51,7 @@
 	let generationStepIndex = $state(0);
 	let progressWidth = $state('0%');
 	let errorMessage = $state('');
-	let policyList = $state<Policy[]>(data.policies);
+	let policyList = $state<Policy[]>([]);
 	let expandedId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let editContent = $state('');
@@ -61,6 +61,10 @@
 	let versionsOpenId = $state<string | null>(null);
 	let restoringVersionId = $state<string | null>(null);
 	let previewingId = $state<string | null>(null);
+
+	$effect(() => {
+		policyList = data.policies;
+	});
 
 	// ── Policy groups ────────────────────────────────────────────────────────
 	const policyGroups = [

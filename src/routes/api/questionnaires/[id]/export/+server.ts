@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions, policies } from '$lib/server/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 function escapeCsvField(value: string): string {
 	// Wrap in double quotes, escape internal double quotes by doubling them
@@ -16,10 +17,7 @@ function buildCsvRow(fields: string[]): string {
 }
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireOrganizationRole(locals);
 
 	// Export is a paid-only feature
 	if (!hasActivePaidAccess(locals.subscription)) {

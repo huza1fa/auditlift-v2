@@ -4,13 +4,14 @@ import { stripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { subscriptions } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireOrganizationRole(
+		locals,
+		'owner',
+		'Only the organization owner can manage billing'
+	);
 
 	// Only resolve subscriptions from the org's existing subscription record.
 	// Never search Stripe by email — that would let a user activate a different

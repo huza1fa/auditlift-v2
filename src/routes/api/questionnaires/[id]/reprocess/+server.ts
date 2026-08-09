@@ -3,21 +3,17 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { questionnaires } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { reprocessQuestionnaire } from '$lib/server/questionnaire-processor';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
-	// 1. Auth check — always first
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
-
-	// 2. Billing check — require active access (trial or paid)
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt)) {
-		throw error(402, 'Your trial has expired. Please upgrade to continue.');
-	}
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot reprocess questionnaires',
+		'Your trial has expired. Please upgrade to continue.'
+	);
 
 	// 3. Rate limit — 5 reprocesses per org per hour
 	if (!checkRateLimit(`reprocess:${orgId}`, 5, 60 * 60 * 1000)) {
@@ -45,8 +41,8 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		throw error(409, 'Questionnaire is already being processed. Please wait for it to complete.');
 	}
 
-	// 6. Fire-and-forget — SSE stream will surface completion to the client
-	reprocessQuestionnaire(questionnaireId, orgId).catch(console.error);
+	// 6. Persist the job before acknowledging the request.
+	await reprocessQuestionnaire(questionnaireId, orgId);
 
 	return json({ success: true });
 };

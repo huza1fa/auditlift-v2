@@ -3,12 +3,12 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { ImproveAnswerSchema } from '$lib/server/validation';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { env } from '$env/dynamic/private';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 function getOpenRouterClient() {
 	const apiKey = env.OPEN_ROUTER_API_KEY;
@@ -24,16 +24,12 @@ function getOpenRouterClient() {
 }
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
-	// Auth check first
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
-
-	// Billing check
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to improve answers with AI.');
-	}
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot improve questionnaire answers',
+		'Trial expired. Upgrade to improve answers with AI.'
+	);
 
 	if (!checkRateLimit(`improve:${orgId}`, 30, 60 * 60 * 1000)) {
 		throw error(429, 'Too many answer improvements. Please wait before trying again.');
@@ -118,7 +114,13 @@ Rewrite the answer applying the instruction. Preserve factual accuracy. Return o
 			userEditedAnswer: improvedAnswer,
 			updatedAt: new Date()
 		})
-		.where(eq(questionnaireQuestions.id, qid));
+		.where(
+			and(
+				eq(questionnaireQuestions.id, qid),
+				eq(questionnaireQuestions.questionnaireId, id),
+				eq(questionnaireQuestions.organizationId, orgId)
+			)
+		);
 
 	return json({ answer: improvedAnswer });
 };

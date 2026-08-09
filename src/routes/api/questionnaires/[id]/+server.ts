@@ -3,13 +3,15 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions, policies, controls } from '$lib/server/db/schema';
 import { eq, and, asc, inArray, isNull } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
+import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'admin',
+		'Only admins and owners can delete questionnaires',
+		'Trial expired. Upgrade to manage questionnaires.'
+	);
 	const { id } = params;
 
 	const [questionnaire] = await db
@@ -37,14 +39,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 };
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
-
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to access questionnaires.');
-	}
+	const { organizationId: orgId } = await requireOrganizationRole(locals);
 
 	const { id } = params;
 
@@ -86,7 +81,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		const policyRows = await db
 			.select({ id: policies.id, title: policies.title })
 			.from(policies)
-			.where(inArray(policies.id, allPolicyIds));
+			.where(and(eq(policies.organizationId, orgId), inArray(policies.id, allPolicyIds)));
 		for (const p of policyRows) {
 			policyMap[p.id] = p.title;
 		}

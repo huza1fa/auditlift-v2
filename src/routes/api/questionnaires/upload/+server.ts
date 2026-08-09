@@ -1,15 +1,21 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
-import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
+import {
+	questionnaires,
+	questionnaireQuestions,
+	questionnaireProcessingJobs,
+	organizations,
+	subscriptions
+} from '$lib/server/db/schema';
 import { eq, count } from 'drizzle-orm';
-import { hasActivePaidAccess } from '$lib/server/billing';
+import { hasActiveAccess, hasActivePaidAccess } from '$lib/server/billing';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { parseQuestionnaire } from '$lib/server/questionnaire-parser';
-import { processQuestionnaire } from '$lib/server/questionnaire-processor';
 import { captureServerEvent } from '$lib/server/posthog';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 const MAX_QUESTIONNAIRE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -85,30 +91,19 @@ function getS3Client(): { client: S3Client; bucket: string } {
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	// 1. Auth check
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot upload questionnaires',
+		'Your trial has expired. Please upgrade to continue.'
+	);
 
 	// 2. Rate limit — 20 uploads per org per hour
 	if (!checkRateLimit(`q-upload:${orgId}`, 20, 60 * 60 * 1000)) {
 		throw error(429, 'Too many uploads. Please wait before uploading more questionnaires.');
 	}
 
-	// 3. Trial questionnaire limit — paid users get unlimited, trial users get 1
-	if (!hasActivePaidAccess(locals.subscription)) {
-		const [{ value: existingCount }] = await db
-			.select({ value: count() })
-			.from(questionnaires)
-			.where(eq(questionnaires.organizationId, orgId));
-
-		if (existingCount >= 1) {
-			throw error(402, 'Trial limit reached. Upgrade to upload more questionnaires.');
-		}
-	}
-
-	// 4. Parse multipart form data
+	// 3. Parse multipart form data
 	let formData: FormData;
 	try {
 		formData = await request.formData();
@@ -158,16 +153,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(400, 'No questions found in file');
 	}
 
-	// 7. Upload raw file to R2
+	// 7. Upload raw file to S3. The database transaction below compensates by deleting
+	// this object when the durable questionnaire setup cannot be committed.
 	const fileExt = file.name.split('.').pop()?.toLowerCase() ?? format;
 	const storageUuid = crypto.randomUUID();
 	const storageKey = `questionnaires/${orgId}/${storageUuid}.${fileExt}`;
+	let storage: ReturnType<typeof getS3Client>;
 
 	try {
-		const { client, bucket } = getS3Client();
-		await client.send(
+		storage = getS3Client();
+		await storage.client.send(
 			new PutObjectCommand({
-				Bucket: bucket,
+				Bucket: storage.bucket,
 				Key: storageKey,
 				Body: buffer,
 				ContentType: file.type || 'application/octet-stream',
@@ -179,49 +176,102 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(500, 'Failed to store file. Please try again.');
 	}
 
-	// 8. Insert questionnaire row
-	const [questionnaire] = await db
-		.insert(questionnaires)
-		.values({
-			organizationId: orgId,
-			filename: file.name,
-			storageKey,
-			sourceFormat: format,
-			status: 'processing',
-			totalQuestions: parsedQuestions.length,
-			answeredCount: 0,
-			gapCount: 0,
-			dealReadinessScore: 0
-		})
-		.returning();
+	let questionnaire: typeof questionnaires.$inferSelect;
+	try {
+		questionnaire = await db.transaction(async (tx) => {
+			// Lock the org row so concurrent trial uploads cannot both consume its quota.
+			const [organization] = await tx
+				.select({ id: organizations.id, trialEndsAt: organizations.trialEndsAt })
+				.from(organizations)
+				.where(eq(organizations.id, orgId))
+				.limit(1)
+				.for('update');
 
-	// 9. Bulk insert all parsed questions
-	await db.insert(questionnaireQuestions).values(
-		parsedQuestions.map((q) => ({
-			questionnaireId: questionnaire.id,
-			organizationId: orgId,
-			sectionName: q.sectionName,
-			questionNumber: q.questionNumber,
-			questionText: q.questionText,
-			order: q.order
-		}))
-	);
+			if (!organization) throw error(404, 'Organization not found');
 
-	// 10. Fire-and-forget: process questionnaire with AI
-	processQuestionnaire(questionnaire.id, orgId).catch(console.error);
+			const [subscription] = await tx
+				.select()
+				.from(subscriptions)
+				.where(eq(subscriptions.organizationId, orgId))
+				.limit(1);
+
+			if (!hasActiveAccess(subscription, organization.trialEndsAt)) {
+				throw error(402, 'Your trial has expired. Please upgrade to continue.');
+			}
+
+			if (!hasActivePaidAccess(subscription)) {
+				const [{ value: existingCount }] = await tx
+					.select({ value: count() })
+					.from(questionnaires)
+					.where(eq(questionnaires.organizationId, orgId));
+
+				if (Number(existingCount) >= 1) {
+					throw error(402, 'Trial limit reached. Upgrade to upload more questionnaires.');
+				}
+			}
+
+			const [createdQuestionnaire] = await tx
+				.insert(questionnaires)
+				.values({
+					organizationId: orgId,
+					filename: file.name,
+					storageKey,
+					sourceFormat: format,
+					status: 'processing',
+					totalQuestions: parsedQuestions.length,
+					answeredCount: 0,
+					gapCount: 0,
+					dealReadinessScore: 0
+				})
+				.returning();
+
+			await tx.insert(questionnaireQuestions).values(
+				parsedQuestions.map((q) => ({
+					questionnaireId: createdQuestionnaire.id,
+					organizationId: orgId,
+					sectionName: q.sectionName,
+					questionNumber: q.questionNumber,
+					questionText: q.questionText,
+					order: q.order
+				}))
+			);
+
+			await tx.insert(questionnaireProcessingJobs).values({
+				questionnaireId: createdQuestionnaire.id,
+				organizationId: orgId,
+				kind: 'initial',
+				status: 'queued'
+			});
+
+			return createdQuestionnaire;
+		});
+	} catch (setupError) {
+		try {
+			await storage.client.send(
+				new DeleteObjectCommand({ Bucket: storage.bucket, Key: storageKey })
+			);
+		} catch (cleanupError) {
+			console.error('[questionnaire-upload] S3 cleanup error:', cleanupError);
+		}
+		throw setupError;
+	}
 
 	// 11. Analytics
-	await captureServerEvent({
-		event: 'questionnaire_uploaded',
-		properties: {
-			org_id: orgId,
-			format,
-			question_count: parsedQuestions.length,
-			file_size_bytes: file.size,
-			is_trial: !hasActivePaidAccess(locals.subscription)
-		},
-		groups: { organization: orgId }
-	});
+	try {
+		await captureServerEvent({
+			event: 'questionnaire_uploaded',
+			properties: {
+				org_id: orgId,
+				format,
+				question_count: parsedQuestions.length,
+				file_size_bytes: file.size,
+				is_trial: !hasActivePaidAccess(locals.subscription)
+			},
+			groups: { organization: orgId }
+		});
+	} catch (analyticsError) {
+		console.error('[questionnaire-upload] Analytics error:', analyticsError);
+	}
 
 	// 12. Return the full questionnaire so the frontend can render it immediately
 	return json(

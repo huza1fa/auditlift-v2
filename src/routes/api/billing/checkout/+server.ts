@@ -3,11 +3,14 @@ import type { RequestHandler } from './$types';
 import { createCheckoutSession, type PlanInterval, type PlanTier } from '$lib/server/stripe';
 import { env } from '$env/dynamic/private';
 import { captureServerEvent } from '$lib/server/posthog';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	const { organizationId, userEmail } = await requireOrganizationRole(
+		locals,
+		'owner',
+		'Only the organization owner can manage billing'
+	);
 
 	const { plan, interval } = await request.json();
 
@@ -23,10 +26,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const cleanOrigin = origin.replace(/\/$/, '');
 
 	const checkoutUrl = await createCheckoutSession(
-		locals.session.user.email,
+		userEmail,
 		plan as PlanTier,
 		interval as PlanInterval,
-		locals.organizationId,
+		organizationId,
 		`${cleanOrigin}/dashboard?subscribed=true`,
 		`${cleanOrigin}/settings/billing`
 	);
@@ -36,9 +39,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		properties: {
 			plan,
 			interval,
-			org_id: locals.organizationId
+			org_id: organizationId
 		},
-		groups: { organization: locals.organizationId }
+		groups: { organization: organizationId }
 	});
 
 	return json({ url: checkoutUrl });

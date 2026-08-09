@@ -1,10 +1,9 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireOrganizationRole(locals);
 
 	return json({
 		subscription: locals.subscription,

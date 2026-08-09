@@ -65,6 +65,7 @@
 		staleEvidenceCount?: number;
 		nextAction?: NextAction | null;
 		hasSystemDescription?: boolean;
+		lastActivity?: { action: string; entityName?: string | null; createdAt: Date | string } | null;
 	};
 
 	let { data }: { data: PageData } = $props();
@@ -126,6 +127,7 @@
 	const recentQuestionnaires = $derived(data.recentQuestionnaires ?? []);
 	const hasQuestionnaires = $derived(recentQuestionnaires.length > 0);
 	const hasFramework = $derived(data.framework !== null);
+	const staleEvidenceCount = $derived(data.staleEvidenceCount ?? 0);
 
 	const questionnaireCoverageCount = $derived(
 		data.questionnaireCoverage?.[0]?.controlsCoveredByQuestionnaires ?? 0
@@ -229,17 +231,17 @@
 	{/if}
 
 	<!-- Stale evidence warning -->
-	{#if (data.staleEvidenceCount ?? 0) > 0}
+	{#if staleEvidenceCount > 0}
 		<div
 			class="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--warning)] bg-[var(--warning-light)] p-4"
 		>
 			<div class="flex items-center gap-3">
 				<Warning size={16} color="var(--warning)" weight="fill" />
 				<p class="text-sm text-[var(--warning)]">
-					{(data.staleEvidenceCount ?? 0) === 1
-						? m.dashboard_stale_evidence_singular({ count: data.staleEvidenceCount })
-						: m.dashboard_stale_evidence_plural({ count: data.staleEvidenceCount })} uploaded more than
-					90 days ago — auditors may question outdated evidence.
+					{staleEvidenceCount === 1
+						? m.dashboard_stale_evidence_singular({ count: staleEvidenceCount })
+						: m.dashboard_stale_evidence_plural({ count: staleEvidenceCount })} uploaded more than 90
+					days ago — auditors may question outdated evidence.
 				</p>
 			</div>
 			<a
@@ -299,8 +301,8 @@
 					{:else if data.nextAction.type === 'stale-evidence'}
 						<p class="text-sm text-[var(--foreground)]">
 							<span class="font-semibold">{data.staleEvidenceCount}</span>
-							{(data.staleEvidenceCount ?? 0) === 1 ? 'evidence file is' : 'evidence files are'} over
-							90 days old — review and refresh them.
+							{staleEvidenceCount === 1 ? 'evidence file is' : 'evidence files are'} over 90 days old
+							— review and refresh them.
 						</p>
 						<a
 							href="/evidence"
@@ -423,7 +425,6 @@
 									<p class="mt-1 text-xs text-[var(--foreground-muted)]">
 										{m.dashboard_answers_gaps_label({
 											answered: q.answeredCount,
-											total: q.totalCount,
 											gaps: q.gapCount
 										})}
 									</p>
@@ -638,7 +639,9 @@
 					>
 						{data.trialDaysRemaining}
 					</p>
-					<p class="text-sm text-[var(--foreground-muted)]">{m.dashboard_trial_days_remaining()}</p>
+					<p class="text-sm text-[var(--foreground-muted)]">
+						{m.dashboard_trial_days_remaining({ days: data.trialDaysRemaining })}
+					</p>
 				{:else}
 					<Badge variant="success">{m.dashboard_trial_active()}</Badge>
 				{/if}

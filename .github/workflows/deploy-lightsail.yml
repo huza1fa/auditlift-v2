@@ -32,6 +32,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate deployment configuration
+        run: |
+          sudo install -d -m 755 /etc/auditlift
+          sudo install -m 600 /dev/null /etc/auditlift/app.env
+          sudo install -m 600 /dev/null /etc/auditlift/db.env
+          APP_IMAGE=lightsail-app:validation docker compose -f deploy/lightsail/docker-compose.yml config -q
+          docker run --rm -v "$PWD/deploy/lightsail/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.10.2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          node --check deploy/lightsail/questionnaire-scheduler.mjs
+
+      - name: Validate image tag
+        run: |
+          if [[ ! "$IMAGE_TAG" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo 'image_tag must be a valid ECR tag (1-128 characters: letters, digits, _, ., -).' >&2
+            exit 1
+          fi
+
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::676799697185:role/auditlift-github-actions
@@ -54,16 +70,38 @@ jobs:
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          LIGHTSAIL_SSH_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_SSH_KNOWN_HOSTS }}
         run: |
           install -d -m 700 ~/.ssh
           printf '%s' "$LIGHTSAIL_SSH_PRIVATE_KEY" > ~/.ssh/lightsail
           chmod 600 ~/.ssh/lightsail
-          ssh-keyscan -H "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
+          test -n "$LIGHTSAIL_SSH_KNOWN_HOSTS"
+          printf '%s\n' "$LIGHTSAIL_SSH_KNOWN_HOSTS" > ~/.ssh/lightsail_known_hosts
+          chmod 600 ~/.ssh/lightsail_known_hosts
 
       - name: Transfer and deploy image
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
         run: |
-          docker save "$ECR_REPOSITORY:$IMAGE_TAG" | gzip | ssh -i ~/.ssh/lightsail "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" 'gzip -d | sudo docker load'
-          scp -i ~/.ssh/lightsail deploy/lightsail/docker-compose.yml "$LIGHTSAIL_USER@$LIGHTSAIL_HOST:/tmp/auditlift-compose.yml"
-          ssh -i ~/.ssh/lightsail "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "sudo install -m 644 /tmp/auditlift-compose.yml /opt/auditlift/deploy/lightsail/docker-compose.yml && sudo env APP_IMAGE='$ECR_REPOSITORY:$IMAGE_TAG' docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait app && curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null"
+          ssh_options=(-i ~/.ssh/lightsail -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/lightsail_known_hosts")
+          target="$LIGHTSAIL_USER@$LIGHTSAIL_HOST"
+
+          docker save "$ECR_REPOSITORY:$IMAGE_TAG" | gzip | ssh "${ssh_options[@]}" "$target" 'gzip -d | sudo docker load'
+          scp "${ssh_options[@]}" deploy/lightsail/docker-compose.yml "$target:/tmp/auditlift-compose.yml"
+          scp "${ssh_options[@]}" deploy/lightsail/Caddyfile "$target:/tmp/auditlift-Caddyfile"
+          scp "${ssh_options[@]}" deploy/lightsail/questionnaire-scheduler.mjs "$target:/tmp/auditlift-questionnaire-scheduler.mjs"
+
+          # Write the validated image reference as data, never into a remote shell command.
+          printf '%s\n' "$ECR_REPOSITORY:$IMAGE_TAG" | ssh "${ssh_options[@]}" "$target" 'sudo install -d -m 755 /opt/auditlift && sudo tee /opt/auditlift/app-image > /dev/null && sudo chmod 600 /opt/auditlift/app-image'
+
+          ssh "${ssh_options[@]}" "$target" 'sudo sh -s' <<'REMOTE'
+          set -eu
+          install -d -m 755 /opt/auditlift/deploy/lightsail
+          install -m 644 /tmp/auditlift-compose.yml /opt/auditlift/deploy/lightsail/docker-compose.yml
+          install -m 644 /tmp/auditlift-Caddyfile /opt/auditlift/deploy/lightsail/Caddyfile
+          install -m 644 /tmp/auditlift-questionnaire-scheduler.mjs /opt/auditlift/deploy/lightsail/questionnaire-scheduler.mjs
+          APP_IMAGE=$(cat /opt/auditlift/app-image)
+          export APP_IMAGE
+          docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait
+          curl --fail --silent --show-error http://127.0.0.1/ > /dev/null
+          REMOTE

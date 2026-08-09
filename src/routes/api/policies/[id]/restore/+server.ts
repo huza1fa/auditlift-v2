@@ -5,15 +5,19 @@ import { db } from '$lib/server/db';
 import { policies, policyVersions } from '$lib/server/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 const RestoreSchema = z.object({
 	versionId: z.string().uuid()
 });
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	const { organizationId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot restore policy versions',
+		'Trial expired. Upgrade to edit policies.'
+	);
 
 	const policyId = params.id;
 	if (!policyId) {
@@ -31,7 +35,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		.where(
 			and(
 				eq(policies.id, policyId),
-				eq(policies.organizationId, locals.organizationId),
+				eq(policies.organizationId, organizationId),
 				isNull(policies.archivedAt)
 			)
 		)
@@ -49,7 +53,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 			and(
 				eq(policyVersions.id, versionId),
 				eq(policyVersions.policyId, policyId),
-				eq(policyVersions.organizationId, locals.organizationId)
+				eq(policyVersions.organizationId, organizationId)
 			)
 		)
 		.limit(1);
@@ -61,9 +65,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	// Save current content as a new version before restoring
 	await db.insert(policyVersions).values({
 		policyId: policyId,
-		organizationId: locals.organizationId,
+		organizationId,
 		content: existingPolicy.content,
-		savedBy: locals.session.user.id
+		savedBy: userId
 	});
 
 	// Restore the version's content
@@ -74,13 +78,13 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 			editedAt: new Date(),
 			updatedAt: new Date()
 		})
-		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)))
+		.where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId)))
 		.returning();
 
 	logActivity({
-		organizationId: locals.organizationId,
-		userId: locals.session.user.id,
-		userName: locals.session.user.name,
+		organizationId,
+		userId,
+		userName: locals.session!.user.name,
 		action: 'policy.edit',
 		entityType: 'policy',
 		entityId: existingPolicy.id,

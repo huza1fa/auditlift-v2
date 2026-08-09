@@ -39,10 +39,19 @@
 		queue = [...queue];
 	}
 
+	async function calculateSha256(file: File): Promise<string> {
+		const hash = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+		const bytes = new Uint8Array(hash);
+		let binary = '';
+		for (const byte of bytes) binary += String.fromCharCode(byte);
+		return btoa(binary);
+	}
+
 	async function uploadOne(entry: FileEntry): Promise<void> {
 		setEntryProgress(entry, 10);
 
 		try {
+			const checksumSha256 = await calculateSha256(entry.file);
 			const presignRes = await fetch('/api/evidence/presign', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -50,7 +59,8 @@
 					controlId,
 					filename: entry.file.name,
 					mimeType: entry.file.type,
-					sizeBytes: entry.file.size
+					sizeBytes: entry.file.size,
+					checksumSha256
 				})
 			});
 
@@ -59,13 +69,17 @@
 				throw new Error((err as { message?: string }).message || 'Failed to get upload URL');
 			}
 
-			const { evidenceId, uploadUrl } = await presignRes.json();
+			const { evidenceId, uploadUrl, uploadFields } = await presignRes.json();
 			setEntryProgress(entry, 30);
 
+			const formData = new FormData();
+			for (const [name, value] of Object.entries(uploadFields as Record<string, string>)) {
+				formData.append(name, value);
+			}
+			formData.append('file', entry.file);
 			const uploadRes = await fetch(uploadUrl, {
-				method: 'PUT',
-				body: entry.file,
-				headers: { 'Content-Type': entry.file.type }
+				method: 'POST',
+				body: formData
 			});
 
 			if (!uploadRes.ok) throw new Error('Failed to upload file to storage');

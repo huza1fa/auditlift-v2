@@ -6,12 +6,10 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { getPresignedDownloadUrl } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
+import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireOrganizationRole(locals);
 
 	const [ev] = await db
 		.select()
@@ -45,10 +43,12 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'admin',
+		'Only admins and owners can delete evidence',
+		'Trial expired. Upgrade to manage evidence.'
+	);
 
 	const [ev] = await db
 		.select()
@@ -79,8 +79,8 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 	logActivity({
 		organizationId: orgId,
-		userId: locals.session.user.id,
-		userName: locals.session.user.name,
+		userId,
+		userName: locals.session!.user.name,
 		action: 'evidence.delete',
 		entityType: 'evidence',
 		entityId: ev.id,
@@ -96,10 +96,12 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 };
 
 export const PATCH: RequestHandler = async ({ params, locals, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot edit evidence',
+		'Trial expired. Upgrade to edit evidence.'
+	);
 
 	const [ev] = await db
 		.select()

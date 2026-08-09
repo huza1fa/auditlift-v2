@@ -209,7 +209,9 @@
 		font-weight: 500;
 		text-decoration: none;
 		cursor: pointer;
-		transition: background 0.15s, opacity 0.15s;
+		transition:
+			background 0.15s,
+			opacity 0.15s;
 		white-space: nowrap;
 	}
 	.btn-primary:hover {
@@ -297,7 +299,9 @@
 		font-size: 0.8125rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: border-color 0.15s, color 0.15s;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
 	}
 	.share-btn:hover {
 		border-color: var(--foreground-muted);

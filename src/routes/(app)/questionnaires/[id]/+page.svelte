@@ -82,7 +82,7 @@
 	let { data } = $props();
 
 	// ── Local state ───────────────────────────────────────────────────────────
-	const id = $derived(page.params.id);
+	const id = $derived(page.params.id ?? '');
 
 	let questionnaire = $state<QuestionnaireData | null>(null);
 	let questions = $state<Question[]>([]);
@@ -822,9 +822,8 @@
 										<Badge variant="default">{fw.frameworkName}</Badge>
 										<span class="truncate text-xs text-[var(--foreground-muted)]">
 											{m.questionnaires_coverage_row_label({
-												controlsCovered: fw.controlsCovered,
-												totalControls: fw.totalControls,
-												coveragePct: fw.coveragePct
+												count: fw.controlsCovered,
+												total: fw.totalControls
 											})}
 										</span>
 									</div>

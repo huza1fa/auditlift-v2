@@ -5,6 +5,7 @@ import { questionnaires } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { captureServerEvent } from '$lib/server/posthog';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 type ShareResponse = {
 	shareToken: string | null;
@@ -12,11 +13,11 @@ type ShareResponse = {
 };
 
 export const POST: RequestHandler = async ({ locals, params }) => {
-	// 1. Auth check — must come first
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot share questionnaires'
+	);
 
 	// 2. Billing check — sharing is a paid-only feature
 	if (!hasActivePaidAccess(locals.subscription)) {

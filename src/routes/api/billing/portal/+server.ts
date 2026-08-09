@@ -2,11 +2,10 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createPortalSession } from '$lib/server/stripe';
 import { env } from '$env/dynamic/private';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	await requireOrganizationRole(locals, 'owner', 'Only the organization owner can manage billing');
 
 	const stripeCustomerId = locals.subscription?.stripeCustomerId;
 

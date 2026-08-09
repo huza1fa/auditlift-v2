@@ -111,7 +111,9 @@
 >
 	{#if submitted}
 		<div class="flex flex-col items-center gap-3 py-6 text-center">
-			<div class="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--success-light)]">
+			<div
+				class="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--success-light)]"
+			>
 				<Check size={24} weight="bold" class="text-[var(--success)]" />
 			</div>
 			<h3 class="text-lg font-semibold text-[var(--foreground)]">Check your downloads</h3>
@@ -128,7 +130,7 @@
 			<button
 				type="submit"
 				disabled={submitting}
-				class="inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--brand-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+				class="inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
 			>
 				{#if submitting}
 					Sending...
@@ -143,8 +145,8 @@
 			{/if}
 
 			<p class="text-center text-xs text-[var(--foreground-subtle)]">
-				No spam. Unsubscribe anytime. We use your email to send the document and occasional
-				product updates.
+				No spam. Unsubscribe anytime. We use your email to send the document and occasional product
+				updates.
 			</p>
 		</form>
 	{/if}

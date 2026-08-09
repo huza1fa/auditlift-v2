@@ -8,14 +8,52 @@ import {
 	organizationFrameworks,
 	frameworks
 } from '$lib/server/db/schema';
-import { eq, and, isNull, inArray } from 'drizzle-orm';
+import { eq, and, isNull, inArray, asc, count, sql } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { ExportSchema } from '$lib/server/validation';
 import archiver from 'archiver';
 import { stringify } from 'csv-stringify/sync';
 import { generatePolicyPdf } from '$lib/server/pdf';
-import { downloadFile } from '$lib/server/storage';
+import { downloadFileStream, sanitizeFilename } from '$lib/server/storage';
 import { captureServerEvent } from '$lib/server/posthog';
+import { Readable } from 'node:stream';
+
+const MAX_EXPORT_FILES = 100;
+const MAX_EXPORT_SOURCE_BYTES = 100 * 1024 * 1024;
+
+type ExportControl = {
+	id: string;
+	code: string;
+	title: string;
+	category: string;
+	frameworkName: string;
+	frameworkSlug: string;
+};
+
+function appendArchiveEntry(
+	archive: archiver.Archiver,
+	source: string | Buffer | Readable,
+	name: string
+): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const onEntry = () => {
+			cleanup();
+			resolve();
+		};
+		const onError = (err: Error) => {
+			cleanup();
+			reject(err);
+		};
+		const cleanup = () => {
+			archive.off('entry', onEntry);
+			archive.off('error', onError);
+		};
+
+		archive.once('entry', onEntry);
+		archive.once('error', onError);
+		archive.append(source, { name });
+	});
+}
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
@@ -38,17 +76,29 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!bodyResult.success) throw error(400, 'Invalid input');
 	const { policyIds, evidenceIds } = bodyResult.data;
 
-	// Get org's framework
-	const [orgFramework] = await db
-		.select({ framework: frameworks })
+	// Include every enrolled framework in a deterministic framework/control order.
+	const enrolledFrameworks = await db
+		.select({ id: frameworks.id, name: frameworks.name, slug: frameworks.slug })
 		.from(organizationFrameworks)
 		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
 		.where(eq(organizationFrameworks.organizationId, orgId))
-		.limit(1);
+		.orderBy(asc(frameworks.name), asc(frameworks.slug));
 
-	// Get all controls
-	const allControls = orgFramework
-		? await db.select().from(controls).where(eq(controls.frameworkId, orgFramework.framework.id))
+	const frameworkIds = enrolledFrameworks.map((framework) => framework.id);
+	const allControls: ExportControl[] = frameworkIds.length
+		? await db
+				.select({
+					id: controls.id,
+					code: controls.code,
+					title: controls.title,
+					category: controls.category,
+					frameworkName: frameworks.name,
+					frameworkSlug: frameworks.slug
+				})
+				.from(controls)
+				.innerJoin(frameworks, eq(controls.frameworkId, frameworks.id))
+				.where(inArray(controls.frameworkId, frameworkIds))
+				.orderBy(asc(frameworks.name), asc(frameworks.slug), asc(controls.code))
 		: [];
 
 	// Get evidence — filtered by selection if provided, always excluding soft-deleted
@@ -66,8 +116,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 					isNull(evidence.deletedAt)
 				);
 
-	const allEvidence = await db.select().from(evidence).where(evidenceWhere);
-
 	// Get policies — filtered by selection if provided, always excluding archived
 	const policiesWhere =
 		policyIds && policyIds.length > 0
@@ -78,84 +126,142 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				)
 			: and(eq(policies.organizationId, orgId), isNull(policies.archivedAt));
 
-	const allPolicies = await db.select().from(policies).where(policiesWhere);
+	const [[evidenceTotals], [policyTotals]] = await Promise.all([
+		db
+			.select({
+				fileCount: count(),
+				sourceBytes: sql<number>`coalesce(sum(${evidence.sizeBytes}), 0)::integer`
+			})
+			.from(evidence)
+			.where(evidenceWhere),
+		db
+			.select({
+				fileCount: count(),
+				sourceBytes: sql<number>`coalesce(sum(octet_length(${policies.content})), 0)::integer`
+			})
+			.from(policies)
+			.where(policiesWhere)
+	]);
 
-	// Build ZIP
+	const sourceFileCount = Number(evidenceTotals.fileCount) + Number(policyTotals.fileCount);
+	if (sourceFileCount > MAX_EXPORT_FILES) {
+		throw error(
+			413,
+			`Export includes ${sourceFileCount} files. Select no more than ${MAX_EXPORT_FILES} policies and evidence files.`
+		);
+	}
+
+	const sourceBytes = Number(evidenceTotals.sourceBytes) + Number(policyTotals.sourceBytes);
+	if (sourceBytes > MAX_EXPORT_SOURCE_BYTES) {
+		throw error(
+			413,
+			`Export source data is ${(sourceBytes / 1024 / 1024).toFixed(1)} MB. Select fewer files to stay within the ${MAX_EXPORT_SOURCE_BYTES / 1024 / 1024} MB limit.`
+		);
+	}
+
+	const [allEvidence, allPolicies] = await Promise.all([
+		db.select().from(evidence).where(evidenceWhere),
+		db.select().from(policies).where(policiesWhere)
+	]);
+
+	const controlsById = new Map(allControls.map((control) => [control.id, control]));
+	const evidenceCounts = new Map<string, number>();
+	const policyCounts = new Map<string, number>();
+	for (const item of allEvidence) {
+		evidenceCounts.set(item.controlId, (evidenceCounts.get(item.controlId) ?? 0) + 1);
+	}
+	for (const policy of allPolicies) {
+		if (policy.controlId) {
+			policyCounts.set(policy.controlId, (policyCounts.get(policy.controlId) ?? 0) + 1);
+		}
+	}
+
+	// Archive output is streamed directly to the response; entries are appended serially to preserve
+	// backpressure and ensure only one S3 object or generated PDF is in memory at a time.
 	const archive = archiver('zip', { zlib: { level: 9 } });
 
 	const date = new Date().toISOString().split('T')[0];
 	const folderName = `AuditLift-Export-${org.slug}-${date}`;
 
-	// control-mapping.csv
 	const csvRows = [
-		['Control ID', 'Code', 'Title', 'Category', 'Status', 'Evidence Count', 'Policy Count']
+		[
+			'Framework',
+			'Control ID',
+			'Code',
+			'Title',
+			'Category',
+			'Status',
+			'Evidence Count',
+			'Policy Count'
+		]
 	];
 	for (const control of allControls) {
-		const ev = allEvidence.filter((e) => e.controlId === control.id);
-		const pol = allPolicies.filter((p) => p.controlId === control.id);
-		const status = ev.length > 0 || pol.length > 0 ? 'Complete' : 'Incomplete';
+		const evidenceCount = evidenceCounts.get(control.id) ?? 0;
+		const policyCount = policyCounts.get(control.id) ?? 0;
+		const status = evidenceCount > 0 || policyCount > 0 ? 'Complete' : 'Incomplete';
 		csvRows.push([
+			control.frameworkName,
 			control.id,
 			control.code,
 			control.title,
 			control.category,
 			status,
-			String(ev.length),
-			String(pol.length)
+			String(evidenceCount),
+			String(policyCount)
 		]);
 	}
-	archive.append(stringify(csvRows), { name: `${folderName}/control-mapping.csv` });
 
-	// Policies as PDF
-	const companyName = org.name ?? 'AuditLift';
-	for (const policy of allPolicies) {
-		const safeFilename = policy.title.replace(/[^a-zA-Z0-9_-]/g, '_');
-		const pdfBytes = await generatePolicyPdf(policy.title, policy.content, companyName);
-		archive.append(Buffer.from(pdfBytes), { name: `${folderName}/Policies/${safeFilename}.pdf` });
-	}
-
-	// Evidence files from S3
-	for (const ev of allEvidence) {
-		const control = allControls.find((c) => c.id === ev.controlId);
-		const controlCode = control?.code ?? 'unknown';
+	void (async () => {
 		try {
-			const fileBuffer = await downloadFile(ev.storageKey);
-			archive.append(fileBuffer, {
-				name: `${folderName}/Evidence/${controlCode}/${ev.filename}`
-			});
+			await appendArchiveEntry(archive, stringify(csvRows), `${folderName}/control-mapping.csv`);
+
+			const companyName = org.name ?? 'AuditLift';
+			for (const policy of allPolicies) {
+				const safeFilename = sanitizeFilename(policy.title).replace(/\.[^.]+$/, '') || 'policy';
+				const pdfBytes = await generatePolicyPdf(policy.title, policy.content, companyName);
+				await appendArchiveEntry(
+					archive,
+					Buffer.from(pdfBytes),
+					`${folderName}/Policies/${safeFilename}-${policy.id}.pdf`
+				);
+			}
+
+			for (const item of allEvidence) {
+				const control = controlsById.get(item.controlId);
+				const frameworkFolder = control?.frameworkSlug ?? 'unmapped';
+				const controlFolder = control ? sanitizeFilename(control.code) : 'unknown';
+				try {
+					const fileStream = await downloadFileStream(item.storageKey);
+					await appendArchiveEntry(
+						archive,
+						fileStream,
+						`${folderName}/Evidence/${frameworkFolder}/${controlFolder}/${sanitizeFilename(item.filename)}`
+					);
+				} catch (err) {
+					console.warn(`[Export] Failed to download evidence ${item.id}: ${err}`);
+				}
+			}
+
+			await archive.finalize();
+			void captureServerEvent({
+				event: 'export_created',
+				properties: {
+					org_id: orgId,
+					policy_count: allPolicies.length,
+					evidence_count: allEvidence.length,
+					control_count: allControls.length
+				},
+				groups: { organization: orgId }
+			}).catch((err) => console.warn(`[Export] Failed to capture event: ${err}`));
 		} catch (err) {
-			console.warn(`[Export] Failed to download evidence ${ev.id}: ${err}`);
+			archive.destroy(err instanceof Error ? err : new Error('Failed to build export archive'));
 		}
-	}
+	})();
 
-	archive.finalize();
-
-	// Convert archiver to Response
-	const chunks: Buffer[] = [];
-	await new Promise<void>((resolve, reject) => {
-		archive.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-		archive.on('end', resolve);
-		archive.on('error', reject);
-	});
-
-	const buffer = Buffer.concat(chunks);
-
-	await captureServerEvent({
-		event: 'export_created',
-		properties: {
-			org_id: orgId,
-			policy_count: allPolicies.length,
-			evidence_count: allEvidence.length,
-			control_count: allControls.length
-		},
-		groups: { organization: orgId }
-	});
-
-	return new Response(buffer, {
+	return new Response(Readable.toWeb(archive) as ReadableStream<Uint8Array>, {
 		headers: {
 			'Content-Type': 'application/zip',
-			'Content-Disposition': `attachment; filename="${folderName}.zip"`,
-			'Content-Length': buffer.length.toString()
+			'Content-Disposition': `attachment; filename="${folderName}.zip"`
 		}
 	});
 };

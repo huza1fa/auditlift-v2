@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { hasActiveAccess } from '$lib/server/billing';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
@@ -425,12 +425,12 @@ Using the description above, write a complete, auditor-ready policy document. St
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.session || !locals.organizationId) throw error(401, 'Unauthorized');
-	const orgId = locals.organizationId;
-
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to generate policies.');
-	}
+	const { organizationId: orgId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot generate policies',
+		'Trial expired. Upgrade to generate policies.'
+	);
 
 	if (!checkRateLimit(`policy-gen:${orgId}`, 10, 60 * 60 * 1000)) {
 		throw error(429, 'Too many policy generations. Please wait before generating more.');
@@ -522,8 +522,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	logActivity({
 		organizationId: orgId,
-		userId: locals.session.user.id,
-		userName: locals.session.user.name,
+		userId,
+		userName: locals.session!.user.name,
 		action: 'policy.generate',
 		entityType: 'policy',
 		entityId: policy.id,

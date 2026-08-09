@@ -6,28 +6,33 @@ import {
 	validateFileType,
 	validateFileSize,
 	generateStorageKey,
-	getPresignedUploadUrl,
+	getPresignedUploadPost,
 	sanitizeFilename,
 	ALLOWED_MIME_TYPES,
 	MAX_FILE_SIZE
 } from '$lib/server/storage';
-import { hasActiveAccess } from '$lib/server/billing';
-import { eq, and } from 'drizzle-orm';
 import { PresignEvidenceSchema } from '$lib/server/validation';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
+	const { organizationId: orgId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot upload evidence',
+		'Trial expired. Upgrade to upload evidence.'
+	);
 
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to upload evidence.');
-	}
-
-	const result = PresignEvidenceSchema.safeParse(await request.json());
+	const body: unknown = await request.json();
+	const result = PresignEvidenceSchema.safeParse(body);
 	if (!result.success) throw error(400, 'Invalid input');
 	const { controlId, filename, mimeType, sizeBytes } = result.data;
+	const checksumSha256 =
+		typeof body === 'object' && body !== null && 'checksumSha256' in body
+			? body.checksumSha256
+			: undefined;
+	if (typeof checksumSha256 !== 'string' || !/^[A-Za-z0-9+/]{43}=$/.test(checksumSha256)) {
+		throw error(400, 'A SHA-256 checksum is required');
+	}
 
 	const safeFilename = sanitizeFilename(filename);
 
@@ -40,7 +45,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const storageKey = generateStorageKey(orgId, controlId, mimeType);
-	const uploadUrl = await getPresignedUploadUrl(storageKey, mimeType);
+	const upload = await getPresignedUploadPost(storageKey, mimeType, checksumSha256);
 
 	try {
 		const [newEvidence] = await db
@@ -53,13 +58,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				mimeType,
 				sizeBytes,
 				status: 'pending',
-				uploadedBy: locals.session.user.id
+				uploadedBy: userId
 			})
 			.returning({ id: evidence.id });
 
 		return json({
 			evidenceId: newEvidence.id,
-			uploadUrl,
+			uploadUrl: upload.url,
+			uploadFields: upload.fields,
 			storageKey
 		});
 	} catch (err) {

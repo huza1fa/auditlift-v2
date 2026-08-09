@@ -448,7 +448,11 @@
 						A practical 47-point checklist covering the policies, evidence, and controls you need
 						before your first SOC 2 audit.
 					</p>
-					<button type="button" class="lead-magnet-btn" onclick={() => openLeadMagnet('soc2-checklist')}>
+					<button
+						type="button"
+						class="lead-magnet-btn"
+						onclick={() => openLeadMagnet('soc2-checklist')}
+					>
 						<Download size={16} />
 						Download free
 					</button>
@@ -608,8 +612,10 @@
 				<ArrowRight size={16} weight="bold" />
 			</a>
 			<p class="final-cta-advisory">
-				Or grab our <button type="button" class="advisory-link" onclick={() => openLeadMagnet('soc2-checklist')}
-					>free SOC 2 checklist</button
+				Or grab our <button
+					type="button"
+					class="advisory-link"
+					onclick={() => openLeadMagnet('soc2-checklist')}>free SOC 2 checklist</button
 				> to get started today.
 			</p>
 		</div>
@@ -1569,7 +1575,9 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 	.testimonial-card:hover {
 		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
@@ -1627,7 +1635,9 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 	.lead-magnet-card:hover {
 		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));

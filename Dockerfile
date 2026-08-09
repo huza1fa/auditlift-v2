@@ -47,6 +47,9 @@ WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
+# The migration service uses this same immutable image before the app starts.
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S sveltekit -u 1001

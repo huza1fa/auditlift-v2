@@ -4,7 +4,7 @@ import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { getPostHogClient } from '$lib/server/posthog';
 import { db } from '$lib/server/db';
 import { userOrganizations, organizations, subscriptions } from '$lib/server/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { dev } from '$app/environment';
 import { paraglideMiddleware } from '$lib/paraglide/server';
@@ -14,8 +14,11 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	const method = event.request.method;
 	if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(method)) {
 		const pathname = event.url.pathname;
-		// Exempt Stripe webhooks — they come from Stripe servers, not browsers
-		if (!pathname.startsWith('/api/webhooks/')) {
+		// Webhooks and the authenticated job runner are invoked by servers, not browsers.
+		if (
+			!pathname.startsWith('/api/webhooks/') &&
+			!pathname.startsWith('/api/internal/questionnaire-jobs/')
+		) {
 			const origin = event.request.headers.get('origin');
 			const expectedOrigin = env.ORIGIN;
 			// Require a non-empty Origin header that matches the expected origin.
@@ -30,12 +33,32 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 
 	if (session?.user) {
-		const [userOrg] = await db
-			.select()
-			.from(userOrganizations)
-			.where(eq(userOrganizations.userId, session.user.id))
-			.orderBy(asc(userOrganizations.createdAt))
-			.limit(1);
+		const requestedOrganizationId =
+			event.request.headers.get('x-auditlift-organization-id') ??
+			event.cookies.get('auditlift_active_organization_id');
+
+		let [userOrg] = requestedOrganizationId
+			? await db
+					.select()
+					.from(userOrganizations)
+					.where(
+						and(
+							eq(userOrganizations.userId, session.user.id),
+							eq(userOrganizations.organizationId, requestedOrganizationId)
+						)
+					)
+					.limit(1)
+			: [];
+
+		// A removed/stale cookie falls back to the original membership selection.
+		if (!userOrg && !event.request.headers.has('x-auditlift-organization-id')) {
+			[userOrg] = await db
+				.select()
+				.from(userOrganizations)
+				.where(eq(userOrganizations.userId, session.user.id))
+				.orderBy(asc(userOrganizations.createdAt))
+				.limit(1);
+		}
 
 		if (userOrg) {
 			event.locals.organizationId = userOrg.organizationId;

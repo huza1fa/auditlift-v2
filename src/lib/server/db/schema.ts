@@ -216,7 +216,10 @@ export const userOrganizations = pgTable(
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
-	(table) => [index('uo_user_id_idx').on(table.userId)]
+	(table) => [
+		uniqueIndex('uo_user_organization_unique_idx').on(table.userId, table.organizationId),
+		index('uo_user_id_idx').on(table.userId)
+	]
 );
 
 // ─── Organization Invitations ───────────────────────────────────────────────
@@ -329,6 +332,36 @@ export const questionnaireQuestions = pgTable(
 	(table) => [
 		index('qq_questionnaire_id_idx').on(table.questionnaireId),
 		index('qq_org_id_idx').on(table.organizationId)
+	]
+);
+
+// ─── Questionnaire Processing Jobs ───────────────────────────────────────────
+
+export const questionnaireProcessingJobs = pgTable(
+	'questionnaire_processing_jobs',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		questionnaireId: uuid('questionnaire_id')
+			.notNull()
+			.references(() => questionnaires.id, { onDelete: 'cascade' }),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id),
+		kind: text('kind').notNull().default('initial'), // 'initial' | 'reprocess'
+		status: text('status').notNull().default('queued'), // 'queued' | 'running' | 'retry_wait' | 'completed' | 'failed'
+		attemptCount: integer('attempt_count').notNull().default(0),
+		maxAttempts: integer('max_attempts').notNull().default(5),
+		nextAttemptAt: timestamp('next_attempt_at').notNull().defaultNow(),
+		lockedAt: timestamp('locked_at'),
+		lockToken: uuid('lock_token'),
+		lastError: text('last_error'),
+		completedAt: timestamp('completed_at'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('questionnaire_processing_jobs_questionnaire_unique_idx').on(table.questionnaireId),
+		index('questionnaire_processing_jobs_ready_idx').on(table.status, table.nextAttemptAt)
 	]
 );
 

@@ -10,7 +10,7 @@ export const auth = betterAuth({
 	baseURL: env.ORIGIN,
 	secret: env.BETTER_AUTH_SECRET,
 	trustedOrigins: [
-		env.ORIGIN,
+		env.ORIGIN!,
 		'https://auditlift.app',
 		'http://auditlift-prod.eba-p99u7chu.us-east-1.elasticbeanstalk.com',
 		'https://auditlift-prod.eba-p99u7chu.us-east-1.elasticbeanstalk.com'
@@ -21,12 +21,12 @@ export const auth = betterAuth({
 	}),
 	socialProviders: {
 		google: {
-			clientId: env.GOOGLE_CLIENT_ID,
-			clientSecret: env.GOOGLE_CLIENT_SECRET
+			clientId: env.GOOGLE_CLIENT_ID!,
+			clientSecret: env.GOOGLE_CLIENT_SECRET!
 		},
 		github: {
-			clientId: env.GITHUB_CLIENT_ID,
-			clientSecret: env.GITHUB_CLIENT_SECRET,
+			clientId: env.GITHUB_CLIENT_ID!,
+			clientSecret: env.GITHUB_CLIENT_SECRET!,
 			scope: ['user:email', 'read:user'],
 			getUserInfo: async (token) => {
 				const headers = {

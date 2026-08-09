@@ -6,9 +6,10 @@ import {
 	controls,
 	organizationFrameworks,
 	organizations,
-	subscriptions
+	subscriptions,
+	questionnaireProcessingJobs
 } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, or, lte, isNull, asc, sql } from 'drizzle-orm';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
@@ -18,6 +19,7 @@ import { hasActivePaidAccess } from '$lib/server/billing';
 const TRIAL_QUESTION_LIMIT = 15;
 const BATCH_SIZE = 5; // Questions per API call
 const PARALLEL_BATCHES = 3; // Concurrent API calls
+const JOB_LEASE_MS = 30 * 60 * 1000;
 
 const QuestionClassificationSchema = z.object({
 	domain: z.string(),
@@ -389,7 +391,9 @@ async function computeAndSaveStats(questionnaireId: string, organizationId: stri
 			errorMessage: null,
 			updatedAt: new Date()
 		})
-		.where(eq(questionnaires.id, questionnaireId));
+		.where(
+			and(eq(questionnaires.id, questionnaireId), eq(questionnaires.organizationId, organizationId))
+		);
 }
 
 export async function processQuestionnaire(
@@ -413,7 +417,12 @@ export async function processQuestionnaire(
 			await db
 				.update(questionnaires)
 				.set({ status: 'ready', updatedAt: new Date() })
-				.where(eq(questionnaires.id, questionnaireId));
+				.where(
+					and(
+						eq(questionnaires.id, questionnaireId),
+						eq(questionnaires.organizationId, organizationId)
+					)
+				);
 			return;
 		}
 
@@ -464,7 +473,12 @@ export async function processQuestionnaire(
 						) {
 							await db
 								.delete(questionnaireQuestions)
-								.where(eq(questionnaireQuestions.id, questionId));
+								.where(
+									and(
+										eq(questionnaireQuestions.id, questionId),
+										eq(questionnaireQuestions.organizationId, organizationId)
+									)
+								);
 							continue;
 						}
 
@@ -487,7 +501,12 @@ export async function processQuestionnaire(
 								mappedControlIds: safeControlIds,
 								updatedAt: new Date()
 							})
-							.where(eq(questionnaireQuestions.id, questionId));
+							.where(
+								and(
+									eq(questionnaireQuestions.id, questionId),
+									eq(questionnaireQuestions.organizationId, organizationId)
+								)
+							);
 					}
 				} else {
 					console.error('[questionnaire-processor] Batch failed:', result.reason);
@@ -520,7 +539,13 @@ export async function processQuestionnaire(
 				errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
 				updatedAt: new Date()
 			})
-			.where(eq(questionnaires.id, questionnaireId));
+			.where(
+				and(
+					eq(questionnaires.id, questionnaireId),
+					eq(questionnaires.organizationId, organizationId)
+				)
+			);
+		throw err;
 	}
 }
 
@@ -532,7 +557,7 @@ export async function processQuestionnaire(
  * The questionnaire status is set to 'processing' at the start and 'ready'
  * (or 'error') at the end. Summary stats are recomputed after all updates.
  */
-export async function reprocessQuestionnaire(
+async function reprocessQuestionnaireNow(
 	questionnaireId: string,
 	organizationId: string
 ): Promise<void> {
@@ -576,7 +601,12 @@ export async function reprocessQuestionnaire(
 			await db
 				.update(questionnaires)
 				.set({ status: 'ready', updatedAt: new Date() })
-				.where(eq(questionnaires.id, questionnaireId));
+				.where(
+					and(
+						eq(questionnaires.id, questionnaireId),
+						eq(questionnaires.organizationId, organizationId)
+					)
+				);
 			return;
 		}
 
@@ -694,6 +724,220 @@ export async function reprocessQuestionnaire(
 				errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
 				updatedAt: new Date()
 			})
-			.where(eq(questionnaires.id, questionnaireId));
+			.where(
+				and(
+					eq(questionnaires.id, questionnaireId),
+					eq(questionnaires.organizationId, organizationId)
+				)
+			);
+		throw err;
 	}
+}
+
+type QuestionnaireJobKind = 'initial' | 'reprocess';
+
+export async function enqueueQuestionnaireProcessing(
+	questionnaireId: string,
+	organizationId: string,
+	kind: QuestionnaireJobKind = 'initial'
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		const [existingJob] = await tx
+			.select({ id: questionnaireProcessingJobs.id })
+			.from(questionnaireProcessingJobs)
+			.where(
+				and(
+					eq(questionnaireProcessingJobs.questionnaireId, questionnaireId),
+					eq(questionnaireProcessingJobs.organizationId, organizationId)
+				)
+			)
+			.limit(1)
+			.for('update');
+
+		if (existingJob) {
+			await tx
+				.update(questionnaireProcessingJobs)
+				.set({
+					kind,
+					status: 'queued',
+					attemptCount: 0,
+					nextAttemptAt: new Date(),
+					lockedAt: null,
+					lockToken: null,
+					lastError: null,
+					completedAt: null,
+					updatedAt: new Date()
+				})
+				.where(eq(questionnaireProcessingJobs.id, existingJob.id));
+		} else {
+			await tx.insert(questionnaireProcessingJobs).values({
+				questionnaireId,
+				organizationId,
+				kind
+			});
+		}
+
+		await tx
+			.update(questionnaires)
+			.set({ status: 'processing', errorMessage: null, updatedAt: new Date() })
+			.where(
+				and(
+					eq(questionnaires.id, questionnaireId),
+					eq(questionnaires.organizationId, organizationId)
+				)
+			);
+	});
+}
+
+/** Queues a reprocess request; the job runner performs the AI work durably. */
+export async function reprocessQuestionnaire(
+	questionnaireId: string,
+	organizationId: string
+): Promise<void> {
+	await enqueueQuestionnaireProcessing(questionnaireId, organizationId, 'reprocess');
+}
+
+async function claimNextQuestionnaireJob() {
+	const now = new Date();
+	const staleBefore = new Date(now.getTime() - JOB_LEASE_MS);
+	const lockToken = crypto.randomUUID();
+
+	return db.transaction(async (tx) => {
+		const [job] = await tx
+			.select()
+			.from(questionnaireProcessingJobs)
+			.where(
+				or(
+					and(
+						eq(questionnaireProcessingJobs.status, 'queued'),
+						lte(questionnaireProcessingJobs.nextAttemptAt, now)
+					),
+					and(
+						eq(questionnaireProcessingJobs.status, 'retry_wait'),
+						lte(questionnaireProcessingJobs.nextAttemptAt, now)
+					),
+					and(
+						eq(questionnaireProcessingJobs.status, 'running'),
+						or(
+							isNull(questionnaireProcessingJobs.lockedAt),
+							lte(questionnaireProcessingJobs.lockedAt, staleBefore)
+						)
+					)
+				)
+			)
+			.orderBy(asc(questionnaireProcessingJobs.nextAttemptAt))
+			.limit(1)
+			.for('update', { skipLocked: true });
+
+		if (!job) return null;
+
+		const [claimed] = await tx
+			.update(questionnaireProcessingJobs)
+			.set({
+				status: 'running',
+				attemptCount: sql`${questionnaireProcessingJobs.attemptCount} + 1`,
+				lockedAt: now,
+				lockToken,
+				updatedAt: now
+			})
+			.where(eq(questionnaireProcessingJobs.id, job.id))
+			.returning();
+
+		await tx
+			.update(questionnaires)
+			.set({ status: 'processing', errorMessage: null, updatedAt: now })
+			.where(
+				and(
+					eq(questionnaires.id, job.questionnaireId),
+					eq(questionnaires.organizationId, job.organizationId)
+				)
+			);
+
+		return claimed;
+	});
+}
+
+async function failQuestionnaireJob(
+	job: NonNullable<Awaited<ReturnType<typeof claimNextQuestionnaireJob>>>,
+	error: unknown
+) {
+	const message = error instanceof Error ? error.message : 'Unknown processing error';
+	const now = new Date();
+	const exhausted = job.attemptCount >= job.maxAttempts;
+	const retryDelayMs = Math.min(60 * 60 * 1000, 60 * 1000 * 2 ** Math.max(0, job.attemptCount - 1));
+
+	const [updated] = await db
+		.update(questionnaireProcessingJobs)
+		.set({
+			status: exhausted ? 'failed' : 'retry_wait',
+			nextAttemptAt: exhausted ? now : new Date(now.getTime() + retryDelayMs),
+			lockedAt: null,
+			lockToken: null,
+			lastError: message.slice(0, 2000),
+			updatedAt: now
+		})
+		.where(
+			and(
+				eq(questionnaireProcessingJobs.id, job.id),
+				eq(questionnaireProcessingJobs.lockToken, job.lockToken!)
+			)
+		)
+		.returning({ id: questionnaireProcessingJobs.id });
+
+	if (exhausted && updated) {
+		await db
+			.update(questionnaires)
+			.set({ status: 'error', errorMessage: message.slice(0, 2000), updatedAt: now })
+			.where(
+				and(
+					eq(questionnaires.id, job.questionnaireId),
+					eq(questionnaires.organizationId, job.organizationId)
+				)
+			);
+	}
+}
+
+/** Claims and runs at most one job. A stale lease is safely reclaimed after restart. */
+export async function runNextQuestionnaireProcessingJob(): Promise<boolean> {
+	const job = await claimNextQuestionnaireJob();
+	if (!job) return false;
+
+	try {
+		if (job.kind === 'reprocess') {
+			await reprocessQuestionnaireNow(job.questionnaireId, job.organizationId);
+		} else {
+			await processQuestionnaire(job.questionnaireId, job.organizationId);
+		}
+
+		await db
+			.update(questionnaireProcessingJobs)
+			.set({
+				status: 'completed',
+				completedAt: new Date(),
+				lockedAt: null,
+				lockToken: null,
+				lastError: null,
+				updatedAt: new Date()
+			})
+			.where(
+				and(
+					eq(questionnaireProcessingJobs.id, job.id),
+					eq(questionnaireProcessingJobs.lockToken, job.lockToken!)
+				)
+			);
+	} catch (error) {
+		console.error('[questionnaire-processor] Job failed:', error);
+		await failQuestionnaireJob(job, error);
+	}
+
+	return true;
+}
+
+export async function runQuestionnaireProcessingJobs(limit = 1): Promise<number> {
+	let processed = 0;
+	for (let index = 0; index < Math.min(Math.max(limit, 1), 10); index++) {
+		if (!(await runNextQuestionnaireProcessingJob())) break;
+		processed++;
+	}
+	return processed;
 }

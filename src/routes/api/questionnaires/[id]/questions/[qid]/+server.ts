@@ -3,22 +3,20 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
 import { z } from 'zod';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 const PatchAnswerSchema = z.object({
 	answer: z.string().min(1).max(10000)
 });
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-	const orgId = locals.organizationId;
-
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to edit questionnaire answers.');
-	}
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot edit questionnaire answers',
+		'Trial expired. Upgrade to edit questionnaire answers.'
+	);
 
 	const { id, qid } = params;
 
@@ -71,7 +69,13 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 			userEditedAnswer: answer,
 			updatedAt: new Date()
 		})
-		.where(eq(questionnaireQuestions.id, qid))
+		.where(
+			and(
+				eq(questionnaireQuestions.id, qid),
+				eq(questionnaireQuestions.questionnaireId, id),
+				eq(questionnaireQuestions.organizationId, orgId)
+			)
+		)
 		.returning();
 
 	return json(updated);

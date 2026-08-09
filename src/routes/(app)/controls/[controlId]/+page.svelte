@@ -104,14 +104,14 @@
 	}
 
 	// ── Local state ──────────────────────────────────────────────────────────
-	let evidenceList = $state<EvidenceItem[]>([...data.evidenceList]);
-	let linkedPolicies = $state<LinkedPolicy[]>([...data.linkedPolicies]);
+	let evidenceList = $state<EvidenceItem[]>([]);
+	let linkedPolicies = $state<LinkedPolicy[]>([]);
 
 	// ── Derived: completion status ────────────────────────────────────────────
 	const isComplete = $derived(evidenceList.length > 0 || linkedPolicies.length > 0);
 
 	// ── Policy generation state ───────────────────────────────────────────────
-	let showPolicyPanel = $state(data.linkedPolicies.length === 0);
+	let showPolicyPanel = $state(false);
 	let generatingPolicy = $state(false);
 	let policyError = $state('');
 	let expandedPolicyId = $state<string | null>(null);
@@ -131,7 +131,7 @@
 
 	// ── Suggested policies ────────────────────────────────────────────────────
 	const suggestedTypes = $derived(getSuggestedPolicies(data.control.code));
-	let selectedPolicyType = $state(getSuggestedPolicies(data.control.code)[0]);
+	let selectedPolicyType = $state('security-policy');
 
 	// Reset selected policy type when navigating to a different control
 	$effect(() => {

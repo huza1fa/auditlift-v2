@@ -154,7 +154,9 @@
 		font-weight: 500;
 		text-decoration: none;
 		cursor: pointer;
-		transition: background 0.15s, opacity 0.15s;
+		transition:
+			background 0.15s,
+			opacity 0.15s;
 		white-space: nowrap;
 	}
 	.btn-primary:hover {
@@ -220,7 +222,9 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 	.blog-card:hover {
 		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));

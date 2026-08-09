@@ -22,10 +22,18 @@
 
 	let { data } = $props();
 
-	const hasInviteRole = data.currentUser.role === 'owner' || data.currentUser.role === 'admin';
-	const canManageRoles = data.currentUser.role === 'owner' || data.currentUser.role === 'admin';
-	let canInviteMore = $state(data.canInviteMore);
+	const hasInviteRole = $derived(
+		data.currentUser.role === 'owner' || data.currentUser.role === 'admin'
+	);
+	const canManageRoles = $derived(
+		data.currentUser.role === 'owner' || data.currentUser.role === 'admin'
+	);
+	let canInviteMore = $state(false);
 	const isTrialLimited = $derived(data.memberLimit !== null);
+
+	$effect(() => {
+		canInviteMore = data.canInviteMore;
+	});
 
 	let showInviteModal = $state(false);
 	let inviteEmail = $state('');
@@ -293,6 +301,7 @@
 				onclick={(e) => e.stopPropagation()}
 				onkeydown={(e) => e.stopPropagation()}
 				role="dialog"
+				tabindex="-1"
 			>
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="text-lg font-semibold text-[var(--foreground)]">Invite Team Member</h2>
@@ -307,10 +316,14 @@
 				{#if !inviteLink}
 					<div class="space-y-4">
 						<div>
-							<label class="mb-1 block text-sm font-medium text-[var(--foreground)]">
+							<label
+								for="invite-email"
+								class="mb-1 block text-sm font-medium text-[var(--foreground)]"
+							>
 								Email address
 							</label>
 							<input
+								id="invite-email"
 								type="email"
 								bind:value={inviteEmail}
 								placeholder="colleague@company.com"
@@ -319,8 +332,12 @@
 						</div>
 
 						<div>
-							<label class="mb-1 block text-sm font-medium text-[var(--foreground)]">Role</label>
+							<label
+								for="invite-role"
+								class="mb-1 block text-sm font-medium text-[var(--foreground)]">Role</label
+							>
 							<select
+								id="invite-role"
 								bind:value={inviteRole}
 								class="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)] focus:outline-none"
 							>

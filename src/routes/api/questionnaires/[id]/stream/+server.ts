@@ -3,18 +3,10 @@ import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { questionnaires } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { hasActiveAccess } from '$lib/server/billing';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
-
-	if (!hasActiveAccess(locals.subscription, locals.organization?.trialEndsAt ?? null)) {
-		throw error(402, 'Trial expired. Upgrade to access questionnaires.');
-	}
-
-	const orgId = locals.organizationId;
+	const { organizationId: orgId } = await requireOrganizationRole(locals);
 	const { id } = params;
 
 	// Verify ownership before opening stream

@@ -12,7 +12,7 @@
 	let confirmError = $state('');
 	let confirmInput = $state('');
 
-	const org = data.organization!;
+	const org = $derived(data.organization!);
 
 	function openDeleteConfirm() {
 		showDeleteConfirm = true;
@@ -129,8 +129,8 @@
 				>
 					<Warning size={16} class="mt-0.5 shrink-0 text-[var(--danger)]" />
 					<p class="text-sm text-[var(--danger)]">
-						<strong>Your account will also be deleted.</strong> As the organization owner, removing
-						this organization permanently deletes your AuditLift account. You will be signed out.
+						<strong>Your account will also be deleted.</strong> As the organization owner, removing this
+						organization permanently deletes your AuditLift account. You will be signed out.
 					</p>
 				</div>
 				<p class="mb-3 text-sm font-medium text-[var(--danger)]">

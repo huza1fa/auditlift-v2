@@ -235,7 +235,6 @@
 
 	ul {
 		margin: 0.5rem 0 0.875rem 1.25rem;
-		space-y: 0.25rem;
 	}
 
 	li {

@@ -3,12 +3,12 @@
 
 	let { data } = $props();
 
-	const score = data.questionnaire.dealReadinessScore ?? 0;
+	const score = $derived(data.questionnaire.dealReadinessScore ?? 0);
 	const ringSize = 80;
 	const ringStroke = 7;
 	const ringRadius = (ringSize - ringStroke) / 2;
 	const ringCircumference = 2 * Math.PI * ringRadius;
-	const ringOffset = ringCircumference - (score / 100) * ringCircumference;
+	const ringOffset = $derived(ringCircumference - (score / 100) * ringCircumference);
 
 	function scoreColor(s: number): string {
 		if (s >= 70) return 'var(--success)';
@@ -49,11 +49,13 @@
 		return groups;
 	});
 
-	const sharedDate = new Date(data.questionnaire.sharedAt!).toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
-	});
+	const sharedDate = $derived(
+		new Date(data.questionnaire.sharedAt!).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		})
+	);
 </script>
 
 <svelte:head>

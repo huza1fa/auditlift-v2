@@ -66,6 +66,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 	const currentPeriodEnd = stripeSub.items.data[0]?.current_period_end
 		? new Date(stripeSub.items.data[0].current_period_end * 1000)
 		: null;
+	const status = mapStripeStatus(stripeSub.status);
 
 	// Check if subscription exists for this org
 	const [existingSub] = await db
@@ -74,13 +75,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 		.where(eq(subscriptions.organizationId, organizationId))
 		.limit(1);
 
-	console.log(`[Stripe] Activating subscription for org ${organizationId} (sub ${stripeSub.id})`);
+	console.log(
+		`[Stripe] Recording subscription for org ${organizationId} (sub ${stripeSub.id}, ${status})`
+	);
 
 	if (existingSub) {
 		await db
 			.update(subscriptions)
 			.set({
-				status: 'active',
+				status,
 				stripeCustomerId: session.customer as string,
 				stripeSubscriptionId: stripeSub.id,
 				currentPeriodEnd,
@@ -91,7 +94,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 	} else {
 		await db.insert(subscriptions).values({
 			organizationId,
-			status: 'active',
+			status,
 			stripeCustomerId: session.customer as string,
 			stripeSubscriptionId: stripeSub.id,
 			currentPeriodEnd,
@@ -99,7 +102,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 		});
 	}
 
-	console.log(`[Stripe] Subscription activated for org ${organizationId}`);
+	console.log(`[Stripe] Subscription recorded for org ${organizationId} with status=${status}`);
 
 	// Analytics
 	const ownerId = await getOrgOwnerId(organizationId);

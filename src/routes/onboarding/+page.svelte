@@ -96,14 +96,19 @@
 	];
 
 	// Step 7 state — framework (Path B only)
-	let framework = $state(
-		data.frameworks.find((f) => f.recommended)?.slug ?? data.frameworks[0]?.slug ?? ''
-	);
+	let framework = $state('');
 
 	let loading = $state(false);
 	let errorMsg = $state('');
 	let domainBlocked = $state(false);
 	let domainBlockMsg = $state('');
+
+	$effect(() => {
+		if (!framework) {
+			framework =
+				data.frameworks.find((f) => f.recommended)?.slug ?? data.frameworks[0]?.slug ?? '';
+		}
+	});
 
 	// 3. Derived values
 	// Path A (questionnaire): steps 1-2-3-4-5-6-done (6 visible steps)

@@ -5,11 +5,10 @@ import { policies, policyVersions } from '$lib/server/db/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
 import { PatchPolicySchema } from '$lib/server/validation';
+import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ locals, params, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	const { organizationId } = await requireOrganizationRole(locals);
 
 	const policyId = params.id;
 	if (!policyId) {
@@ -24,7 +23,7 @@ export const GET: RequestHandler = async ({ locals, params, request }) => {
 			.where(
 				and(
 					eq(policyVersions.policyId, policyId),
-					eq(policyVersions.organizationId, locals.organizationId)
+					eq(policyVersions.organizationId, organizationId)
 				)
 			)
 			.orderBy(desc(policyVersions.savedAt))
@@ -38,7 +37,7 @@ export const GET: RequestHandler = async ({ locals, params, request }) => {
 		.where(
 			and(
 				eq(policies.id, policyId),
-				eq(policies.organizationId, locals.organizationId),
+				eq(policies.organizationId, organizationId),
 				isNull(policies.archivedAt)
 			)
 		)
@@ -52,9 +51,12 @@ export const GET: RequestHandler = async ({ locals, params, request }) => {
 };
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	const { organizationId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'admin',
+		'Only admins and owners can archive policies',
+		'Trial expired. Upgrade to manage policies.'
+	);
 
 	const policyId = params.id;
 	if (!policyId) {
@@ -67,7 +69,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		.where(
 			and(
 				eq(policies.id, policyId),
-				eq(policies.organizationId, locals.organizationId),
+				eq(policies.organizationId, organizationId),
 				isNull(policies.archivedAt)
 			)
 		)
@@ -80,12 +82,12 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	await db
 		.update(policies)
 		.set({ archivedAt: new Date(), updatedAt: new Date() })
-		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)));
+		.where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId)));
 
 	logActivity({
-		organizationId: locals.organizationId,
-		userId: locals.session.user.id,
-		userName: locals.session.user.name,
+		organizationId,
+		userId,
+		userName: locals.session!.user.name,
 		action: 'policy.archive',
 		entityType: 'policy',
 		entityId: existing.id,
@@ -96,9 +98,12 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 };
 
 export const PATCH: RequestHandler = async ({ locals, params, request }) => {
-	if (!locals.session || !locals.organizationId) {
-		throw error(401, 'Unauthorized');
-	}
+	const { organizationId, userId } = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot edit policies',
+		'Trial expired. Upgrade to edit policies.'
+	);
 
 	const policyId = params.id;
 	if (!policyId) {
@@ -113,7 +118,13 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	const [existing] = await db
 		.select()
 		.from(policies)
-		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)))
+		.where(
+			and(
+				eq(policies.id, policyId),
+				eq(policies.organizationId, organizationId),
+				isNull(policies.archivedAt)
+			)
+		)
 		.limit(1);
 
 	if (!existing) {
@@ -124,9 +135,9 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	if (existing.content) {
 		await db.insert(policyVersions).values({
 			policyId: policyId,
-			organizationId: locals.organizationId,
+			organizationId,
 			content: existing.content,
-			savedBy: locals.session.user.id
+			savedBy: userId
 		});
 	}
 
@@ -141,12 +152,12 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 	const [updated] = await db
 		.update(policies)
 		.set(updates)
-		.where(and(eq(policies.id, policyId), eq(policies.organizationId, locals.organizationId)))
+		.where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId)))
 		.returning();
 
 	logActivity({
-		organizationId: locals.organizationId!,
-		userId: locals.session!.user.id,
+		organizationId,
+		userId,
 		userName: locals.session!.user.name,
 		action: 'policy.edit',
 		entityType: 'policy',

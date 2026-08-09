@@ -1,26 +1,11 @@
 import { PostHog } from 'posthog-node';
-import { env } from '$env/dynamic/private';
-import { dev } from '$app/environment';
+import { env } from '$env/dynamic/public';
 
 let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
-	if (!env.PUBLIC_POSTHOG_KEY) {
-		if (dev) {
-			throw new Error(
-				'PUBLIC_POSTHOG_KEY variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_KEY is configured'
-			);
-		}
-		return null;
-	}
-	if (!env.PUBLIC_POSTHOG_HOST) {
-		if (dev) {
-			throw new Error(
-				'PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_HOST is configured'
-			);
-		}
-		return null;
-	}
+	// Analytics is optional. It must never prevent application requests when unset.
+	if (!env.PUBLIC_POSTHOG_KEY || !env.PUBLIC_POSTHOG_HOST) return null;
 
 	if (!posthogClient) {
 		posthogClient = new PostHog(env.PUBLIC_POSTHOG_KEY, {
