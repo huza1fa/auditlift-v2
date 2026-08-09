@@ -34,10 +34,7 @@ jobs:
 
       - name: Validate deployment configuration
         run: |
-          sudo install -d -m 755 /etc/auditlift
-          sudo install -m 600 /dev/null /etc/auditlift/app.env
-          sudo install -m 600 /dev/null /etc/auditlift/db.env
-          APP_IMAGE=lightsail-app:validation docker compose -f deploy/lightsail/docker-compose.yml config -q
+          AUDITLIFT_APP_ENV_FILE=/dev/null AUDITLIFT_DB_ENV_FILE=/dev/null APP_IMAGE=lightsail-app:validation docker compose -f deploy/lightsail/docker-compose.yml config -q
           docker run --rm -v "$PWD/deploy/lightsail/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.10.2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           node --check deploy/lightsail/questionnaire-scheduler.mjs
 

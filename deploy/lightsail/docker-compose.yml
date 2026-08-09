@@ -14,7 +14,7 @@ services:
     image: ${APP_IMAGE:-lightsail-app:latest}
     pull_policy: never
     env_file:
-      - /etc/auditlift/app.env
+      - ${AUDITLIFT_APP_ENV_FILE:-/etc/auditlift/app.env}
     command: ['./node_modules/.bin/drizzle-kit', 'migrate', '--config=drizzle.config.ts']
     depends_on:
       db:
@@ -26,7 +26,7 @@ services:
     pull_policy: never
     restart: unless-stopped
     env_file:
-      - /etc/auditlift/app.env
+      - ${AUDITLIFT_APP_ENV_FILE:-/etc/auditlift/app.env}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -48,7 +48,7 @@ services:
     pull_policy: never
     restart: unless-stopped
     env_file:
-      - /etc/auditlift/app.env
+      - ${AUDITLIFT_APP_ENV_FILE:-/etc/auditlift/app.env}
     command: ['node', '/app/questionnaire-scheduler.mjs']
     volumes:
       - ./questionnaire-scheduler.mjs:/app/questionnaire-scheduler.mjs:ro
@@ -60,7 +60,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     env_file:
-      - /etc/auditlift/db.env
+      - ${AUDITLIFT_DB_ENV_FILE:-/etc/auditlift/db.env}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
