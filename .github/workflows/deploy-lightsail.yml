@@ -99,6 +99,9 @@ jobs:
           install -m 644 /tmp/auditlift-questionnaire-scheduler.mjs /opt/auditlift/deploy/lightsail/questionnaire-scheduler.mjs
           APP_IMAGE=$(cat /opt/auditlift/app-image)
           export APP_IMAGE
-          docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait
+          if ! docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait; then
+            docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml logs --no-color db migrate app
+            exit 1
+          fi
           curl --fail --silent --show-error http://127.0.0.1/ > /dev/null
           REMOTE
