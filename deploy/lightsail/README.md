@@ -24,15 +24,15 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 QUESTIONNAIRE_JOB_SECRET=<long-random-secret>
 ```
 
-Install Docker and Docker Compose on the VM. The workflow installs `docker-compose.yml` and `Caddyfile` at `/opt/auditlift/deploy/lightsail/` on every deployment.
+Install Docker and Docker Compose on the VM. The workflow installs `docker-compose.yml` and the scheduler script at `/opt/auditlift/deploy/lightsail/` on every deployment.
 
-The compose stack publishes Caddy on host port `80`. Caddy proxies requests to `app:3000` over the Docker network; the application service has no host port binding and remains private to the stack. Allow inbound TCP port `80` in the Lightsail networking rules. Terminate TLS at an upstream CDN/load balancer, or extend the Caddy configuration with a verified hostname and certificate configuration before exposing HTTPS directly.
+The VM host must run a reverse proxy on port `80` that forwards to `127.0.0.1:3000`. The Compose stack binds the app only to that loopback address, so it is not exposed directly to the internet. Allow inbound TCP port `80` in the Lightsail networking rules and terminate TLS at an upstream CDN/load balancer.
 
 ## Questionnaire Job Scheduler
 
 `questionnaire-scheduler` is an always-on Compose service. It starts after the app health check, calls `POST /api/internal/questionnaire-jobs/run?limit=1` over the private Docker network, and resumes queued work after a deployment, container restart, or VM restart. It runs another job immediately after successful work, polls an empty queue every 15 seconds, and retries transient network, timeout, `408`, `429`, and `5xx` failures twice before waiting 60 seconds.
 
-Set `QUESTIONNAIRE_JOB_SECRET` in `/etc/auditlift/app.env`; it must match the endpoint's bearer-token secret. The scheduler uses this value only in an internal request header. It is not placed in the Compose file, command line, URL, or logs. Caddy returns `404` for `/api/internal/*`, so the job endpoint is not reachable through the public proxy.
+Set `QUESTIONNAIRE_JOB_SECRET` in `/etc/auditlift/app.env`; it must match the endpoint's bearer-token secret. The scheduler uses this value only in an internal request header. It is not placed in the Compose file, command line, URL, or logs. The endpoint rejects every request without the bearer token.
 
 The workflow installs `questionnaire-scheduler.mjs` with the Compose file on every deployment. Do not run a separate host cron job or external scheduler.
 

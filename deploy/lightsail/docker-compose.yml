@@ -1,15 +1,4 @@
 services:
-  proxy:
-    image: caddy:2.10.2-alpine
-    restart: unless-stopped
-    ports:
-      - '80:80'
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on:
-      app:
-        condition: service_healthy
-
   migrate:
     image: ${APP_IMAGE:-lightsail-app:latest}
     pull_policy: never
@@ -35,8 +24,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-    expose:
-      - '3000'
+    ports:
+      - '127.0.0.1:3000:3000'
     healthcheck:
       test:
         [

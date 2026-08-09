@@ -9,17 +9,11 @@ async function projectFile(path: string) {
 }
 
 describe('Lightsail deployment and questionnaire worker configuration', () => {
-	it('keeps the application private behind the public Caddy proxy', async () => {
-		const [compose, caddy] = await Promise.all([
-			projectFile('deploy/lightsail/docker-compose.yml'),
-			projectFile('deploy/lightsail/Caddyfile')
-		]);
+	it('keeps the application private behind the VM host proxy', async () => {
+		const compose = await projectFile('deploy/lightsail/docker-compose.yml');
 
-		expect(compose).toMatch(/proxy:\n\s+image: caddy:2\.10\.2-alpine/);
-		expect(compose).toMatch(/ports:\n\s+- '80:80'/);
-		expect(compose).toMatch(/app:\n(?:.|\n)*?expose:\n\s+- '3000'/);
-		expect(compose).not.toMatch(/app:\n(?:.|\n)*?ports:/);
-		expect(caddy).toContain('reverse_proxy app:3000');
+		expect(compose).toMatch(/app:\n(?:.|\n)*?ports:\n\s+- '127\.0\.0\.1:3000:3000'/);
+		expect(compose).not.toMatch(/\n\s+proxy:/);
 	});
 
 	it('runs immutable-image migrations before starting a healthy application', async () => {
