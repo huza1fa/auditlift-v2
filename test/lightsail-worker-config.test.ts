@@ -43,6 +43,9 @@ describe('Lightsail deployment and questionnaire worker configuration', () => {
 		);
 		expect(dockerfile).toContain('USER sveltekit');
 		expect(baseline).toContain("to_regclass('drizzle.__drizzle_migrations')");
+		expect(baseline).toContain(
+			'SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations'
+		);
 		expect(baseline).toContain("'0010_amazing_calypso'");
 	});
 
