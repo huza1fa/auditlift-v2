@@ -15,7 +15,12 @@ services:
     pull_policy: never
     env_file:
       - ${AUDITLIFT_APP_ENV_FILE:-/etc/auditlift/app.env}
-    command: ['./node_modules/.bin/drizzle-kit', 'migrate', '--config=drizzle.config.ts']
+    command:
+      [
+        'sh',
+        '-c',
+        'node /app/baseline-migrations.mjs && ./node_modules/.bin/drizzle-kit migrate --config=drizzle.config.ts'
+      ]
     depends_on:
       db:
         condition: service_healthy

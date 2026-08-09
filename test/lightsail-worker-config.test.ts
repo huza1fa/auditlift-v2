@@ -23,22 +23,27 @@ describe('Lightsail deployment and questionnaire worker configuration', () => {
 	});
 
 	it('runs immutable-image migrations before starting a healthy application', async () => {
-		const [compose, dockerfile] = await Promise.all([
+		const [compose, dockerfile, baseline] = await Promise.all([
 			projectFile('deploy/lightsail/docker-compose.yml'),
-			projectFile('Dockerfile')
+			projectFile('Dockerfile'),
+			projectFile('deploy/lightsail/baseline-migrations.mjs')
 		]);
 
 		expect(compose).toMatch(/migrate:\n\s+image: \$\{APP_IMAGE:-lightsail-app:latest\}/);
-		expect(compose).toContain(
-			"command: ['./node_modules/.bin/drizzle-kit', 'migrate', '--config=drizzle.config.ts']"
-		);
+		expect(compose).toContain('node /app/baseline-migrations.mjs');
+		expect(compose).toContain('./node_modules/.bin/drizzle-kit migrate --config=drizzle.config.ts');
 		expect(compose).toMatch(/migrate:\n(?:.|\n)*?db:\n\s+condition: service_healthy/);
 		expect(compose).toMatch(
 			/app:\n(?:.|\n)*?migrate:\n\s+condition: service_completed_successfully/
 		);
 		expect(dockerfile).toContain('COPY --from=builder /app/drizzle ./drizzle');
 		expect(dockerfile).toContain('COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts');
+		expect(dockerfile).toContain(
+			'COPY --from=builder /app/deploy/lightsail/baseline-migrations.mjs ./baseline-migrations.mjs'
+		);
 		expect(dockerfile).toContain('USER sveltekit');
+		expect(baseline).toContain("to_regclass('drizzle.__drizzle_migrations')");
+		expect(baseline).toContain("'0010_amazing_calypso'");
 	});
 
 	it('uses a durable, leased worker queue and validates deployment configuration', async () => {
