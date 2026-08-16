@@ -111,7 +111,7 @@
 			<h2>4. Subscription, Billing &amp; Trial</h2>
 			<h3>Free trial</h3>
 			<p>
-				New organizations receive a <strong>14-day free trial</strong> with full access to all features.
+				New organizations receive a <strong>10-day free trial</strong> with full access to all features.
 				No credit card is required to start the trial. At the end of the trial period, access to the service
 				will be restricted unless you subscribe.
 			</p>

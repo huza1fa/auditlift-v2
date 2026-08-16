@@ -185,7 +185,7 @@ export async function sendWelcomeEmail(opts: {
 	const body = `
 ${heading(`Welcome to AuditLift, ${firstName}`)}
 ${paragraph(`Your workspace for <strong>${escapeHtml(opts.organizationName)}</strong> is ready.`)}
-${trialStr ? callout(`Your 14-day free trial runs until <strong>${escapeHtml(trialStr)}</strong>.`) : ''}
+${trialStr ? callout(`Your 10-day free trial runs until <strong>${escapeHtml(trialStr)}</strong>.`) : ''}
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:${BRAND.foreground};">Here&rsquo;s where to start:</p>
 <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;line-height:1.8;color:${BRAND.muted};">
   <li>Open <strong>Controls</strong> to see every framework requirement mapped out</li>

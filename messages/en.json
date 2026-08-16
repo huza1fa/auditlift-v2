@@ -205,7 +205,7 @@
 	"onboarding_error_intent_required": "Please choose a path to continue",
 	"onboarding_error_generic": "Something went wrong. Please try again.",
 	"onboarding_done_title": "You're all set!",
-	"onboarding_done_trial_badge": "14-day free trial started",
+	"onboarding_done_trial_badge": "10-day free trial started",
 	"onboarding_done_subtitle_questionnaire": "Upload your first questionnaire and get AI-drafted answers in minutes.",
 	"onboarding_done_subtitle_compliance": "Your compliance journey starts now. Let's get your first controls covered.",
 	"onboarding_done_cta_questionnaire": "Upload questionnaire",

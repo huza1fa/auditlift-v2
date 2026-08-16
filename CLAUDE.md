@@ -52,83 +52,31 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 > **Primary platform: AWS (us-east-1, account 676799697185)**
 
-| Layer                  | Service                                   | Details                                                         |
-| ---------------------- | ----------------------------------------- | --------------------------------------------------------------- |
-| **App Hosting**        | AWS Elastic Beanstalk (Docker on AL2023)  | Single-instance t3.micro, no ALB                                |
-| **Container Registry** | Amazon ECR                                | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
-| **Database**           | Amazon RDS (PostgreSQL 16)                | db.t3.micro, Single-AZ, SSL required                            |
-| **Object Storage**     | Amazon S3                                 | `auditlift-storage-676799697185-us-east-1`                      |
-| **Secrets**            | AWS Systems Manager (SSM) Parameter Store | `/prod/app/*` as `SecureString`                                 |
-| **DNS**                | Cloudflare (Porkbun registrar)            | CNAME → Beanstalk, SSL Flexible                                 |
-| **CDN/SSL**            | Cloudflare                                | Flexible SSL termination (HTTP origin)                          |
-| **Logging**            | CloudWatch Logs                           | App stdout, nginx, eb-engine                                    |
+| Layer                  | Service                        | Details                                                         |
+| ---------------------- | ------------------------------ | --------------------------------------------------------------- |
+| **App Hosting**        | AWS Lightsail VM               | Docker Compose app stack; host reverse proxy on port 80         |
+| **Container Registry** | Amazon ECR                     | Immutable `sha-<commit>` images plus the moving `main` tag      |
+| **Database**           | PostgreSQL 16                  | Compose `db` service with persistent Docker volume              |
+| **Object Storage**     | Amazon S3                      | `auditlift-storage-676799697185-us-east-1`                      |
+| **Secrets**            | VM environment files           | `/etc/auditlift/app.env` and `/etc/auditlift/db.env`, mode 0600 |
+| **DNS/CDN/SSL**        | Cloudflare (Porkbun registrar) | Points to the Lightsail VM; TLS terminates upstream             |
+| **Logging**            | Docker Compose                 | Inspect with `docker compose logs` on the VM                    |
 
-### Beanstalk Deployment Flow
+### Lightsail Deployment Flow
 
-1. Build Docker image locally: `docker build --platform linux/amd64 -t auditlift:latest .`
-2. Tag and push to ECR: `docker tag ... && docker push ...`
-3. Create a source bundle ZIP containing `Dockerrun.aws.json`, `.ebextensions/`, and `.platform/` (see "Nginx Proxy Buffer Fix" above)
-4. Create application version from the source bundle ZIP
-5. Update Beanstalk environment to new version
-6. Beanstalk pulls image from ECR, starts container on port 3000
+1. GitHub Actions validates `deploy/lightsail/`, builds a Linux AMD64 image, and publishes it to ECR.
+2. The workflow streams the selected image to the Lightsail VM over pinned-host-key SSH and updates `/opt/auditlift/deploy/lightsail/`.
+3. Compose runs Drizzle migrations before recreating the application; the app binds only to `127.0.0.1:3000` and the host reverse proxy serves public traffic.
+4. The `questionnaire-scheduler` Compose service starts after the app health check and invokes the authenticated internal job endpoint. It processes the durable queue continuously, polls an empty queue every 15 seconds, and resumes after deployments or restarts.
 
-### Nginx Proxy Buffer Fix (Beanstalk 502 on sign-in)
+Do not deploy source bundles, use Elastic Beanstalk configuration, or add host cron/external scheduler jobs. See `deploy/lightsail/README.md` for VM setup, required GitHub secrets, and rollback.
 
-The app uses Better Auth, which sends large `Set-Cookie` headers during sign-in and sign-up. Beanstalk's default nginx proxy buffer (4 kB) causes:
+### Environment Variables (Lightsail)
 
-```
-502 Bad Gateway — upstream sent too big header
-```
+Place runtime configuration in `/etc/auditlift/app.env` and database credentials in `/etc/auditlift/db.env`, both mode `0600`. The app environment includes:
 
-This is fixed by increasing the proxy buffer size. Two config locations are used so the fix works across Beanstalk platform versions:
-
-1. **Legacy `.ebextensions`** — `.ebextensions/proxy.config` writes `/etc/nginx/conf.d/proxy.conf`.
-2. **AL2023 `.platform`** — `.platform/nginx/conf.d/proxy.conf` is auto-included by the AL2023 platform.
-
-Both files set:
-
-```
-proxy_buffer_size 128k;
-proxy_buffers 4 256k;
-proxy_busy_buffers_size 256k;
-```
-
-#### The hurdle: source bundle, not just the Docker image
-
-Updating only the Docker image in ECR is **not enough**. Beanstalk applies nginx config from the **source bundle ZIP**, not from the container image. If you deploy a new image but reuse an old source bundle — or a bundle missing `.ebextensions` and `.platform/nginx/conf.d/proxy.conf` — the 502 will persist on sign-in.
-
-**Every source bundle ZIP must contain:**
-
-```
-source-bundle.zip
-├── Dockerrun.aws.json
-├── .ebextensions/
-│   └── proxy.config
-└── .platform/
-    └── nginx/
-        └── conf.d/
-            └── proxy.conf
-```
-
-Create the application version from this ZIP, then update the environment. Do not create the application version from `Dockerrun.aws.json` alone.
-
-Quick way to build the bundle (PowerShell — `Compress-Archive` uses backslashes which break Linux `unzip`, so use Python instead):
-
-```powershell
-python -c "import zipfile, os; zf = zipfile.ZipFile('auditlift-source-bundle.zip', 'w', zipfile.ZIP_DEFLATED); zf.write('Dockerrun.aws.json', 'Dockerrun.aws.json'); [zf.write(p, p.replace('\\', '/')) for d in ['.ebextensions', '.platform'] for root, _, files in os.walk(d) for p in [os.path.join(root, f)]]; zf.close()"
-```
-
-Or on macOS/Linux:
-
-```bash
-zip -r auditlift-source-bundle.zip Dockerrun.aws.json .ebextensions .platform
-```
-
-### Environment Variables (Beanstalk)
-
-All secrets are injected via Beanstalk environment option settings (`aws:elasticbeanstalk:application:environment`):
-
-- `DATABASE_URL` — RDS connection string with `?ssl=require`
+- `DATABASE_URL` — Compose database connection string (for example, `postgres://auditlift:<password>@db:5432/auditlift`)
+- `DATABASE_SSL=false` — the Compose database does not use TLS
 - `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` — Auth config
 - `S3_BUCKET_NAME` — S3 bucket for file storage
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — Payments
@@ -140,26 +88,15 @@ All secrets are injected via Beanstalk environment option settings (`aws:elastic
 - `ORIGIN` — `https://auditlift.app`
 - `PUBLIC_POSTHOG_KEY` — PostHog project API key (client-side)
 - `PUBLIC_POSTHOG_HOST` — PostHog instance URL (default: `https://us.i.posthog.com`)
+- `QUESTIONNAIRE_JOB_SECRET` — bearer secret shared with the internal questionnaire scheduler
 
 ### Storage Configuration (S3)
 
 The app uses AWS SDK v3 (`@aws-sdk/client-s3`).
 
-- **AWS mode** (production): When `BUCKET_ENDPOINT` is absent, the S3 client uses the default AWS credential chain (IAM instance profile on Beanstalk EC2).
+- **AWS mode** (production): When `BUCKET_ENDPOINT` is absent, the S3 client uses the default AWS credential chain available to the Lightsail workload.
 - **S3-compatible mode** (dev/local): When `BUCKET_ENDPOINT` is set, uses explicit endpoint + access keys.
 - The bucket name is read from `BUCKET_NAME` with fallback to `S3_BUCKET_NAME`.
-
-### RDS SSL
-
-RDS requires SSL. The connection is configured with:
-
-```ts
-ssl: {
-	rejectUnauthorized: false;
-}
-```
-
-in `src/lib/server/db/index.ts`, and `?ssl=require` appended to `DATABASE_URL`.
 
 ---
 
@@ -204,7 +141,7 @@ Pricing: 10-day free trial → monthly subscription.
 - **frontend agent**: Svelte components, pages, layouts, Paraglide strings, Tailwind
 - **backend agent**: API routes, auth guards, Stripe webhooks, policy generation logic
 - **database agent**: Drizzle schema, migrations, service functions
-- **infrastructure agent**: CDK stacks, Beanstalk config, Docker builds, ECR pushes, SSM secrets
+- **infrastructure agent**: Lightsail Compose/Caddy config, Docker builds, ECR deployment, VM environment files
 
 ---
 

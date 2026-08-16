@@ -1,15 +1,26 @@
 import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
+import {
+	canChangeRole,
+	canDeleteOrganization,
+	canInvite,
+	canManageRoles,
+	canRemoveMembers,
+	hasMinimumRole,
+	type UserRole
+} from './authorization';
 import { hasActiveAccess } from './billing';
 import { db } from './db';
-import { userOrganizations, type UserRole } from './db/schema';
+import { userOrganizations } from './db/schema';
 
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-	owner: 4,
-	admin: 3,
-	member: 2,
-	viewer: 1
-};
+export {
+	canChangeRole,
+	canDeleteOrganization,
+	canInvite,
+	canManageRoles,
+	canRemoveMembers,
+	hasMinimumRole
+} from './authorization';
 
 function isUserRole(role: string): role is UserRole {
 	return role === 'owner' || role === 'admin' || role === 'member' || role === 'viewer';
@@ -66,46 +77,6 @@ export async function requireActiveOrganizationRole(
 	}
 
 	return context;
-}
-
-export function hasMinimumRole(userRole: UserRole, minimumRole: UserRole): boolean {
-	return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[minimumRole];
-}
-
-export function canInvite(role: UserRole): boolean {
-	return role === 'owner' || role === 'admin';
-}
-
-export function canManageRoles(role: UserRole): boolean {
-	return role === 'owner' || role === 'admin';
-}
-
-export function canRemoveMembers(role: UserRole): boolean {
-	return role === 'owner' || role === 'admin';
-}
-
-export function canDeleteOrganization(role: UserRole): boolean {
-	return role === 'owner';
-}
-
-export function canChangeRole(
-	actorRole: UserRole,
-	targetRole: UserRole,
-	targetUserId: string,
-	actorUserId: string
-): boolean {
-	// Cannot change own role
-	if (targetUserId === actorUserId) {
-		return false;
-	}
-
-	// Only owner can change owner role
-	if (targetRole === 'owner') {
-		return actorRole === 'owner';
-	}
-
-	// Owner and admin can change other roles
-	return actorRole === 'owner' || actorRole === 'admin';
 }
 
 export function requireMinimumRole(

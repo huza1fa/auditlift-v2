@@ -19,21 +19,16 @@
 	import { captureEvent } from '$lib/posthog';
 
 	// ---------------------------------------------------------------------------
-	// Types (fields being added by backend in parallel — marked optional)
+	// Types
 	// ---------------------------------------------------------------------------
 	type RecentQuestionnaire = {
 		id: string;
 		filename: string;
 		status: 'processing' | 'ready' | 'error';
-		dealReadiness: number | null;
+		dealReadinessScore: number;
 		answeredCount: number;
-		totalCount: number;
+		totalQuestions: number;
 		gapCount: number;
-	};
-
-	type QuestionnaireCoverageEntry = {
-		frameworkId: string;
-		controlsCoveredByQuestionnaires: number;
 	};
 
 	type NextAction =
@@ -56,12 +51,10 @@
 		justSubscribed: boolean;
 		scoreHistory?: Array<{ score: number; snapshotAt: Date }>;
 		isReadOnly?: boolean;
-		// New fields added by backend in parallel
 		questionnaireTotal?: number;
 		avgDealReadiness?: number | null;
 		policiesTotal?: number;
 		recentQuestionnaires?: RecentQuestionnaire[];
-		questionnaireCoverage?: QuestionnaireCoverageEntry[];
 		staleEvidenceCount?: number;
 		nextAction?: NextAction | null;
 		hasSystemDescription?: boolean;
@@ -128,10 +121,6 @@
 	const hasQuestionnaires = $derived(recentQuestionnaires.length > 0);
 	const hasFramework = $derived(data.framework !== null);
 	const staleEvidenceCount = $derived(data.staleEvidenceCount ?? 0);
-
-	const questionnaireCoverageCount = $derived(
-		data.questionnaireCoverage?.[0]?.controlsCoveredByQuestionnaires ?? 0
-	);
 
 	const showStartHere = $derived(
 		data.readiness.completedControls === 0 && data.readiness.blockers.length > 0 && !data.isReadOnly
@@ -273,10 +262,10 @@
 							the missing policies to close them.
 						</p>
 						<a
-							href="/policies"
+							href="/questionnaires/{data.nextAction.questionnaireId}?filter=gaps"
 							class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:underline"
 						>
-							Generate policies <ArrowRight size={12} />
+							Review gaps <ArrowRight size={12} />
 						</a>
 					{:else if data.nextAction.type === 'upload-questionnaire'}
 						<p class="text-sm text-[var(--foreground)]">
@@ -435,12 +424,12 @@
 									<p class="text-xs text-[var(--foreground-muted)]">
 										{m.dashboard_deal_readiness_label()}
 									</p>
-									{#if q.dealReadiness !== null}
+									{#if q.status === 'ready'}
 										<p
 											class="text-lg font-bold"
-											style="color: {dealReadinessColor(q.dealReadiness)}"
+											style="color: {dealReadinessColor(q.dealReadinessScore)}"
 										>
-											{q.dealReadiness}%
+											{q.dealReadinessScore}%
 										</p>
 									{:else}
 										<p class="text-lg font-bold text-[var(--foreground-muted)]">—</p>
@@ -538,21 +527,14 @@
 					<div
 						class="space-y-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-alt)] p-3 text-sm"
 					>
-						<p class="text-[var(--foreground-muted)]">
-							{m.dashboard_coverage_from_evidence({
-								count: data.readiness.completedControls
-							})}
-						</p>
-						<p class="text-[var(--foreground-muted)]">
-							{m.dashboard_coverage_from_questionnaires({
-								count: questionnaireCoverageCount
-							})}
-						</p>
-						<p class="border-t border-[var(--border)] pt-2 font-medium text-[var(--foreground)]">
+						<p class="font-medium text-[var(--foreground)]">
 							{m.dashboard_coverage_total({
-								covered: data.readiness.completedControls + questionnaireCoverageCount,
+								covered: data.readiness.completedControls,
 								total: data.readiness.totalControls
 							})}
+						</p>
+						<p class="border-t border-[var(--border)] pt-2 text-[var(--foreground-muted)]">
+							Includes controls covered through questionnaire answers, policies, and evidence.
 						</p>
 					</div>
 

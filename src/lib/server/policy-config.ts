@@ -39,6 +39,25 @@ export const POLICY_TITLES: Record<string, string> = {
 	custom: 'Custom Policy'
 };
 
+export const POLICY_CONTROL_CODES: Record<StandardPolicyType, string[]> = {
+	'security-policy': ['CC1.1', 'CC1.2', 'CC2.1', 'CC5.1', 'CC6.1', 'CC9.1'],
+	'access-control-policy': ['CC6.1', 'CC6.2', 'CC6.3', 'CC6.6', 'CC6.7'],
+	'incident-response-policy': ['CC7.3', 'CC7.4', 'CC7.5'],
+	'change-management-policy': ['CC8.1', 'CC3.4'],
+	'vulnerability-management-policy': ['CC7.1', 'CC7.2'],
+	'data-classification-policy': ['CC6.1', 'CC6.5', 'P1.1', 'P2.1'],
+	'business-continuity-policy': ['A1.2', 'A1.3', 'CC9.1'],
+	'vendor-management-policy': ['CC9.2'],
+	'cryptography-policy': ['CC6.1', 'CC6.7'],
+	'acceptable-use-policy': ['CC1.4', 'CC2.2'],
+	'password-policy': ['CC6.1', 'CC6.6'],
+	'remote-work-policy': ['CC6.6', 'CC6.7'],
+	'privacy-policy': ['P1.1', 'P2.1', 'P3.1', 'P4.1', 'P5.1', 'P6.1', 'P7.1', 'P8.1'],
+	'ai-usage-policy': ['CC2.2', 'CC6.1'],
+	'data-retention-policy': ['CC6.5', 'P4.1'],
+	'physical-security-policy': ['CC6.4']
+};
+
 export const POLICY_GROUPS: { label: string; types: string[] }[] = [
 	{
 		label: 'Security Fundamentals',

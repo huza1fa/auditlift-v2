@@ -5,12 +5,21 @@ import { checkRateLimit } from '$lib/server/rate-limit';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { db } from '$lib/server/db';
-import { policies, organizationFrameworks, frameworks } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import {
+	policies,
+	policyControls,
+	organizationFrameworks,
+	frameworks,
+	controls,
+	questionnaires,
+	questionnaireQuestions
+} from '$lib/server/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import {
 	STANDARD_POLICY_TYPES,
 	POLICY_TITLES,
+	POLICY_CONTROL_CODES,
 	type StandardPolicyType
 } from '$lib/server/policy-config';
 import { computeReadinessScore } from '$lib/server/score';
@@ -18,6 +27,7 @@ import { logActivity } from '$lib/server/activity';
 import { GeneratePolicySchema } from '$lib/server/validation';
 import { buildSystemPrompt, buildRichContext } from '$lib/server/policy-context';
 import { captureServerEvent } from '$lib/server/posthog';
+import { getVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts';
 
 // ─── Template fallback ────────────────────────────────────────────────────────
 
@@ -69,6 +79,8 @@ function getOpenRouterClient() {
 interface GenerateRequest {
 	policyType: string;
 	controlId?: string;
+	controlIds?: string[];
+	questionnaireId?: string;
 	customTitle?: string;
 	customPrompt?: string;
 }
@@ -441,7 +453,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const parseResult = GeneratePolicySchema.safeParse(await request.json());
 	if (!parseResult.success) throw error(400, 'Invalid input');
-	const { policyType, controlId, customTitle, customPrompt } = parseResult.data;
+	const { policyType, controlId, controlIds, questionnaireId, customTitle, customPrompt } =
+		parseResult.data;
 
 	const trimmedCustomTitle = customTitle?.trim();
 	const trimmedCustomPrompt = customPrompt?.trim();
@@ -462,18 +475,103 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 	}
 
-	// Resolve org's primary framework
-	const [orgFramework] = await db
+	const requestedControlIds = [
+		...new Set([...(controlIds ?? []), ...(controlId ? [controlId] : [])])
+	];
+
+	const orgFrameworkRows = await db
 		.select({ framework: frameworks })
 		.from(organizationFrameworks)
 		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
-		.where(eq(organizationFrameworks.organizationId, orgId))
-		.limit(1);
+		.where(eq(organizationFrameworks.organizationId, orgId));
+	const enrolledFrameworkIdSet = new Set(orgFrameworkRows.map((row) => row.framework.id));
 
-	const frameworkName = orgFramework?.framework.name ?? 'SOC 2';
-	const frameworkId = orgFramework?.framework.id ?? null;
+	let questionnaireMappedControlIds = new Set<string>();
+	if (questionnaireId) {
+		const [questionnaire] = await db
+			.select({ id: questionnaires.id })
+			.from(questionnaires)
+			.where(and(eq(questionnaires.id, questionnaireId), eq(questionnaires.organizationId, orgId)))
+			.limit(1);
+		if (!questionnaire) throw error(404, 'Questionnaire not found');
+
+		const mappedQuestions = await db
+			.select({ mappedControlIds: questionnaireQuestions.mappedControlIds })
+			.from(questionnaireQuestions)
+			.where(
+				and(
+					eq(questionnaireQuestions.questionnaireId, questionnaireId),
+					eq(questionnaireQuestions.organizationId, orgId)
+				)
+			);
+		questionnaireMappedControlIds = new Set(
+			mappedQuestions.flatMap((question) => (question.mappedControlIds as string[]) ?? [])
+		);
+	}
+
+	const requestedControls =
+		requestedControlIds.length > 0
+			? await db
+					.select({
+						id: controls.id,
+						frameworkId: controls.frameworkId,
+						code: controls.code,
+						title: controls.title
+					})
+					.from(controls)
+					.where(inArray(controls.id, requestedControlIds))
+			: [];
+	if (requestedControls.length !== requestedControlIds.length) {
+		throw error(400, 'One or more controls do not exist');
+	}
+
+	const requestedFrameworkIds = [
+		...new Set(requestedControls.map((control) => control.frameworkId))
+	];
+	if (requestedFrameworkIds.length > 1) {
+		throw error(400, 'Generate separate policies for controls from different frameworks');
+	}
+
+	const frameworkId = requestedFrameworkIds[0] ?? orgFrameworkRows[0]?.framework.id ?? null;
+	const [targetFramework] = frameworkId
+		? await db.select().from(frameworks).where(eq(frameworks.id, frameworkId)).limit(1)
+		: [];
+	const frameworkName = targetFramework?.name ?? 'SOC 2';
+	const standardControls =
+		isStandard && frameworkId
+			? await db
+					.select({
+						id: controls.id,
+						frameworkId: controls.frameworkId,
+						code: controls.code,
+						title: controls.title
+					})
+					.from(controls)
+					.where(
+						and(
+							eq(controls.frameworkId, frameworkId),
+							inArray(controls.code, POLICY_CONTROL_CODES[policyType as StandardPolicyType])
+						)
+					)
+			: [];
+	const associatedControls = [
+		...new Map(
+			[...standardControls, ...requestedControls].map((control) => [control.id, control])
+		).values()
+	];
+	const associatedControlIds = associatedControls.map((control) => control.id);
+
+	for (const control of associatedControls) {
+		if (
+			!enrolledFrameworkIdSet.has(control.frameworkId) &&
+			!questionnaireMappedControlIds.has(control.id)
+		) {
+			throw error(403, 'Control is not applicable to this organization');
+		}
+	}
 
 	const ctx = buildRichContext(org, frameworkName);
+	const verifiedFacts = await getVerifiedOrganizationFactsForPrompt(orgId);
 
 	// Build prompt
 	const prompt = isCustom
@@ -486,7 +584,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const openrouter = getOpenRouterClient();
 		const result = await generateText({
 			model: openrouter('openai/gpt-4o-mini'),
-			system: buildSystemPrompt(ctx),
+			system: buildSystemPrompt(ctx, verifiedFacts),
 			prompt,
 			maxOutputTokens: 4096
 		});
@@ -505,20 +603,34 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const title = isCustom ? trimmedCustomTitle! : (POLICY_TITLES[policyType] ?? policyType);
 
 	// Persist to DB
-	const [policy] = await db
-		.insert(policies)
-		.values({
-			organizationId: orgId,
-			controlId: controlId ?? null,
-			frameworkId: frameworkId ?? null,
-			type: policyType,
-			title,
-			content,
-			isCustom,
-			customPrompt: isCustom ? trimmedCustomPrompt! : null,
-			generatedAt: new Date()
-		})
-		.returning();
+	const policy = await db.transaction(async (tx) => {
+		const [created] = await tx
+			.insert(policies)
+			.values({
+				organizationId: orgId,
+				controlId: associatedControlIds[0] ?? null,
+				frameworkId: frameworkId ?? associatedControls[0]?.frameworkId ?? null,
+				type: policyType,
+				title,
+				content,
+				isCustom,
+				customPrompt: isCustom ? trimmedCustomPrompt! : null,
+				generatedAt: new Date()
+			})
+			.returning();
+
+		if (associatedControlIds.length > 0) {
+			await tx.insert(policyControls).values(
+				associatedControlIds.map((mappedControlId) => ({
+					organizationId: orgId,
+					policyId: created.id,
+					controlId: mappedControlId
+				}))
+			);
+		}
+
+		return created;
+	});
 
 	logActivity({
 		organizationId: orgId,
@@ -543,9 +655,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		groups: { organization: orgId }
 	});
 
-	if (frameworkId) {
-		computeReadinessScore(orgId, frameworkId).catch(console.error);
+	for (const affectedFrameworkId of new Set(
+		associatedControls.map((control) => control.frameworkId)
+	)) {
+		computeReadinessScore(orgId, affectedFrameworkId).catch(console.error);
 	}
 
-	return json(policy);
+	return json({
+		...policy,
+		linkedControls: associatedControls.map((control) => ({
+			id: control.id,
+			code: control.code,
+			title: control.title
+		}))
+	});
 };

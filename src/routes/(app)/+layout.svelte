@@ -205,7 +205,7 @@
 					<div class="h-1 w-full rounded-full bg-[var(--background-subtle)]">
 						<div
 							class="h-1 rounded-full bg-[var(--warning)] transition-all"
-							style="width: {Math.min(100, (trialDays / 14) * 100)}%"
+							style="width: {Math.min(100, (trialDays / 10) * 100)}%"
 						></div>
 					</div>
 					<p class="mt-1.5 text-[10px] text-[var(--warning)]">Upgrade to keep access →</p>

@@ -1,7 +1,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { evidence } from '$lib/server/db/schema';
+import { evidence, controls, organizationFrameworks } from '$lib/server/db/schema';
+import { and, eq } from 'drizzle-orm';
 import {
 	validateFileType,
 	validateFileSize,
@@ -26,6 +27,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const result = PresignEvidenceSchema.safeParse(body);
 	if (!result.success) throw error(400, 'Invalid input');
 	const { controlId, filename, mimeType, sizeBytes } = result.data;
+	const [control] = await db
+		.select({ id: controls.id })
+		.from(controls)
+		.innerJoin(
+			organizationFrameworks,
+			and(
+				eq(organizationFrameworks.frameworkId, controls.frameworkId),
+				eq(organizationFrameworks.organizationId, orgId)
+			)
+		)
+		.where(eq(controls.id, controlId))
+		.limit(1);
+	if (!control) throw error(404, 'Control not found');
 	const checksumSha256 =
 		typeof body === 'object' && body !== null && 'checksumSha256' in body
 			? body.checksumSha256

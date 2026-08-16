@@ -7,8 +7,12 @@ import {
 	uuid,
 	jsonb,
 	uniqueIndex,
-	index
+	index,
+	foreignKey,
+	check
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { user } from './auth.schema';
 
 // ─── Organizations ────────────────────────────────────────────────────────────
 
@@ -44,6 +48,43 @@ export const organizations = pgTable('organizations', {
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
+
+// ─── Organization Facts ──────────────────────────────────────────────────────
+
+export type OrganizationFactSource = 'manual' | 'system';
+export type OrganizationFactStatus = 'pending' | 'verified';
+
+export const organizationFacts = pgTable(
+	'organization_facts',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		category: text('category').notNull(),
+		label: text('label').notNull(),
+		value: text('value').notNull(),
+		source: text('source').$type<OrganizationFactSource>().notNull().default('manual'),
+		status: text('status').$type<OrganizationFactStatus>().notNull().default('pending'),
+		sourceDetail: text('source_detail'),
+		createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+		updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+		reviewedBy: text('reviewed_by').references(() => user.id, { onDelete: 'set null' }),
+		reviewedAt: timestamp('reviewed_at'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('organization_facts_org_category_label_unique_idx').on(
+			table.organizationId,
+			table.category,
+			table.label
+		),
+		index('organization_facts_org_status_idx').on(table.organizationId, table.status),
+		check('organization_facts_source_check', sql`${table.source} in ('manual', 'system')`),
+		check('organization_facts_status_check', sql`${table.status} in ('pending', 'verified')`)
+	]
+);
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 
@@ -117,7 +158,13 @@ export const organizationFrameworks = pgTable(
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
-	(table) => [index('org_fw_org_id_idx').on(table.organizationId)]
+	(table) => [
+		uniqueIndex('organization_frameworks_org_framework_unique_idx').on(
+			table.organizationId,
+			table.frameworkId
+		),
+		index('org_fw_org_id_idx').on(table.organizationId)
+	]
 );
 
 // ─── Evidence ─────────────────────────────────────────────────────────────────
@@ -158,6 +205,7 @@ export const policies = pgTable(
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id),
+		// Retained for older consumers; policyControls is the authoritative association.
 		controlId: uuid('control_id').references(() => controls.id),
 		frameworkId: uuid('framework_id').references(() => frameworks.id),
 		type: text('type').notNull(),
@@ -172,8 +220,38 @@ export const policies = pgTable(
 		archivedAt: timestamp('archived_at')
 	},
 	(table) => [
+		uniqueIndex('policies_id_organization_unique_idx').on(table.id, table.organizationId),
 		index('policies_org_archived_idx').on(table.organizationId, table.archivedAt),
 		index('policies_control_org_idx').on(table.controlId, table.organizationId)
+	]
+);
+
+// ─── Policy Controls ──────────────────────────────────────────────────────────
+
+export const policyControls = pgTable(
+	'policy_controls',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		policyId: uuid('policy_id')
+			.notNull()
+			.references(() => policies.id, { onDelete: 'cascade' }),
+		controlId: uuid('control_id')
+			.notNull()
+			.references(() => controls.id),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('policy_controls_policy_control_unique_idx').on(table.policyId, table.controlId),
+		index('policy_controls_org_control_idx').on(table.organizationId, table.controlId),
+		index('policy_controls_org_policy_idx').on(table.organizationId, table.policyId),
+		foreignKey({
+			columns: [table.policyId, table.organizationId],
+			foreignColumns: [policies.id, policies.organizationId],
+			name: 'policy_controls_policy_organization_fk'
+		}).onDelete('cascade')
 	]
 );
 

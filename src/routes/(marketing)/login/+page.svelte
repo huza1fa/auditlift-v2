@@ -276,6 +276,6 @@
 	</div>
 
 	<p class="mt-6 text-[12px] text-[var(--foreground-subtle)]">
-		14-day free trial · No credit card required
+		10-day free trial · No credit card required
 	</p>
 </div>

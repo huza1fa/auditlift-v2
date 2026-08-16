@@ -6,7 +6,8 @@ import {
 	organizationFrameworks,
 	frameworks,
 	evidence,
-	policies
+	policies,
+	policyControls
 } from '$lib/server/db/schema';
 import { eq, and, count, sql, isNull } from 'drizzle-orm';
 
@@ -58,9 +59,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			)
 		)
 		.leftJoin(
+			policyControls,
+			and(eq(policyControls.controlId, controls.id), eq(policyControls.organizationId, orgId))
+		)
+		.leftJoin(
 			policies,
 			and(
-				eq(policies.controlId, controls.id),
+				eq(policies.id, policyControls.policyId),
 				eq(policies.organizationId, orgId),
 				isNull(policies.archivedAt)
 			)

@@ -21,6 +21,8 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+!src/routes/api/questionnaires/\[id\]/coverage/
+!src/routes/api/questionnaires/\[id\]/coverage/+server.ts
 *.lcov
 
 # nyc test coverage
@@ -153,6 +155,7 @@ nul
 # === Generated build artifacts ===
 .svelte-kit/
 build/
+src/lib/paraglide/
 
 # === Migration artifacts (local only, do not commit) ===
 infrastructure/

@@ -1,7 +1,13 @@
 import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { controls, evidence, policies, organizationFrameworks } from '$lib/server/db/schema';
+import {
+	controls,
+	evidence,
+	policies,
+	policyControls,
+	organizationFrameworks
+} from '$lib/server/db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -44,13 +50,18 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const linkedPolicies = await db
 		.select()
 		.from(policies)
+		.innerJoin(
+			policyControls,
+			and(eq(policyControls.policyId, policies.id), eq(policyControls.organizationId, orgId))
+		)
 		.where(
 			and(
 				eq(policies.organizationId, orgId),
-				eq(policies.controlId, control.id),
+				eq(policyControls.controlId, control.id),
 				isNull(policies.archivedAt)
 			)
-		);
+		)
+		.then((rows) => rows.map((row) => row.policies));
 
 	const allControlsWithStatus = await db
 		.select({
@@ -71,9 +82,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			)
 		)
 		.leftJoin(
+			policyControls,
+			and(eq(policyControls.controlId, controls.id), eq(policyControls.organizationId, orgId))
+		)
+		.leftJoin(
 			policies,
 			and(
-				eq(policies.controlId, controls.id),
+				eq(policies.id, policyControls.policyId),
 				eq(policies.organizationId, orgId),
 				isNull(policies.archivedAt)
 			)

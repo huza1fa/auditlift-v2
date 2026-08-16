@@ -2,10 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { organizations, userOrganizations } from '$lib/server/db/schema';
+import { organizations } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireMinimumRole } from '$lib/server/auth-utils';
-import type { UserRole } from '$lib/server/db/schema';
+import { requireOrganizationRole } from '$lib/server/auth-utils';
 
 const PostureSchema = z.object({
 	securityTools: z
@@ -20,24 +19,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!result.success) throw error(400, 'Invalid input');
 	const { securityTools } = result.data;
 
-	const [userOrg] = await db
-		.select()
-		.from(userOrganizations)
-		.where(eq(userOrganizations.userId, locals.session.user.id))
-		.limit(1);
-	if (!userOrg) throw error(400, 'No organization found');
-
-	// Only owners/admins can update organization profile data
-	requireMinimumRole(
-		userOrg.role as UserRole,
+	const { organizationId } = await requireOrganizationRole(
+		locals,
 		'admin',
 		'Only admins can update organization details'
 	);
 
-	await db
-		.update(organizations)
-		.set({ securityTools })
-		.where(eq(organizations.id, userOrg.organizationId));
+	await db.update(organizations).set({ securityTools }).where(eq(organizations.id, organizationId));
 
 	return json({ ok: true });
 };

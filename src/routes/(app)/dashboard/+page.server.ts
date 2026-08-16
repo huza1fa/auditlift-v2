@@ -6,13 +6,11 @@ import {
 	frameworks,
 	readinessSnapshots,
 	questionnaires,
-	questionnaireQuestions,
 	policies,
-	controls,
 	evidence,
 	activityLogs
 } from '$lib/server/db/schema';
-import { eq, and, desc, count, avg, isNull, inArray, lt } from 'drizzle-orm';
+import { eq, and, desc, count, avg, isNull, lt } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -170,74 +168,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.from(policies)
 		.where(and(eq(policies.organizationId, orgId), isNull(policies.archivedAt)));
 
-	// ── Aggregate framework coverage from questionnaire mappings ───────────────
-
-	// Collect all unique control IDs mapped across all processed questions for this org
-	const allMappedQuestions = await db
-		.select({ mappedControlIds: questionnaireQuestions.mappedControlIds })
-		.from(questionnaireQuestions)
-		.where(eq(questionnaireQuestions.organizationId, orgId));
-
-	const allMappedControlIds = [
-		...new Set(allMappedQuestions.flatMap((q) => (q.mappedControlIds as string[]) ?? []))
-	];
-
-	// Load all frameworks selected by this org
-	const orgFrameworkRows = await db
-		.select({
-			frameworkId: organizationFrameworks.frameworkId,
-			frameworkName: frameworks.name
-		})
-		.from(organizationFrameworks)
-		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
-		.where(eq(organizationFrameworks.organizationId, orgId));
-
-	type QuestionnaireCoverageEntry = {
-		frameworkId: string;
-		frameworkName: string;
-		controlsCoveredByQuestionnaires: number;
-		totalControls: number;
-	};
-
-	let questionnaireCoverage: QuestionnaireCoverageEntry[] = [];
-
-	if (orgFrameworkRows.length > 0) {
-		const orgFrameworkIds = orgFrameworkRows.map((f) => f.frameworkId);
-
-		// Fetch all controls for the org's selected frameworks in one query
-		const allFrameworkControls = await db
-			.select({ id: controls.id, frameworkId: controls.frameworkId })
-			.from(controls)
-			.where(inArray(controls.frameworkId, orgFrameworkIds));
-
-		// Build a map of frameworkId -> Set of control IDs
-		const controlsByFramework = new Map<string, Set<string>>();
-		for (const row of allFrameworkControls) {
-			if (!controlsByFramework.has(row.frameworkId)) {
-				controlsByFramework.set(row.frameworkId, new Set());
-			}
-			controlsByFramework.get(row.frameworkId)!.add(row.id);
-		}
-
-		// The set of mapped control IDs for fast intersection
-		const mappedSet = new Set(allMappedControlIds);
-
-		questionnaireCoverage = orgFrameworkRows.map((fw) => {
-			const frameworkControlSet = controlsByFramework.get(fw.frameworkId) ?? new Set<string>();
-			const totalControls = frameworkControlSet.size;
-			const controlsCoveredByQuestionnaires = [...frameworkControlSet].filter((cId) =>
-				mappedSet.has(cId)
-			).length;
-
-			return {
-				frameworkId: fw.frameworkId,
-				frameworkName: fw.frameworkName,
-				controlsCoveredByQuestionnaires,
-				totalControls
-			};
-		});
-	}
-
 	// ── Stale evidence count (older than 90 days, not deleted, active) ─────────
 
 	const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
@@ -308,7 +238,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		questionnaireTotal,
 		avgDealReadiness,
 		policiesTotal,
-		questionnaireCoverage,
 		staleEvidenceCount,
 		nextAction,
 		lastActivity: lastActivity ?? null,

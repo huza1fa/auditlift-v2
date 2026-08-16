@@ -166,6 +166,16 @@
 		}
 	}
 
+	async function saveOnboardingStep(path: string, body: Record<string, unknown>) {
+		const response = await fetch(path, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body)
+		});
+		if (!response.ok) throw new Error(`Failed to save ${path}`);
+		return response;
+	}
+
 	async function next() {
 		errorMsg = '';
 		domainBlocked = false;
@@ -191,12 +201,11 @@
 					}
 				}
 
-				const res = await fetch('/api/onboarding/organization', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ name: companyName, website: website.trim() || null, industry })
+				await saveOnboardingStep('/api/onboarding/organization', {
+					name: companyName,
+					website: website.trim() || null,
+					industry
 				});
-				if (!res.ok) throw new Error('Failed to save');
 				captureEvent('onboarding_step_completed', { step: 1, step_name: 'company_setup' });
 			} else if (step === 2) {
 				if (!teamSize) {
@@ -204,19 +213,11 @@
 					loading = false;
 					return;
 				}
-				await fetch('/api/onboarding/team', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ teamSize })
-				});
+				await saveOnboardingStep('/api/onboarding/team', { teamSize });
 				captureEvent('onboarding_step_completed', { step: 2, step_name: 'team_size' });
 			} else if (step === 3) {
 				// Tech stack — optional, just save and proceed
-				await fetch('/api/onboarding/stack', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ stack })
-				});
+				await saveOnboardingStep('/api/onboarding/stack', { stack });
 				captureEvent('onboarding_step_completed', { step: 3, step_name: 'tech_stack', stack });
 			} else if (step === 4) {
 				// NEW: Data & Customers — validate and save
@@ -225,10 +226,11 @@
 					loading = false;
 					return;
 				}
-				await fetch('/api/onboarding/profile', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ dataTypes, customerType, geoReach, productType })
+				await saveOnboardingStep('/api/onboarding/profile', {
+					dataTypes,
+					customerType,
+					geoReach,
+					productType
 				});
 				captureEvent('onboarding_step_completed', {
 					step: 4,
@@ -239,11 +241,7 @@
 				});
 			} else if (step === 5) {
 				// NEW: Security posture — optional, just save
-				await fetch('/api/onboarding/posture', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ securityTools })
-				});
+				await saveOnboardingStep('/api/onboarding/posture', { securityTools });
 				captureEvent('onboarding_step_completed', {
 					step: 5,
 					step_name: 'security_posture',
@@ -266,20 +264,11 @@
 				// Path B: continue to framework step
 			} else if (step === 7 && intent === 'compliance') {
 				// Framework step (was step 5)
-				await fetch('/api/onboarding/framework', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ frameworkSlug: framework })
-				});
+				await saveOnboardingStep('/api/onboarding/framework', { frameworkSlug: framework });
 				captureEvent('onboarding_step_completed', { step: 7, step_name: 'framework', framework });
 			} else if (isCompletionStep) {
 				// Completion — call complete endpoint and redirect
-				const res = await fetch('/api/onboarding/complete', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ intent })
-				});
-				if (!res.ok) throw new Error('Failed to complete');
+				const res = await saveOnboardingStep('/api/onboarding/complete', { intent });
 				const completionData = await res.json();
 				captureEvent('onboarding_completed', { intent });
 				goto(completionData.redirectTo ?? '/dashboard');

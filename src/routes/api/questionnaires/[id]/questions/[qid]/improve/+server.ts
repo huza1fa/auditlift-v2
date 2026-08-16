@@ -100,7 +100,7 @@ ${currentAnswer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 
 <instruction>${refinementPrompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</instruction>
 
-Rewrite the answer applying the instruction. Preserve factual accuracy. Return only the revised answer text with no preamble, no explanation, and no markdown formatting.`
+Rewrite the answer applying the instruction. Preserve factual accuracy and do not introduce company-specific tools, practices, certifications, or commitments that are absent from the current answer. Return only the revised answer text with no preamble, no explanation, and no markdown formatting.`
 		});
 		improvedAnswer = result.text.trim();
 	} catch {

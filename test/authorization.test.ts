@@ -1,6 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('../src/lib/server/db', () => ({ db: {} }));
+import { describe, expect, it } from 'vitest';
 
 import {
 	canChangeRole,
@@ -9,7 +7,7 @@ import {
 	canManageRoles,
 	canRemoveMembers,
 	hasMinimumRole
-} from '../src/lib/server/auth-utils';
+} from '../src/lib/server/authorization';
 
 describe('organization authorization helpers', () => {
 	it('enforces the complete role hierarchy', () => {

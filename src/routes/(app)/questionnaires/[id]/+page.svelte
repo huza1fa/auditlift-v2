@@ -17,7 +17,9 @@
 		Copy,
 		ArrowClockwise,
 		ShareNetwork,
-		Link as LinkIcon
+		Link as LinkIcon,
+		ChatCenteredDots,
+		PaperPlaneTilt
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -78,6 +80,30 @@
 		orgHasFramework: boolean;
 	}
 
+	interface RemediationAction {
+		id: string;
+		title: string;
+		reason: string;
+		priority: number;
+		questionIds: string[];
+	}
+
+	interface DealRemediationPlan {
+		actions: RemediationAction[];
+	}
+
+	interface FounderInterviewPrompt {
+		category: string;
+		question: string;
+		whyItMatters: string;
+		affectedQuestionIds: string[];
+		proposedFact: { label: string; category: string };
+	}
+
+	interface GapInterviewResponse {
+		prompts: FounderInterviewPrompt[];
+	}
+
 	// ── Props ─────────────────────────────────────────────────────────────────
 	let { data } = $props();
 
@@ -109,6 +135,13 @@
 	let sharing = $state(false);
 	let shareCopied = $state(false);
 	let existingPolicyTypes = $state<string[]>([]);
+	let remediationPlan = $state<DealRemediationPlan | null>(null);
+	let planLoading = $state(false);
+	let interviewPrompts = $state<FounderInterviewPrompt[]>([]);
+	let interviewAnswers = $state<Record<string, string>>({});
+	let interviewLoading = $state(false);
+	let interviewError = $state('');
+	let savingPromptId = $state<string | null>(null);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	const selectedQuestion = $derived(questions.find((q) => q.id === selectedQuestionId) ?? null);
@@ -135,6 +168,18 @@
 
 	const isProcessing = $derived(questionnaire?.status === 'processing');
 	const isError = $derived(questionnaire?.status === 'error');
+	const planActions = $derived(remediationPlan?.actions ?? []);
+	const selectedInterviewPrompts = $derived(
+		selectedQuestion
+			? interviewPrompts.filter((prompt) =>
+					prompt.affectedQuestionIds.includes(selectedQuestion.id)
+				)
+			: []
+	);
+
+	$effect(() => {
+		filterTab = page.url.searchParams.get('filter') === 'gaps' ? 'gaps' : 'all';
+	});
 
 	// Score ring math
 	const ringSize = 80;
@@ -269,6 +314,7 @@
 			// Fetch coverage data when questionnaire is ready
 			if (json.questionnaire.status === 'ready') {
 				fetchCoverage();
+				fetchRemediationPlan();
 			}
 		} catch {
 			fetchError = 'Failed to load questionnaire.';
@@ -284,6 +330,72 @@
 			}
 		} catch {
 			// Coverage is optional — silently ignore errors
+		}
+	}
+
+	async function fetchRemediationPlan() {
+		planLoading = true;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/plan`);
+			if (!res.ok) return;
+			const json: DealRemediationPlan = await res.json();
+			remediationPlan = json;
+		} catch {
+			// The plan is supplementary and should not block questionnaire review.
+		} finally {
+			planLoading = false;
+		}
+	}
+
+	function priorityVariant(priority: number): 'danger' | 'warning' | 'info' {
+		if (priority === 1) return 'danger';
+		if (priority <= 3) return 'warning';
+		return 'info';
+	}
+
+	async function startGapInterview() {
+		if (!selectedQuestion) return;
+		interviewLoading = true;
+		interviewError = '';
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/gap-interview`, {
+				method: 'POST'
+			});
+			const json: GapInterviewResponse & { message?: string } = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(json.message ?? 'Unable to start the founder interview.');
+			interviewPrompts = json.prompts ?? [];
+			interviewAnswers = {};
+		} catch (error) {
+			interviewError =
+				error instanceof Error ? error.message : 'Unable to start the founder interview.';
+		} finally {
+			interviewLoading = false;
+		}
+	}
+
+	async function saveInterviewFact(prompt: FounderInterviewPrompt) {
+		const answer = interviewAnswers[prompt.question]?.trim();
+		if (!answer) return;
+		savingPromptId = prompt.question;
+		try {
+			const res = await fetch('/api/settings/facts', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					category: prompt.proposedFact.category,
+					label: prompt.proposedFact.label,
+					value: answer,
+					sourceDetail: `Founder interview for questionnaire ${id}: ${prompt.question}`
+				})
+			});
+			const json: { message?: string } = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(json.message ?? 'Unable to save the suggested fact.');
+			interviewPrompts = interviewPrompts.filter((item) => item.question !== prompt.question);
+			toastSuccess('Saved as a pending company fact');
+		} catch (error) {
+			toastError(error instanceof Error ? error.message : 'Unable to save the suggested fact.');
+		} finally {
+			savingPromptId = null;
 		}
 	}
 
@@ -472,6 +584,7 @@
 			showImproveInput = false;
 			refinementPrompt = '';
 			improveError = '';
+			interviewError = '';
 		}
 	});
 </script>
@@ -853,6 +966,55 @@
 				</Card>
 			{/if}
 
+			<!-- Deal remediation plan -->
+			{#if planLoading || remediationPlan}
+				<Card class="p-5 sm:p-6">
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+						<div class="flex items-start gap-2.5">
+							<Sparkle size={19} color="var(--brand)" weight="fill" class="mt-0.5 shrink-0" />
+							<div>
+								<h2 class="text-sm font-semibold text-[var(--foreground)]">
+									Deal remediation plan
+								</h2>
+								<p class="mt-1 text-xs leading-relaxed text-[var(--foreground-muted)]">
+									Prioritized next steps to improve this deal's readiness. Review each action before
+									representing it to your prospect.
+								</p>
+							</div>
+						</div>
+						{#if planLoading}
+							<Spinner size={18} class="animate-spin" color="var(--foreground-muted)" />
+						{/if}
+					</div>
+
+					{#if planActions.length > 0}
+						<div class="mt-4 grid gap-3 lg:grid-cols-3">
+							{#each planActions as action (action.id)}
+								<button
+									onclick={() => (selectedQuestionId = action.questionIds[0] ?? selectedQuestionId)}
+									disabled={action.questionIds.length === 0}
+									class="rounded-[var(--radius)] border border-[var(--border)] p-3 text-left transition-colors enabled:hover:border-[var(--brand)] enabled:hover:bg-[var(--brand-light)] disabled:cursor-default"
+								>
+									<div class="mb-2 flex items-center justify-between gap-2">
+										<Badge variant={priorityVariant(action.priority)}
+											>Priority {action.priority}</Badge
+										>
+										{#if action.questionIds.length > 0}<ArrowRight
+												size={14}
+												color="var(--foreground-muted)"
+											/>{/if}
+									</div>
+									<p class="text-sm font-medium text-[var(--foreground)]">{action.title}</p>
+									<p class="mt-1 text-xs leading-relaxed text-[var(--foreground-muted)]">
+										{action.reason}
+									</p>
+								</button>
+							{/each}
+						</div>
+					{/if}
+				</Card>
+			{/if}
+
 			<!-- Two-column review layout -->
 			<div class="flex flex-col gap-5 lg:flex-row lg:items-start">
 				<!-- Left panel: question list -->
@@ -1152,6 +1314,89 @@
 									</div>
 								</div>
 
+								<!-- Founder interview -->
+								{#if data.hasActivePaidAccess}
+									<div
+										class="mb-4 rounded-[var(--radius-lg)] border border-[var(--brand)] bg-[var(--brand-light)] p-4"
+									>
+										<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+											<div class="flex items-start gap-2.5">
+												<ChatCenteredDots size={18} color="var(--brand)" class="mt-0.5 shrink-0" />
+												<div>
+													<p class="text-sm font-semibold text-[var(--foreground)]">
+														Founder interview
+													</p>
+													<p class="mt-0.5 text-xs leading-relaxed text-[var(--foreground-muted)]">
+														Answer a short AI follow-up to capture missing company context.
+													</p>
+												</div>
+											</div>
+											<Button
+												size="sm"
+												variant="secondary"
+												onclick={startGapInterview}
+												disabled={interviewLoading}
+											>
+												{#if interviewLoading}<Spinner
+														size={13}
+														class="animate-spin"
+													/>{:else}<Sparkle size={13} />{/if}
+												{interviewPrompts.length > 0 ? 'Refresh' : 'Start'}
+											</Button>
+										</div>
+
+										{#each selectedInterviewPrompts as prompt (prompt.question)}
+											<div class="mt-4 rounded-[var(--radius)] bg-[var(--background)] p-3">
+												<p
+													class="text-xs font-semibold tracking-wide text-[var(--foreground-subtle)] uppercase"
+												>
+													AI question
+												</p>
+												<p class="mt-1.5 text-sm leading-relaxed text-[var(--foreground)]">
+													{prompt.question}
+												</p>
+												<p class="mt-1 text-xs leading-relaxed text-[var(--foreground-muted)]">
+													{prompt.whyItMatters}
+												</p>
+												<textarea
+													value={interviewAnswers[prompt.question] ?? ''}
+													oninput={(event) => {
+														interviewAnswers = {
+															...interviewAnswers,
+															[prompt.question]: (event.target as HTMLTextAreaElement).value
+														};
+													}}
+													rows={3}
+													placeholder="Share only details you can confirm."
+													class="mt-3 w-full resize-y rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+												></textarea>
+												<div class="mt-2 flex justify-end">
+													<Button
+														size="sm"
+														variant="secondary"
+														onclick={() => saveInterviewFact(prompt)}
+														disabled={savingPromptId === prompt.question ||
+															!(interviewAnswers[prompt.question] ?? '').trim()}
+													>
+														{#if savingPromptId === prompt.question}<Spinner
+																size={13}
+																class="animate-spin"
+															/>{:else}<PaperPlaneTilt size={13} />{/if}
+														Save as pending fact
+													</Button>
+												</div>
+												<p class="mt-2 text-xs text-[var(--foreground-subtle)]">
+													This will not alter the questionnaire answer.
+												</p>
+											</div>
+										{/each}
+
+										{#if interviewError}
+											<p class="mt-3 text-xs text-[var(--danger)]">{interviewError}</p>
+										{/if}
+									</div>
+								{/if}
+
 								{#if selectedQuestion.gapRemediation}
 									{@const suggestedType = getSuggestedPolicyType(selectedQuestion.domain)}
 									<div class="rounded-[var(--radius-lg)] border border-[var(--border)] p-4">
@@ -1163,7 +1408,11 @@
 										</p>
 										<div class="flex flex-wrap gap-2">
 											{#if suggestedType}
-												<a href="/policies?generate={suggestedType}">
+												<a
+													href="/policies?generate={suggestedType}&controlIds={gapControls
+														.map((control) => control.id)
+														.join(',')}&questionnaireId={id}"
+												>
 													<Button size="sm" variant="secondary">
 														<FileText size={14} />
 														Generate {getPolicyTitle(suggestedType)}

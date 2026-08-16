@@ -52,7 +52,7 @@
 				'Unlimited evidence & policies',
 				'Up to 5 team members',
 				'Auditor export',
-				'14-day free trial'
+				'10-day free trial'
 			]
 		},
 		{
@@ -66,7 +66,7 @@
 				'Unlimited evidence & policies',
 				'Unlimited team members',
 				'Auditor export',
-				'14-day free trial'
+				'10-day free trial'
 			]
 		}
 	];
@@ -211,14 +211,14 @@
 						name: 'Starter',
 						price: '149.00',
 						priceCurrency: 'USD',
-						description: '1 compliance framework, up to 5 team members, 14-day free trial'
+						description: '1 compliance framework, up to 5 team members, 10-day free trial'
 					},
 					{
 						'@type': 'Offer',
 						name: 'Growth',
 						price: '299.00',
 						priceCurrency: 'USD',
-						description: 'All 3 frameworks, unlimited team members, 14-day free trial'
+						description: 'All 3 frameworks, unlimited team members, 10-day free trial'
 					}
 				]
 			}
@@ -583,7 +583,7 @@
 								{/each}
 							</ul>
 							<a href="/login" class="btn-primary pricing-cta-btn">Start free trial</a>
-							<p class="pricing-trial-note">14-day free trial. No credit card required.</p>
+							<p class="pricing-trial-note">10-day free trial. No credit card required.</p>
 						</div>
 					</div>
 				{/each}

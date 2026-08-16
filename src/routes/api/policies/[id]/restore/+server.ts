@@ -2,10 +2,11 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { z } from 'zod';
 import { db } from '$lib/server/db';
-import { policies, policyVersions } from '$lib/server/db/schema';
+import { policies, policyControls, policyVersions, controls } from '$lib/server/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
+import { computeReadinessScore } from '$lib/server/score';
 
 const RestoreSchema = z.object({
 	versionId: z.string().uuid()
@@ -80,6 +81,17 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		})
 		.where(and(eq(policies.id, policyId), eq(policies.organizationId, organizationId)))
 		.returning();
+
+	const affectedControls = await db
+		.select({ frameworkId: controls.frameworkId })
+		.from(policyControls)
+		.innerJoin(controls, eq(policyControls.controlId, controls.id))
+		.where(
+			and(eq(policyControls.policyId, policyId), eq(policyControls.organizationId, organizationId))
+		);
+	for (const { frameworkId } of affectedControls) {
+		computeReadinessScore(organizationId, frameworkId).catch(console.error);
+	}
 
 	logActivity({
 		organizationId,

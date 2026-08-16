@@ -5,6 +5,7 @@ import {
 	controls,
 	evidence,
 	policies,
+	policyControls,
 	organizationFrameworks,
 	frameworks
 } from '$lib/server/db/schema';
@@ -159,9 +160,13 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		);
 	}
 
-	const [allEvidence, allPolicies] = await Promise.all([
+	const [allEvidence, allPolicies, allPolicyControls] = await Promise.all([
 		db.select().from(evidence).where(evidenceWhere),
-		db.select().from(policies).where(policiesWhere)
+		db.select().from(policies).where(policiesWhere),
+		db
+			.select({ policyId: policyControls.policyId, controlId: policyControls.controlId })
+			.from(policyControls)
+			.where(eq(policyControls.organizationId, orgId))
 	]);
 
 	const controlsById = new Map(allControls.map((control) => [control.id, control]));
@@ -170,9 +175,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	for (const item of allEvidence) {
 		evidenceCounts.set(item.controlId, (evidenceCounts.get(item.controlId) ?? 0) + 1);
 	}
-	for (const policy of allPolicies) {
-		if (policy.controlId) {
-			policyCounts.set(policy.controlId, (policyCounts.get(policy.controlId) ?? 0) + 1);
+	const exportedPolicyIds = new Set(allPolicies.map((policy) => policy.id));
+	for (const mapping of allPolicyControls) {
+		if (exportedPolicyIds.has(mapping.policyId)) {
+			policyCounts.set(mapping.controlId, (policyCounts.get(mapping.controlId) ?? 0) + 1);
 		}
 	}
 

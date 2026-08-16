@@ -8,6 +8,8 @@ export const InviteTeamMemberSchema = z.object({
 export const GeneratePolicySchema = z.object({
 	policyType: z.string().min(1).max(100),
 	controlId: z.string().uuid().optional(),
+	controlIds: z.array(z.string().uuid()).min(1).max(50).optional(),
+	questionnaireId: z.string().uuid().optional(),
 	customTitle: z.string().min(1).max(200).optional(),
 	customPrompt: z.string().min(1).max(2000).optional()
 });
@@ -39,7 +41,7 @@ export const StackSchema = z.object({
 });
 
 export const OrganizationSchema = z.object({
-	name: z.string().min(1).max(100).trim(),
+	name: z.string().trim().min(1).max(100),
 	website: z
 		.string()
 		.max(500)
@@ -77,3 +79,36 @@ export const SystemDescriptionSchema = z.object({
 	keyTools: z.string().max(500).optional().default(''),
 	additionalContext: z.string().max(1000).optional().default('')
 });
+
+const OrganizationFactFields = {
+	category: z.string().trim().min(1).max(100),
+	label: z.string().trim().min(1).max(200),
+	value: z.string().trim().min(1).max(10_000),
+	sourceDetail: z.string().trim().min(1).max(2_000).nullable().optional()
+};
+
+export const CreateOrganizationFactSchema = z
+	.object({
+		...OrganizationFactFields,
+		status: z.enum(['pending', 'verified']).optional()
+	})
+	.strict();
+
+export const UpdateOrganizationFactSchema = z
+	.object({
+		category: OrganizationFactFields.category.optional(),
+		label: OrganizationFactFields.label.optional(),
+		value: OrganizationFactFields.value.optional(),
+		sourceDetail: OrganizationFactFields.sourceDetail,
+		status: z.enum(['pending', 'verified']).optional()
+	})
+	.strict()
+	.refine(
+		(data) =>
+			data.category !== undefined ||
+			data.label !== undefined ||
+			data.value !== undefined ||
+			data.sourceDetail !== undefined ||
+			data.status !== undefined,
+		{ message: 'At least one field is required' }
+	);

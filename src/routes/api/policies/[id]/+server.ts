@@ -1,11 +1,12 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { policies, policyVersions } from '$lib/server/db/schema';
+import { policies, policyControls, policyVersions, controls } from '$lib/server/db/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { logActivity } from '$lib/server/activity';
 import { PatchPolicySchema } from '$lib/server/validation';
 import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
+import { computeReadinessScore } from '$lib/server/score';
 
 export const GET: RequestHandler = async ({ locals, params, request }) => {
 	const { organizationId } = await requireOrganizationRole(locals);
@@ -79,6 +80,14 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		throw error(404, 'Policy not found');
 	}
 
+	const affectedControls = await db
+		.select({ frameworkId: controls.frameworkId })
+		.from(policyControls)
+		.innerJoin(controls, eq(policyControls.controlId, controls.id))
+		.where(
+			and(eq(policyControls.policyId, policyId), eq(policyControls.organizationId, organizationId))
+		);
+
 	await db
 		.update(policies)
 		.set({ archivedAt: new Date(), updatedAt: new Date() })
@@ -93,6 +102,10 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		entityId: existing.id,
 		entityName: existing.title
 	}).catch(console.error);
+
+	for (const { frameworkId } of affectedControls) {
+		computeReadinessScore(organizationId, frameworkId).catch(console.error);
+	}
 
 	return json({ success: true });
 };

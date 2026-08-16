@@ -48,44 +48,30 @@ AuditLift makes that connection visible and automatic.
 
 > **Primary platform: AWS (us-east-1, account 676799697185)**
 
-| Component              | Service                                  | Details                                                         |
-| ---------------------- | ---------------------------------------- | --------------------------------------------------------------- |
-| **App Hosting**        | AWS Elastic Beanstalk (Docker on AL2023) | Single-instance t3.micro, no ALB                                |
-| **Container Registry** | Amazon ECR                               | `676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest` |
-| **Database**           | Amazon RDS (PostgreSQL 16)               | db.t3.micro, Single-AZ, SSL required                            |
-| **Object Storage**     | Amazon S3                                | `auditlift-storage-676799697185-us-east-1`                      |
-| **Secrets**            | AWS SSM Parameter Store                  | `/prod/app/*` as `SecureString`                                 |
-| **DNS**                | Cloudflare (Porkbun registrar)           | CNAME → Beanstalk, SSL Flexible                                 |
-| **CDN/SSL**            | Cloudflare                               | Flexible SSL termination (HTTP origin)                          |
-| **Logging**            | CloudWatch Logs                          | App stdout, nginx, eb-engine                                    |
+| Component              | Service                        | Details                                                         |
+| ---------------------- | ------------------------------ | --------------------------------------------------------------- |
+| **App Hosting**        | AWS Lightsail VM               | Docker Compose app stack with a host reverse proxy              |
+| **Container Registry** | Amazon ECR                     | Immutable `sha-<commit>` images plus the moving `main` tag      |
+| **Database**           | PostgreSQL 16                  | Compose `db` service with a persistent Docker volume            |
+| **Object Storage**     | Amazon S3                      | `auditlift-storage-676799697185-us-east-1`                      |
+| **Secrets**            | VM environment files           | `/etc/auditlift/app.env` and `/etc/auditlift/db.env`, mode 0600 |
+| **DNS/CDN/SSL**        | Cloudflare (Porkbun registrar) | Points to the Lightsail VM; TLS terminates upstream             |
+| **Logging**            | Docker Compose                 | `docker compose logs` on the Lightsail VM                       |
 
 ### Deployment Flow
 
-1. **Build** Docker image locally:
+1. GitHub Actions validates the Compose configuration, builds a Linux AMD64 image, and publishes immutable ECR tags.
+2. The workflow streams the selected image to the Lightsail VM over pinned-host-key SSH and installs the Compose, Caddy, and scheduler files under `/opt/auditlift/deploy/lightsail/`.
+3. Compose runs the Drizzle migrations before recreating the app. The app is bound to `127.0.0.1:3000`; the VM's reverse proxy accepts public HTTP traffic.
+4. The `questionnaire-scheduler` Compose service starts after app health checks and invokes the authenticated internal job endpoint. It polls the durable queue every 15 seconds when empty and resumes work after deployments or restarts. Do not add a host cron job or external scheduler.
 
-   ```bash
-   docker build --platform linux/amd64 -t auditlift:latest .
-   ```
-
-2. **Push** to ECR:
-
-   ```bash
-   docker tag auditlift:latest 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest
-   docker push 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:latest
-   ```
-
-3. **Create** application version from `Dockerrun.aws.json` (references `:latest` image)
-
-4. **Deploy** to Beanstalk environment `auditlift-prod`
-
-5. Beanstalk pulls image, starts container on port 3000, nginx proxies requests
+See [`deploy/lightsail/README.md`](deploy/lightsail/README.md) for VM setup, deployment secrets, and rollback instructions.
 
 ### Known Infrastructure Quirks
 
-- **Nginx proxy buffers**: Better Auth sends large `Set-Cookie` headers. We fix this via `.ebextensions/proxy.config` in every source bundle (sets `proxy_buffer_size 128k; proxy_buffers 4 256k;`). Without this, social sign-in returns `502`.
-- **Single-instance Beanstalk**: No ALB = cost savings (~$16/mo), but no detailed health checks. Health shows "Grey/No Data" during deployments.
-- **RDS SSL**: Required. Connection uses `ssl: { rejectUnauthorized: false }` and `?ssl=require` in `DATABASE_URL`.
-- **S3 IAM mode**: In production, the S3 client uses the EC2 instance profile (no explicit access keys). In dev, set `BUCKET_ENDPOINT` for S3-compatible storage.
+- **Migrations**: Deployments fail before the app is recreated if Drizzle migrations fail.
+- **Async processing**: Questionnaire work is durable in PostgreSQL and handled only by the always-on Compose scheduler, not request handlers or cron.
+- **S3 credentials**: Production uses the AWS credential chain. In development, set `BUCKET_ENDPOINT` for S3-compatible storage.
 
 ## Development
 

@@ -27,7 +27,9 @@
 	import { captureEvent } from '$lib/posthog';
 
 	// ── Types ────────────────────────────────────────────────────────────────
-	type Policy = (typeof data.policies)[0];
+	type Policy = (typeof data.policies)[0] & {
+		linkedControls?: Array<{ id: string; code: string; title: string }>;
+	};
 	type Version = { id: string; content: string; savedAt: string; savedBy: string };
 
 	// ── Props ────────────────────────────────────────────────────────────────
@@ -52,6 +54,9 @@
 	let progressWidth = $state('0%');
 	let errorMessage = $state('');
 	let policyList = $state<Policy[]>([]);
+	let controlsByPolicy = $state<Record<string, Array<{ id: string; code: string; title: string }>>>(
+		{}
+	);
 	let expandedId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let editContent = $state('');
@@ -64,6 +69,7 @@
 
 	$effect(() => {
 		policyList = data.policies;
+		controlsByPolicy = data.controlsByPolicy;
 	});
 
 	// ── Policy groups ────────────────────────────────────────────────────────
@@ -228,7 +234,7 @@
 		generationStepIndex = 0;
 	}
 
-	async function callGenerate(body: Record<string, string>) {
+	async function callGenerate(body: Record<string, unknown>) {
 		generating = true;
 		errorMessage = '';
 		startGenerationProgress();
@@ -246,6 +252,10 @@
 			}
 			const newPolicy: Policy = await res.json();
 			policyList = [newPolicy, ...policyList];
+			controlsByPolicy = {
+				...controlsByPolicy,
+				[newPolicy.id]: newPolicy.linkedControls ?? []
+			};
 			stopGenerationProgress(true);
 		} catch {
 			errorMessage = m.policies_error_generic();
@@ -257,7 +267,13 @@
 
 	async function generateStandard() {
 		captureEvent('policy_generate_clicked', { policy_type: selectedType, tab: 'standard' });
-		await callGenerate({ policyType: selectedType });
+		const controlIds = page.url.searchParams.get('controlIds')?.split(',').filter(Boolean) ?? [];
+		const questionnaireId = page.url.searchParams.get('questionnaireId');
+		await callGenerate({
+			policyType: selectedType,
+			...(controlIds.length ? { controlIds } : {}),
+			...(questionnaireId ? { questionnaireId } : {})
+		});
 	}
 
 	async function generateCustom() {
@@ -274,7 +290,7 @@
 
 	async function regenerate(policy: Policy) {
 		captureEvent('policy_regenerate_clicked', { policy_id: policy.id, policy_type: policy.type });
-		const body: Record<string, string> = { policyType: policy.type };
+		const body: Record<string, unknown> = { policyType: policy.type };
 		if (policy.isCustom && policy.customPrompt) {
 			body.policyType = 'custom';
 			body.customTitle = policy.title;
@@ -508,6 +524,15 @@
 								<p class="text-xs text-[var(--foreground-muted)]">
 									{m.policies_generated_on({ date: formatDate(policy.createdAt) })}
 								</p>
+								{#if controlsByPolicy[policy.id]?.length}
+									<div class="mt-1 flex flex-wrap gap-1">
+										{#each controlsByPolicy[policy.id] as control (control.id)}
+											<a href="/controls/{control.id}" title={control.title}>
+												<Badge variant="default">{control.code}</Badge>
+											</a>
+										{/each}
+									</div>
+								{/if}
 							</div>
 						</div>
 						<div class="flex shrink-0 gap-2">

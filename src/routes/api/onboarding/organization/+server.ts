@@ -2,10 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { organizations, userOrganizations } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { extractDomainFromEmail, requireMinimumRole } from '$lib/server/auth-utils';
+import { eq } from 'drizzle-orm';
+import { extractDomainFromEmail, requireOrganizationRole } from '$lib/server/auth-utils';
 import { OrganizationSchema } from '$lib/server/validation';
-import type { UserRole } from '$lib/server/db/schema';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.session) throw error(401, 'Unauthorized');
@@ -14,27 +13,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!parseResult.success) throw error(400, 'Invalid input');
 	const { name, website, industry } = parseResult.data;
 
-	// Check if user already has an org
-	const [existingUserOrg] = await db
-		.select()
-		.from(userOrganizations)
-		.where(eq(userOrganizations.userId, locals.session.user.id))
-		.limit(1);
-
-	if (existingUserOrg) {
-		// Only owners/admins can update organization profile data
-		requireMinimumRole(
-			existingUserOrg.role as UserRole,
+	if (locals.organizationId) {
+		const { organizationId } = await requireOrganizationRole(
+			locals,
 			'admin',
 			'Only admins can update organization details'
 		);
 
-		// Update existing org
 		await db
 			.update(organizations)
 			.set({ name: name.trim(), website: website?.trim() || null, industry: industry || null })
-			.where(eq(organizations.id, existingUserOrg.organizationId));
-		return json({ organizationId: existingUserOrg.organizationId });
+			.where(eq(organizations.id, organizationId));
+		return json({ organizationId });
 	}
 
 	// Extract domain from email
@@ -51,7 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		Date.now().toString(36);
 
 	const trialEndsAt = new Date();
-	trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+	trialEndsAt.setDate(trialEndsAt.getDate() + 10);
 
 	const [org] = await db
 		.insert(organizations)

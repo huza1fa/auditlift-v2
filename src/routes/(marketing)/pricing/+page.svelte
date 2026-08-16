@@ -29,7 +29,7 @@
 				'Up to 5 team members',
 				'Email support',
 				'Readiness score dashboard',
-				'14-day free trial'
+				'10-day free trial'
 			]
 		},
 		{
@@ -50,7 +50,7 @@
 				'Unlimited team members',
 				'Priority email support',
 				'Readiness score dashboard',
-				'14-day free trial'
+				'10-day free trial'
 			]
 		}
 	];
@@ -60,7 +60,7 @@
 	<title>Pricing — AuditLift | Security Readiness for Closing Deals</title>
 	<meta
 		name="description"
-		content="Simple, flat-rate pricing to get deal-ready for SOC 2, PCI-DSS, and ISO 27001. Starter from $149/mo. No per-seat pricing. Cancel anytime. 14-day free trial."
+		content="Simple, flat-rate pricing to get deal-ready for SOC 2, PCI-DSS, and ISO 27001. Starter from $149/mo. No per-seat pricing. Cancel anytime. 10-day free trial."
 	/>
 	<link rel="canonical" href="https://auditlift.app/pricing" />
 
@@ -70,7 +70,7 @@
 	<meta property="og:title" content="Pricing — AuditLift | SOC 2 Compliance Software" />
 	<meta
 		property="og:description"
-		content="SOC 2 compliance from $149/mo. No per-seat pricing. All 3 frameworks on Growth. 14-day free trial."
+		content="SOC 2 compliance from $149/mo. No per-seat pricing. All 3 frameworks on Growth. 10-day free trial."
 	/>
 	<meta property="og:image" content="https://auditlift.app/og.png" />
 
@@ -78,7 +78,7 @@
 	<meta name="twitter:title" content="Pricing — AuditLift" />
 	<meta
 		name="twitter:description"
-		content="SOC 2 compliance from $149/mo. No per-seat pricing. 14-day free trial."
+		content="SOC 2 compliance from $149/mo. No per-seat pricing. 10-day free trial."
 	/>
 	<meta name="twitter:image" content="https://auditlift.app/og.png" />
 </svelte:head>
