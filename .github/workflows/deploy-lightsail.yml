@@ -110,9 +110,6 @@ jobs:
           install -d -m 755 /opt/auditlift/deploy/lightsail
           install -m 644 /tmp/auditlift-compose.yml /opt/auditlift/deploy/lightsail/docker-compose.yml
           install -m 644 /tmp/auditlift-Caddyfile /opt/auditlift/deploy/lightsail/Caddyfile
-          install -m 644 /tmp/auditlift-Caddyfile /etc/caddy/Caddyfile
-          caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-          systemctl reload caddy
           install -m 644 /tmp/auditlift-questionnaire-scheduler.mjs /opt/auditlift/deploy/lightsail/questionnaire-scheduler.mjs
           APP_IMAGE=$(cat /opt/auditlift/app-image)
           export APP_IMAGE
