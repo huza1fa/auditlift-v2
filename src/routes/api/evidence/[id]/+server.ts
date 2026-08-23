@@ -6,10 +6,15 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { getPresignedDownloadUrl } from '$lib/server/storage';
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
-import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { organizationId: orgId } = await requireOrganizationRole(locals);
+	const { organizationId: orgId } = await requireActiveOrganizationRole(
+		locals,
+		'viewer',
+		'Insufficient permissions',
+		'Trial expired. Upgrade to download evidence.'
+	);
 
 	const [ev] = await db
 		.select()

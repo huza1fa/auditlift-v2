@@ -16,8 +16,8 @@ export function hasActiveAccess(subscription: Subscription, trialEndsAt?: Date |
 	if (subscription.status === 'active') return true;
 
 	if (subscription.status === 'trialing') {
-		if (trialEndsAt) return trialEndsAt > new Date();
-		return true;
+		if (!trialEndsAt) return false;
+		return trialEndsAt > new Date();
 	}
 
 	return false;

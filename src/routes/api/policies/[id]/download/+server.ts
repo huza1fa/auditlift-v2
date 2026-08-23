@@ -4,10 +4,15 @@ import { db } from '$lib/server/db';
 import { policies } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { generatePolicyPdf } from '$lib/server/pdf';
-import { requireOrganizationRole } from '$lib/server/auth-utils';
+import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const { organizationId } = await requireOrganizationRole(locals);
+	const { organizationId } = await requireActiveOrganizationRole(
+		locals,
+		'viewer',
+		'Insufficient permissions',
+		'Trial expired. Upgrade to download policies.'
+	);
 
 	const policyId = params.id;
 	if (!policyId) {
