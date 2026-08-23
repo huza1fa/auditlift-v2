@@ -106,24 +106,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	if (!dev) {
 		response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 	}
-
-	// Only enforce CSP in production — Vite's module system in dev doesn't
-	// play well with script-src restrictions (dynamic imports, HMR, eval for source maps)
-	if (!dev) {
-		response.headers.set(
-			'Content-Security-Policy',
-			[
-				"default-src 'self'",
-				"script-src 'self' 'unsafe-inline' https://us-assets.i.posthog.com https://static.cloudflareinsights.com",
-				"worker-src 'self' blob: data:",
-				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-				"font-src 'self' https://fonts.gstatic.com",
-				"img-src 'self' data: https:",
-				"connect-src 'self' https://api.openrouter.ai https://api.stripe.com https://us.i.posthog.com https://us-assets.i.posthog.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://auditlift-storage-676799697185-us-east-1.s3.us-east-1.amazonaws.com",
-				"frame-ancestors 'none'"
-			].join('; ')
-		);
-	}
+	// Content-Security-Policy is configured in svelte.config.js (kit.csp, nonce mode):
+	// SvelteKit generates a per-request nonce for its injected scripts and replaces
+	// %sveltekit.nonce% in app.html. 'unsafe-inline' scripts are no longer allowed.
 	return response;
 };
 

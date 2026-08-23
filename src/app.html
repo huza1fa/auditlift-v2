@@ -10,7 +10,7 @@
 		%sveltekit.head%
 	</head>
 
-	<script>
+	<script nonce="%sveltekit.nonce%">
 		// Apply theme before render to prevent flash
 		(function () {
 			const stored = localStorage.getItem('auditlift-theme');

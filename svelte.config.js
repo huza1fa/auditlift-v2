@@ -17,6 +17,32 @@ const config = {
 		adapter: adapter(),
 		paths: {
 			relative: false
+		},
+		csp: {
+			mode: 'nonce',
+			directives: {
+				'default-src': ['self'],
+				'script-src': [
+					'self',
+					'https://us-assets.i.posthog.com',
+					'https://static.cloudflareinsights.com'
+				],
+				'worker-src': ['self', 'blob:', 'data:'],
+				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
+				'font-src': ['self', 'https://fonts.gstatic.com'],
+				'img-src': ['self', 'data:', 'https:'],
+				'connect-src': [
+					'self',
+					'https://api.openrouter.ai',
+					'https://api.stripe.com',
+					'https://us.i.posthog.com',
+					'https://us-assets.i.posthog.com',
+					'https://cloudflareinsights.com',
+					'https://*.cloudflareinsights.com',
+					'https://auditlift-storage-676799697185-us-east-1.s3.us-east-1.amazonaws.com'
+				],
+				'frame-ancestors': ['none']
+			}
 		}
 	}
 };
