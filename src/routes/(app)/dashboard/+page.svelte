@@ -46,6 +46,14 @@
 			blockers: Array<{ id: string; code: string; title: string; category: string }>;
 		};
 		framework: { id: string; name: string } | null;
+		frameworksReadiness?: Array<{
+			id: string;
+			name: string;
+			slug: string;
+			score: number;
+			totalControls: number;
+			completedControls: number;
+		}>;
 		trialDaysRemaining: number | null;
 		isActiveSubscription: boolean;
 		justSubscribed: boolean;
@@ -480,7 +488,9 @@
 						{m.dashboard_compliance_coverage_subtitle()}
 					</p>
 				</div>
-				{#if data.framework}
+				{#if data.frameworksReadiness && data.frameworksReadiness.length > 1}
+					<Badge variant="info">{data.frameworksReadiness.length} frameworks</Badge>
+				{:else if data.framework}
 					<Badge variant="info">{data.framework.name}</Badge>
 				{/if}
 			</div>
@@ -536,6 +546,26 @@
 						<p class="border-t border-[var(--border)] pt-2 text-[var(--foreground-muted)]">
 							Includes controls covered through questionnaire answers, policies, and evidence.
 						</p>
+						{#if data.frameworksReadiness && data.frameworksReadiness.length > 1}
+							<div class="space-y-2 border-t border-[var(--border)] pt-2">
+								{#each data.frameworksReadiness as fw (fw.id)}
+									<div class="flex items-center justify-between gap-3 text-xs">
+										<span class="font-medium text-[var(--foreground)]">{fw.name}</span>
+										<div class="flex flex-1 items-center gap-2">
+											<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
+												<div
+													class="h-full rounded-full bg-[var(--brand)] transition-all duration-700"
+													style="width: {fw.score}%"
+												></div>
+											</div>
+											<span class="w-16 shrink-0 text-right text-[var(--foreground-muted)]">
+												{fw.completedControls}/{fw.totalControls} · {fw.score}%
+											</span>
+										</div>
+									</div>
+								{/each}
+							</div>
+						{/if}
 					</div>
 
 					{#if data.readiness.blockers.length > 0}

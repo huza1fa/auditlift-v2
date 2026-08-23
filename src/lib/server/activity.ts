@@ -19,9 +19,17 @@ export type ActivityAction =
 	| 'team.invited'
 	| 'team.role_changed'
 	| 'team.removed'
-	| 'team.joined';
+	| 'team.joined'
+	| 'framework.activated'
+	| 'framework.deactivated';
 
-export type ActivityEntityType = 'evidence' | 'policy' | 'questionnaire' | 'export' | 'user';
+export type ActivityEntityType =
+	| 'evidence'
+	| 'policy'
+	| 'questionnaire'
+	| 'export'
+	| 'user'
+	| 'framework';
 
 export async function logActivity(opts: {
 	organizationId: string;

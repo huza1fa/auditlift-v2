@@ -19,13 +19,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const orgId = locals.organizationId;
 	const justSubscribed = url.searchParams.get('subscribed') === 'true';
 
-	// Get org's active framework
-	const [orgFramework] = await db
+	// Get org's enrolled frameworks (multi-framework ready)
+	const orgFrameworkRows = await db
 		.select({ framework: frameworks })
 		.from(organizationFrameworks)
 		.innerJoin(frameworks, eq(organizationFrameworks.frameworkId, frameworks.id))
 		.where(eq(organizationFrameworks.organizationId, orgId))
-		.limit(1);
+		.orderBy(frameworks.name);
+
+	const orgFramework = orgFrameworkRows[0];
 
 	let readiness: {
 		score: number;
@@ -37,6 +39,23 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (orgFramework) {
 		readiness = await computeReadinessScore(orgId, orgFramework.framework.id);
 	}
+
+	const frameworksReadiness = await Promise.all(
+		orgFrameworkRows.map(async ({ framework }) => {
+			const result =
+				framework.id === orgFramework?.framework.id
+					? readiness
+					: await computeReadinessScore(orgId, framework.id);
+			return {
+				id: framework.id,
+				name: framework.name,
+				slug: framework.slug,
+				score: result.score,
+				totalControls: result.totalControls,
+				completedControls: result.completedControls
+			};
+		})
+	);
 
 	let scoreHistory: Array<{ score: number; snapshotAt: Date }> = [];
 	if (orgFramework) {
@@ -230,6 +249,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	return {
 		readiness,
 		framework: orgFramework?.framework ?? null,
+		frameworksReadiness,
 		trialDaysRemaining,
 		isActiveSubscription,
 		justSubscribed,
