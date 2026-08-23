@@ -5,6 +5,7 @@ import { questionnaires, questionnaireQuestions, policies } from '$lib/server/db
 import { eq, and, inArray } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { requireOrganizationRole } from '$lib/server/auth-utils';
+import { logActivity } from '$lib/server/activity';
 
 function escapeCsvField(value: string): string {
 	// Wrap in double quotes, escape internal double quotes by doubling them
@@ -17,7 +18,7 @@ function buildCsvRow(fields: string[]): string {
 }
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const { organizationId: orgId } = await requireOrganizationRole(locals);
+	const { organizationId: orgId, userId } = await requireOrganizationRole(locals);
 
 	// Export is a paid-only feature
 	if (!hasActivePaidAccess(locals.subscription)) {
@@ -104,6 +105,17 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		.replace(/\.[^.]+$/, '');
 	const dateStr = new Date().toISOString().slice(0, 10);
 	const exportFilename = `questionnaire-answers-${safeFilename}-${dateStr}.csv`;
+
+	logActivity({
+		organizationId: orgId,
+		userId,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: 'questionnaire.export',
+		entityType: 'questionnaire',
+		entityId: id,
+		entityName: questionnaire.filename,
+		details: `${questions.length} questions exported`
+	}).catch(console.error);
 
 	return new Response(csvContent, {
 		status: 200,

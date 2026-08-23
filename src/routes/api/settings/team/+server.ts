@@ -14,6 +14,7 @@ import type { UserRole } from '$lib/server/db/schema';
 import { sendInviteEmail } from '$lib/server/email';
 import { InviteTeamMemberSchema } from '$lib/server/validation';
 import { hasActivePaidAccess, TRIAL_MEMBER_LIMIT } from '$lib/server/billing';
+import { logActivity } from '$lib/server/activity';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -194,6 +195,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		role: role as string,
 		expiresAt: invitation.expiresAt
 	}).catch(console.error);
+
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session.user.id,
+		userName: inviterName,
+		action: 'team.invited',
+		entityType: 'user',
+		entityId: locals.session.user.id,
+		entityName: email,
+		details: `role: ${role}`
+	});
 
 	return json({
 		invitation: {

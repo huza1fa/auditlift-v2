@@ -9,7 +9,7 @@ import { logActivity } from '$lib/server/activity';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
-	const { organizationId: orgId } = await requireActiveOrganizationRole(
+	const { organizationId: orgId, userId } = await requireActiveOrganizationRole(
 		locals,
 		'viewer',
 		'Insufficient permissions',
@@ -37,6 +37,16 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 
 	const downloadUrl = await getPresignedDownloadUrl(ev.storageKey);
+
+	logActivity({
+		organizationId: orgId,
+		userId,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: 'evidence.download',
+		entityType: 'evidence',
+		entityId: ev.id,
+		entityName: ev.filename
+	}).catch(console.error);
 
 	return json({
 		id: ev.id,

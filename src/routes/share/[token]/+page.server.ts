@@ -8,11 +8,20 @@ import {
 	policies,
 	controls
 } from '$lib/server/db/schema';
-import { eq, and, isNull, inArray } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
+import { checkRateLimit } from '$lib/server/rate-limit';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, getClientAddress }) => {
 	const token = params.token;
 	if (!token) throw error(400, 'Invalid share link');
+
+	try {
+		if (!(await checkRateLimit(`share-view:${getClientAddress()}`, 120, 60 * 60 * 1000))) {
+			throw error(429, 'Too many requests. Please slow down.');
+		}
+	} catch (e) {
+		if (e && typeof e === 'object' && 'status' in e) throw e;
+	}
 
 	// Find questionnaire by share token
 	const [questionnaire] = await db
@@ -23,6 +32,10 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	if (!questionnaire || !questionnaire.sharedAt) {
 		throw error(404, 'This questionnaire is not shared or does not exist');
+	}
+
+	if (!questionnaire.shareExpiresAt || questionnaire.shareExpiresAt < new Date()) {
+		throw error(404, 'This share link has expired. Ask for a fresh link.');
 	}
 
 	// Load org name
@@ -52,14 +65,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		.where(eq(questionnaireQuestions.questionnaireId, questionnaire.id))
 		.orderBy(questionnaireQuestions.order);
 
-	// Resolve policy titles from mappedPolicyIds
-	const allPolicyIds = [
-		...new Set(
-			questions.flatMap(() => []) // questions don't have mappedPolicyIds in this select
-		)
-	];
-
-	// Load mapped policy IDs from the full questions
+	// Load mapped policy IDs from the questions
 	const fullQuestions = await db
 		.select({
 			id: questionnaireQuestions.id,
@@ -80,7 +86,12 @@ export const load: PageServerLoad = async ({ params }) => {
 		const policyRows = await db
 			.select({ id: policies.id, title: policies.title })
 			.from(policies)
-			.where(inArray(policies.id, [...policyIdSet]));
+			.where(
+				and(
+					eq(policies.organizationId, questionnaire.organizationId),
+					inArray(policies.id, [...policyIdSet])
+				)
+			);
 		for (const p of policyRows) policyMap[p.id] = p.title;
 	}
 

@@ -8,6 +8,7 @@ import {
 	jsonb,
 	uniqueIndex,
 	index,
+	primaryKey,
 	foreignKey,
 	check
 } from 'drizzle-orm/pg-core';
@@ -332,6 +333,7 @@ export const activityLogs = pgTable(
 		entityId: text('entity_id').notNull(),
 		entityName: text('entity_name'),
 		controlCode: text('control_code'),
+		details: text('details'),
 		createdAt: timestamp('created_at').defaultNow().notNull()
 	},
 	(table) => [index('activity_org_created_idx').on(table.organizationId, table.createdAt)]
@@ -374,6 +376,7 @@ export const questionnaires = pgTable(
 		errorMessage: text('error_message'),
 		shareToken: text('share_token').unique(),
 		sharedAt: timestamp('shared_at'),
+		shareExpiresAt: timestamp('share_expires_at'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
@@ -471,6 +474,21 @@ export const consultingRequests = pgTable('consulting_requests', {
 	status: text('status').notNull().default('new'), // 'new' | 'contacted' | 'closed'
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+// ─── Rate Limit Counters ─────────────────────────────────────────────────────
+
+export const rateLimitCounters = pgTable(
+	'rate_limit_counters',
+	{
+		key: text('key').notNull(),
+		windowStart: timestamp('window_start').notNull(),
+		count: integer('count').notNull().default(0)
+	},
+	(table) => [
+		primaryKey({ columns: [table.key, table.windowStart] }),
+		index('rate_limit_window_idx').on(table.windowStart)
+	]
+);
 
 // ─── Re-export auth schema ────────────────────────────────────────────────────
 

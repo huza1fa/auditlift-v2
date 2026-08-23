@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		'Trial expired. Upgrade to improve answers with AI.'
 	);
 
-	if (!checkRateLimit(`improve:${orgId}`, 30, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`improve:${orgId}`, 30, 60 * 60 * 1000))) {
 		throw error(429, 'Too many answer improvements. Please wait before trying again.');
 	}
 

@@ -257,7 +257,7 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 
 	// Rate limit: 5 submissions per IP per hour
 	const ip = getClientAddress();
-	if (!checkRateLimit(`lead-magnet:${ip}`, 5, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`lead-magnet:${ip}`, 5, 60 * 60 * 1000))) {
 		throw error(429, 'Too many requests. Please try again later.');
 	}
 

@@ -5,6 +5,8 @@ import { userOrganizations } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { canRemoveMembers, canChangeRole, requireMinimumRole } from '$lib/server/auth-utils';
 import type { UserRole } from '$lib/server/db/schema';
+import { logActivity } from '$lib/server/activity';
+import { user as authUser } from '$lib/server/db/auth.schema';
 
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	if (!locals.session || !locals.organizationId) {
@@ -74,6 +76,16 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			and(eq(userOrganizations.organizationId, orgId), eq(userOrganizations.userId, targetUserId))
 		);
 
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name ?? locals.session.user.email,
+		action: 'team.role_changed',
+		entityType: 'user',
+		entityId: targetUserId,
+		details: `${targetRole} -> ${role}`
+	});
+
 	return json({ success: true });
 };
 
@@ -135,6 +147,23 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		.where(
 			and(eq(userOrganizations.organizationId, orgId), eq(userOrganizations.userId, targetUserId))
 		);
+
+	const [removedUser] = await db
+		.select({ name: authUser.name, email: authUser.email })
+		.from(authUser)
+		.where(eq(authUser.id, targetUserId))
+		.limit(1);
+
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name ?? locals.session.user.email,
+		action: 'team.removed',
+		entityType: 'user',
+		entityId: targetUserId,
+		entityName: removedUser?.name ?? removedUser?.email ?? null,
+		details: `role was ${targetUserMembership.role}`
+	});
 
 	return json({ success: true });
 };

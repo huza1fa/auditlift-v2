@@ -5,9 +5,10 @@ import { policies } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
+import { logActivity } from '$lib/server/activity';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const { organizationId } = await requireActiveOrganizationRole(
+	const { organizationId, userId } = await requireActiveOrganizationRole(
 		locals,
 		'viewer',
 		'Insufficient permissions',
@@ -28,6 +29,16 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	if (!policy) {
 		throw error(404, 'Policy not found');
 	}
+
+	logActivity({
+		organizationId,
+		userId,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: 'policy.download',
+		entityType: 'policy',
+		entityId: policy.id,
+		entityName: policy.title
+	}).catch(console.error);
 
 	const companyName = locals.organization?.name ?? 'AuditLift';
 

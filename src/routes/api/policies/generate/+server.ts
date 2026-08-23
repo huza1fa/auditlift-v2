@@ -444,7 +444,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		'Trial expired. Upgrade to generate policies.'
 	);
 
-	if (!checkRateLimit(`policy-gen:${orgId}`, 10, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`policy-gen:${orgId}`, 10, 60 * 60 * 1000))) {
 		throw error(429, 'Too many policy generations. Please wait before generating more.');
 	}
 
