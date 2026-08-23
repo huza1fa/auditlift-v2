@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { z } from 'zod';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import {
@@ -13,13 +14,18 @@ import {
 import { eq, count } from 'drizzle-orm';
 import { hasActiveAccess, hasActivePaidAccess } from '$lib/server/billing';
 import { checkRateLimit } from '$lib/server/rate-limit';
-import { parseQuestionnaire } from '$lib/server/questionnaire-parser';
+import {
+	parseQuestionnaire,
+	parseRawText,
+	ScannedPdfError
+} from '$lib/server/questionnaire-parser';
 import { captureServerEvent } from '$lib/server/posthog';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
 
 const MAX_QUESTIONNAIRE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_RAW_TEXT_LENGTH = 500_000;
 
-type QuestionnaireFormat = 'xlsx' | 'csv' | 'pdf' | 'docx';
+type QuestionnaireFormat = 'xlsx' | 'csv' | 'pdf' | 'docx' | 'text';
 
 const FORMAT_MIME: Record<string, QuestionnaireFormat> = {
 	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
@@ -90,6 +96,11 @@ function getS3Client(): { client: S3Client; bucket: string } {
 	return { client, bucket };
 }
 
+const rawTextSchema = z.object({
+	title: z.string().trim().min(1).max(200),
+	rawText: z.string().min(20).max(MAX_RAW_TEXT_LENGTH)
+});
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { organizationId: orgId } = await requireActiveOrganizationRole(
 		locals,
@@ -98,64 +109,93 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		'Your trial has expired. Please upgrade to continue.'
 	);
 
-	// 2. Rate limit — 20 uploads per org per hour
 	if (!checkRateLimit(`q-upload:${orgId}`, 20, 60 * 60 * 1000)) {
 		throw error(429, 'Too many uploads. Please wait before uploading more questionnaires.');
 	}
 
-	// 3. Parse multipart form data
-	let formData: FormData;
-	try {
-		formData = await request.formData();
-	} catch {
-		throw error(400, 'Invalid form data');
+	const contentType = request.headers.get('content-type') ?? '';
+
+	let format: QuestionnaireFormat;
+	let filename: string;
+	let fileContentType: string;
+	let buffer: Buffer;
+	let parsed: Awaited<ReturnType<typeof parseQuestionnaire>>;
+
+	if (contentType.includes('application/json')) {
+		let body: unknown;
+		try {
+			body = await request.json();
+		} catch {
+			throw error(400, 'Invalid JSON body');
+		}
+		const result = rawTextSchema.safeParse(body);
+		if (!result.success) {
+			throw error(400, 'Provide a title (1-200 chars) and the questionnaire text.');
+		}
+
+		format = 'text';
+		filename = `${result.data.title.replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'pasted-questionnaire'}.txt`;
+		fileContentType = 'text/plain';
+		buffer = Buffer.from(result.data.rawText, 'utf-8');
+		parsed = parseRawText(result.data.rawText);
+	} else {
+		let formData: FormData;
+		try {
+			formData = await request.formData();
+		} catch {
+			throw error(400, 'Invalid form data');
+		}
+
+		const fileEntry = formData.get('file');
+		if (!fileEntry || !(fileEntry instanceof File)) {
+			throw error(400, 'Missing file field in form data');
+		}
+
+		const file = fileEntry;
+		const detected = detectFormat(file.name, file.type);
+		if (!detected || detected === 'text') {
+			throw error(400, 'Unsupported file format. Allowed: xlsx, csv, pdf, docx');
+		}
+		format = detected;
+
+		if (file.size > MAX_QUESTIONNAIRE_SIZE) {
+			throw error(400, 'File too large. Maximum size is 5MB');
+		}
+		if (file.size === 0) {
+			throw error(400, 'File is empty');
+		}
+
+		buffer = Buffer.from(await file.arrayBuffer());
+		filename = file.name;
+		fileContentType = file.type || 'application/octet-stream';
+
+		if (!validateMagicNumbers(buffer, format)) {
+			throw error(400, 'File content does not match the declared format');
+		}
+
+		try {
+			parsed = await parseQuestionnaire(buffer, format);
+		} catch (parseErr) {
+			console.error('[questionnaire-upload] Parse error:', parseErr);
+			if (parseErr instanceof ScannedPdfError) {
+				throw error(422, parseErr.message);
+			}
+			throw error(422, 'Failed to parse file. Ensure it is a valid questionnaire document.');
+		}
 	}
 
-	const fileEntry = formData.get('file');
-	if (!fileEntry || !(fileEntry instanceof File)) {
-		throw error(400, 'Missing file field in form data');
-	}
-
-	const file = fileEntry;
-
-	// 4. Validate format and size
-	const format = detectFormat(file.name, file.type);
-	if (!format) {
-		throw error(400, 'Unsupported file format. Allowed: xlsx, csv, pdf, docx');
-	}
-
-	if (file.size > MAX_QUESTIONNAIRE_SIZE) {
-		throw error(400, 'File too large. Maximum size is 5MB');
-	}
-
-	if (file.size === 0) {
-		throw error(400, 'File is empty');
-	}
-
-	// 5. Parse file into questions
-	const arrayBuffer = await file.arrayBuffer();
-	const buffer = Buffer.from(arrayBuffer);
-
-	if (!validateMagicNumbers(buffer, format)) {
-		throw error(400, 'File content does not match the declared format');
-	}
-
-	let parsedQuestions: Awaited<ReturnType<typeof parseQuestionnaire>>;
-	try {
-		parsedQuestions = await parseQuestionnaire(buffer, format);
-	} catch (parseErr) {
-		console.error('[questionnaire-upload] Parse error:', parseErr);
-		throw error(422, 'Failed to parse file. Ensure it is a valid questionnaire document.');
-	}
-
-	// 6. Must have at least one question
-	if (parsedQuestions.length === 0) {
-		throw error(400, 'No questions found in file');
+	if (parsed.questions.length === 0) {
+		throw error(
+			400,
+			format === 'pdf'
+				? 'No questions found in PDF. If it is a scanned document, paste the questions as text instead.'
+				: 'No questions found in file'
+		);
 	}
 
 	// 7. Upload raw file to S3. The database transaction below compensates by deleting
 	// this object when the durable questionnaire setup cannot be committed.
-	const fileExt = file.name.split('.').pop()?.toLowerCase() ?? format;
+	const fileExt = filename.split('.').pop()?.toLowerCase() ?? format;
 	const storageUuid = crypto.randomUUID();
 	const storageKey = `questionnaires/${orgId}/${storageUuid}.${fileExt}`;
 	let storage: ReturnType<typeof getS3Client>;
@@ -167,8 +207,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				Bucket: storage.bucket,
 				Key: storageKey,
 				Body: buffer,
-				ContentType: file.type || 'application/octet-stream',
-				ContentLength: file.size
+				ContentType: fileContentType,
+				ContentLength: buffer.length
 			})
 		);
 	} catch (uploadErr) {
@@ -214,11 +254,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				.insert(questionnaires)
 				.values({
 					organizationId: orgId,
-					filename: file.name,
+					filename,
 					storageKey,
 					sourceFormat: format,
 					status: 'processing',
-					totalQuestions: parsedQuestions.length,
+					totalQuestions: parsed.questions.length,
 					answeredCount: 0,
 					gapCount: 0,
 					dealReadinessScore: 0
@@ -226,7 +266,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				.returning();
 
 			await tx.insert(questionnaireQuestions).values(
-				parsedQuestions.map((q) => ({
+				parsed.questions.map((q) => ({
 					questionnaireId: createdQuestionnaire.id,
 					organizationId: orgId,
 					sectionName: q.sectionName,
@@ -263,8 +303,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			properties: {
 				org_id: orgId,
 				format,
-				question_count: parsedQuestions.length,
-				file_size_bytes: file.size,
+				question_count: parsed.questions.length,
+				file_size_bytes: buffer.length,
 				is_trial: !hasActivePaidAccess(locals.subscription)
 			},
 			groups: { organization: orgId }
@@ -273,22 +313,24 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.error('[questionnaire-upload] Analytics error:', analyticsError);
 	}
 
-	// 12. Return the full questionnaire so the frontend can render it immediately
 	return json(
 		{
 			id: questionnaire.id,
 			organizationId: orgId,
-			filename: file.name,
+			filename,
 			storageKey,
 			sourceFormat: format,
 			status: 'processing' as const,
-			totalQuestions: parsedQuestions.length,
+			totalQuestions: parsed.questions.length,
 			answeredCount: 0,
 			gapCount: 0,
 			dealReadinessScore: 0,
 			highCount: 0,
 			mediumCount: 0,
 			lowCount: 0,
+			truncated: parsed.truncated,
+			totalDetected: parsed.totalDetected,
+			warnings: parsed.warnings,
 			errorMessage: null,
 			shareToken: null,
 			sharedAt: null,
