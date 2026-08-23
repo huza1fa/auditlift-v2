@@ -22,6 +22,7 @@ import {
 	POLICY_CONTROL_CODES,
 	type StandardPolicyType
 } from '$lib/server/policy-config';
+import { normalizeFrameworkSlug, translateSoc2Codes } from '$lib/server/cross-framework';
 import { computeReadinessScore } from '$lib/server/score';
 import { logActivity } from '$lib/server/activity';
 import { GeneratePolicySchema } from '$lib/server/validation';
@@ -537,23 +538,38 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		? await db.select().from(frameworks).where(eq(frameworks.id, frameworkId)).limit(1)
 		: [];
 	const frameworkName = targetFramework?.name ?? 'SOC 2';
-	const standardControls =
-		isStandard && frameworkId
-			? await db
-					.select({
-						id: controls.id,
-						frameworkId: controls.frameworkId,
-						code: controls.code,
-						title: controls.title
-					})
-					.from(controls)
-					.where(
-						and(
-							eq(controls.frameworkId, frameworkId),
-							inArray(controls.code, POLICY_CONTROL_CODES[policyType as StandardPolicyType])
+
+	// Link the policy to equivalent controls across ALL enrolled frameworks so one
+	// policy counts toward SOC 2, ISO 27001, and PCI DSS simultaneously.
+	const baseCodes = isStandard ? POLICY_CONTROL_CODES[policyType as StandardPolicyType] : [];
+	let standardControls: Array<{ id: string; frameworkId: string; code: string; title: string }> =
+		[];
+	if (isStandard && orgFrameworkRows.length > 0) {
+		const codesByFramework = new Map<string, string[]>();
+		for (const row of orgFrameworkRows) {
+			const slug = normalizeFrameworkSlug(row.framework.slug);
+			codesByFramework.set(
+				row.framework.id,
+				slug === 'iso27001' || slug === 'pci' ? translateSoc2Codes(baseCodes, slug) : [...baseCodes]
+			);
+		}
+		const allFrameworkIds = [...codesByFramework.keys()];
+		const allCodes = [...new Set([...codesByFramework.values()].flat())];
+		standardControls =
+			allFrameworkIds.length > 0
+				? await db
+						.select({
+							id: controls.id,
+							frameworkId: controls.frameworkId,
+							code: controls.code,
+							title: controls.title
+						})
+						.from(controls)
+						.where(
+							and(inArray(controls.frameworkId, allFrameworkIds), inArray(controls.code, allCodes))
 						)
-					)
-			: [];
+				: [];
+	}
 	const associatedControls = [
 		...new Map(
 			[...standardControls, ...requestedControls].map((control) => [control.id, control])
@@ -586,7 +602,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			model: openrouter('openai/gpt-4o-mini'),
 			system: buildSystemPrompt(ctx, verifiedFacts),
 			prompt,
-			maxOutputTokens: 4096
+			maxOutputTokens: 8192
 		});
 		content = result.text;
 	} catch (err) {
