@@ -452,6 +452,70 @@ function preprocessPdfText(text: string): string {
 		.replace(/([a-z?!,]) ((?:Section|Part|Appendix)\s+\d)/gi, '$1\n$2');
 }
 
+function parseFlatPdfControlRows(text: string): ParseResult | null {
+	// Some PDF generators expose a visually tabular questionnaire as one long
+	// string. In that form line-based parsing sees the entire document as one
+	// question. Control IDs are a stable row boundary for these documents.
+	const controlIdPattern = /\b([A-Z][A-Z0-9]{1,15}-\d{1,4})\b/g;
+	const matches = [...text.matchAll(controlIdPattern)].filter((match) =>
+		/^\s+[A-Z]/.test(text.slice((match.index ?? 0) + match[1].length))
+	);
+	if (matches.length < 2) return null;
+
+	const questions: ParsedQuestion[] = [];
+	let currentSection: string | null = null;
+	let previousEnd = 0;
+
+	for (let index = 0; index < matches.length; index++) {
+		const match = matches[index];
+		const controlId = match[1];
+		const start = match.index ?? 0;
+		const sectionContext = text.slice(previousEnd, start);
+		const sectionMatches = [
+			...sectionContext.matchAll(
+				/\b\d{1,2}\.\s+([A-Z][A-Za-z0-9 &,/-]{2,80}?)(?=\s+(?:ID\s+Security Requirement|[A-Z][A-Z0-9]{1,15}-\d{1,4})|$)/g
+			)
+		];
+		const latestSection = sectionMatches.at(-1)?.[1]?.trim();
+		if (latestSection) currentSection = latestSection;
+
+		const nextStart = matches[index + 1]?.index ?? text.length;
+		let questionText = text.slice(start + controlId.length, nextStart);
+		// A blank questionnaire commonly puts the selectable answer cells after
+		// the question. They are not part of the prompt sent to the AI.
+		questionText = questionText.split(/\s+\[\s*\]\s*(?:Yes|No|Partial|N\/A)\b/i)[0];
+		const questionEnd = questionText.indexOf('?');
+		if (questionEnd !== -1) questionText = questionText.slice(0, questionEnd + 1);
+		questionText = questionText
+			.replace(/([A-Za-z])\-\s+([a-z])/g, '$1-$2')
+			.replace(/\s+/g, ' ')
+			.trim();
+
+		if (questionText.length >= 12) {
+			questions.push({
+				sectionName: currentSection,
+				questionNumber: controlId,
+				questionText,
+				order: questions.length
+			});
+		}
+		previousEnd = start + controlId.length;
+	}
+
+	if (questions.length < 2) return null;
+	const capped = questions.slice(0, MAX_QUESTIONS);
+	return {
+		questions: capped,
+		truncated: questions.length > capped.length,
+		totalDetected: questions.length,
+		warnings: []
+	};
+}
+
+export function parsePdfText(text: string): ParseResult {
+	return parseFlatPdfControlRows(text) ?? parseTextLines(preprocessPdfText(text));
+}
+
 async function parsePdf(buffer: Buffer): Promise<ParseResult> {
 	const pdf = await getDocumentProxy(new Uint8Array(buffer));
 	const { text } = await extractText(pdf, { mergePages: true });
@@ -460,7 +524,7 @@ async function parsePdf(buffer: Buffer): Promise<ParseResult> {
 		throw new ScannedPdfError();
 	}
 
-	return parseTextLines(preprocessPdfText(text));
+	return parsePdfText(text);
 }
 
 export function parseRawText(rawText: string): ParseResult {

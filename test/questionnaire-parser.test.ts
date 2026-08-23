@@ -4,6 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 import {
 	parseQuestionnaire,
 	parseRawText,
+	parsePdfText,
 	parseDocxTables,
 	ScannedPdfError
 } from '../src/lib/server/questionnaire-parser';
@@ -179,6 +180,35 @@ describe('questionnaire parser', () => {
 		await expect(parseQuestionnaire(Buffer.from(bytes), 'pdf')).rejects.toBeInstanceOf(
 			ScannedPdfError
 		);
+	});
+
+	it('parses flat PDF table text using control IDs as row boundaries', () => {
+		const result = parsePdfText(
+			'1. Architecture & Data Governance ID Security Requirement / Question Compliance Status SEC-01 Is customer data encrypted at rest using industry- standard algorithms (e.g., AES-256)? [ ] Yes [ ] No [ ] Partial [ ] N/A SEC-02 Is all data in transit encrypted using TLS 1.2 or higher across public networks? [ ] Yes [ ] No [ ] Partial [ ] N/A 2. Authentication & Access Control ID Security Requirement / Question Compliance Status AUTH-01 Is Multi-Factor Authentication (MFA) mandatory for admin access? [ ] Yes [ ] No [ ] Partial [ ] N/A'
+		);
+
+		expect(result.questions).toEqual([
+			{
+				sectionName: 'Architecture & Data Governance',
+				questionNumber: 'SEC-01',
+				questionText:
+					'Is customer data encrypted at rest using industry-standard algorithms (e.g., AES-256)?',
+				order: 0
+			},
+			{
+				sectionName: 'Architecture & Data Governance',
+				questionNumber: 'SEC-02',
+				questionText:
+					'Is all data in transit encrypted using TLS 1.2 or higher across public networks?',
+				order: 1
+			},
+			{
+				sectionName: 'Authentication & Access Control',
+				questionNumber: 'AUTH-01',
+				questionText: 'Is Multi-Factor Authentication (MFA) mandatory for admin access?',
+				order: 2
+			}
+		]);
 	});
 
 	it('parses pasted raw text with numbered questions and sections', () => {

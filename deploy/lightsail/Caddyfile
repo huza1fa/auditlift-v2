@@ -2,5 +2,13 @@
 	@internal path /api/internal/*
 	respond @internal 404
 
+	# Send browser analytics through our own origin. This prevents common content
+	# blockers from repeatedly rejecting requests to the PostHog domain.
+	handle_path /ingest/* {
+		reverse_proxy https://us.i.posthog.com {
+			header_up Host us.i.posthog.com
+		}
+	}
+
 	reverse_proxy app:3000
 }

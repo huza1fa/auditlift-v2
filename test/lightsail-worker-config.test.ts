@@ -10,10 +10,15 @@ async function projectFile(path: string) {
 
 describe('Lightsail deployment and questionnaire worker configuration', () => {
 	it('keeps the application private behind the VM host proxy', async () => {
-		const compose = await projectFile('deploy/lightsail/docker-compose.yml');
+		const [compose, caddyfile] = await Promise.all([
+			projectFile('deploy/lightsail/docker-compose.yml'),
+			projectFile('deploy/lightsail/Caddyfile')
+		]);
 
 		expect(compose).toMatch(/app:\n(?:.|\n)*?ports:\n\s+- '127\.0\.0\.1:3000:3000'/);
 		expect(compose).not.toMatch(/\n\s+proxy:/);
+		expect(caddyfile).toContain('handle_path /ingest/*');
+		expect(caddyfile).toContain('reverse_proxy https://us.i.posthog.com');
 	});
 
 	it('runs immutable-image migrations before starting a healthy application', async () => {

@@ -1,15 +1,18 @@
 import { PostHog } from 'posthog-node';
-import { env } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 
 let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
 	// Analytics is optional. It must never prevent application requests when unset.
 	if (!env.PUBLIC_POSTHOG_KEY || !env.PUBLIC_POSTHOG_HOST) return null;
+	// Browser traffic uses the same-origin proxy, while server traffic can use
+	// PostHog directly and avoid an unnecessary trip back through the public app.
+	const host = env.POSTHOG_HOST || env.PUBLIC_POSTHOG_HOST;
 
 	if (!posthogClient) {
 		posthogClient = new PostHog(env.PUBLIC_POSTHOG_KEY, {
-			host: env.PUBLIC_POSTHOG_HOST,
+			host,
 			flushAt: 1,
 			flushInterval: 0,
 			enableExceptionAutocapture: true

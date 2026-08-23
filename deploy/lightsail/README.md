@@ -20,7 +20,10 @@ POSTGRES_PASSWORD=<url-safe-random-password>
 DATABASE_URL=postgres://auditlift:<url-safe-random-password>@db:5432/auditlift
 DATABASE_SSL=false
 PUBLIC_POSTHOG_KEY=<PostHog project token>
-PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+# Browser events are proxied through Caddy to avoid client-side tracker blocking.
+PUBLIC_POSTHOG_HOST=https://auditlift.app/ingest
+# Server events can go directly to PostHog rather than through the public proxy.
+POSTHOG_HOST=https://us.i.posthog.com
 QUESTIONNAIRE_JOB_SECRET=<long-random-secret>
 ```
 
