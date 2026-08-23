@@ -86,13 +86,16 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		throw error(422, 'No answer to improve — this question has not been answered yet');
 	}
 
-	// Call OpenRouter AI
+	// Call OpenRouter AI (retry once before giving up)
 	const openrouter = getOpenRouterClient();
-	let improvedAnswer: string;
-	try {
-		const result = await generateText({
-			model: openrouter('openai/gpt-4o-mini'),
-			prompt: `You are refining a security questionnaire answer.
+	const modelName = (env.QUESTIONNAIRE_AI_MODELS || 'openai/gpt-4o-mini').split(',')[0].trim();
+	let improvedAnswer: string | null = null;
+	let lastError: unknown;
+	for (let attempt = 1; attempt <= 2 && !improvedAnswer; attempt++) {
+		try {
+			const result = await generateText({
+				model: openrouter(modelName),
+				prompt: `You are refining a security questionnaire answer.
 
 <current_answer>
 ${currentAnswer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
@@ -101,9 +104,15 @@ ${currentAnswer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
 <instruction>${refinementPrompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</instruction>
 
 Rewrite the answer applying the instruction. Preserve factual accuracy and do not introduce company-specific tools, practices, certifications, or commitments that are absent from the current answer. Return only the revised answer text with no preamble, no explanation, and no markdown formatting.`
-		});
-		improvedAnswer = result.text.trim();
-	} catch {
+			});
+			improvedAnswer = result.text.trim() || null;
+		} catch (err) {
+			lastError = err;
+			if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 800));
+		}
+	}
+	if (!improvedAnswer) {
+		console.error('[improve-answer] AI improvement failed:', lastError);
 		throw error(502, 'AI improvement failed. Please try again.');
 	}
 
