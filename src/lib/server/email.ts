@@ -299,6 +299,45 @@ ${callout(`Questions? Reply to this email and we&rsquo;ll help you find the righ
 	}
 }
 
+export async function sendVerificationEmail(opts: {
+	to: string;
+	name: string;
+	verificationLink: string;
+}): Promise<void> {
+	if (!env.RESEND_API_KEY) {
+		console.log(`[DEV] Verification email → ${opts.to} | link: ${opts.verificationLink}`);
+		return;
+	}
+
+	const { Resend } = await import('resend');
+	const resend = new Resend(env.RESEND_API_KEY);
+
+	const firstName = escapeHtml(opts.name.split(' ')[0] || 'there');
+
+	const body = `
+${heading('Verify your email')}
+${paragraph(`Hi ${firstName}, welcome to AuditLift! Confirm your email address to activate your account and start your trial.`)}
+<p style="margin:0 0 24px;">${button(opts.verificationLink, 'Verify Email')}</p>
+${paragraph(
+	`If the button doesn&rsquo;t work, copy and paste this link: <a href="${escapeHtml(opts.verificationLink)}" style="color:${BRAND.green};text-decoration:underline;">${escapeHtml(opts.verificationLink)}</a>`
+)}
+`;
+
+	const result = await resend.emails.send({
+		from: 'AuditLift <hello@auditlift.app>',
+		to: opts.to,
+		subject: 'Verify your email — AuditLift',
+		html: emailWrapper('Verify your email', body)
+	});
+
+	if (result.error) {
+		console.error('[email] Verification email failed:', result.error);
+		throw new Error(
+			`Failed to send verification email: ${result.error.name} — ${result.error.message}`
+		);
+	}
+}
+
 export async function sendPasswordResetEmail(opts: {
 	to: string;
 	name: string;

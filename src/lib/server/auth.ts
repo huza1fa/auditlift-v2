@@ -67,7 +67,7 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: false,
+		requireEmailVerification: true,
 		sendResetPassword: async ({ user, url }) => {
 			try {
 				const { sendPasswordResetEmail } = await import('$lib/server/email');
@@ -78,6 +78,23 @@ export const auth = betterAuth({
 				});
 			} catch (err) {
 				console.error('[auth] sendResetPassword failed:', err);
+				throw err;
+			}
+		}
+	},
+	emailVerification: {
+		sendOnSignUp: true,
+		autoSignInAfterVerification: true,
+		sendVerificationEmail: async ({ user, url }) => {
+			try {
+				const { sendVerificationEmail } = await import('$lib/server/email');
+				await sendVerificationEmail({
+					to: user.email,
+					name: user.name ?? '',
+					verificationLink: url
+				});
+			} catch (err) {
+				console.error('[auth] sendVerificationEmail failed:', err);
 				throw err;
 			}
 		}
