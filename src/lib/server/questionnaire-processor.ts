@@ -477,11 +477,14 @@ async function computeAndSaveStats(questionnaireId: string, organizationId: stri
 
 	const answeredCount = highCount + mediumCount + lowCount;
 
+	// Score over PROCESSED questions only — unprocessed (trial-locked) questions
+	// must not drag the perceived deal readiness toward zero.
+	const processedCount = highCount + mediumCount + lowCount + gapCount;
 	const dealReadinessScore =
-		totalQuestions > 0
+		processedCount > 0
 			? Math.min(
 					100,
-					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / totalQuestions)
+					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / processedCount)
 				)
 			: 0;
 

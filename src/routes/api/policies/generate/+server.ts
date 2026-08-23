@@ -594,19 +594,40 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		? buildCustomPrompt(ctx, trimmedCustomTitle!, trimmedCustomPrompt!)
 		: POLICY_PROMPTS[policyType as StandardPolicyType](ctx);
 
-	// Generate with AI
+	// Generate with AI — retry each model in the chain before falling back to templates
 	let content = '';
-	try {
-		const openrouter = getOpenRouterClient();
-		const result = await generateText({
-			model: openrouter('openai/gpt-4o-mini'),
-			system: buildSystemPrompt(ctx, verifiedFacts),
-			prompt,
-			maxOutputTokens: 8192
-		});
-		content = result.text;
-	} catch (err) {
-		console.error('[policy-generate] AI generation failed, trying template fallback:', err);
+	let aiUsed = false;
+	const modelChain = (env.QUESTIONNAIRE_AI_MODELS || 'openai/gpt-4o-mini')
+		.split(',')
+		.map((model) => model.trim())
+		.filter(Boolean);
+	const openrouter = getOpenRouterClient();
+	for (const modelName of modelChain) {
+		for (let attempt = 1; attempt <= 2 && !content; attempt++) {
+			try {
+				const result = await generateText({
+					model: openrouter(modelName),
+					system: buildSystemPrompt(ctx, verifiedFacts),
+					prompt,
+					maxOutputTokens: 8192
+				});
+				content = result.text.trim();
+				if (content) aiUsed = true;
+			} catch (err) {
+				console.error(
+					`[policy-generate] ${modelName} attempt ${attempt} failed:`,
+					err instanceof Error ? err.message : err
+				);
+				if (attempt < 2) {
+					await new Promise((resolve) => setTimeout(resolve, 800));
+				}
+			}
+		}
+		if (content) break;
+	}
+
+	if (!content) {
+		console.error('[policy-generate] All AI models failed, trying template fallback');
 		if (!isCustom) {
 			content = getTemplateContent(ctx, policyType) ?? '';
 		}
@@ -666,7 +687,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			is_custom: isCustom,
 			framework_id: frameworkId,
 			framework_name: frameworkName,
-			ai_used: content.length > 0
+			ai_used: aiUsed
 		},
 		groups: { organization: orgId }
 	});
