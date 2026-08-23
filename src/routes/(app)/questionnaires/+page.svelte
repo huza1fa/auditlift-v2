@@ -14,7 +14,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
-	import { toastError, toastSuccess } from '$lib/stores/toasts.svelte';
+	import { toastError, toastSuccess, toastWarning } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { goto } from '$app/navigation';
 	import { captureEvent } from '$lib/posthog';
@@ -224,11 +224,24 @@
 				return;
 			}
 
-			const newQ: Questionnaire = await res.json();
+			const newQ: Questionnaire & {
+				truncated?: boolean;
+				totalDetected?: number;
+				warnings?: string[];
+			} = await res.json();
 			questionnaires = [newQ, ...questionnaires];
 			toastSuccess(
 				'Questionnaire uploaded — AI is analyzing your questions now. This may take a minute.'
 			);
+			if (newQ.truncated) {
+				toastWarning(
+					m.questionnaires_upload_truncated({ total: newQ.totalDetected ?? newQ.totalQuestions }),
+					8000
+				);
+			}
+			for (const warning of newQ.warnings ?? []) {
+				toastWarning(warning, 8000);
+			}
 
 			if (newQ.status === 'processing') {
 				connectSSE(newQ.id);

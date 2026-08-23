@@ -85,6 +85,7 @@
 	"questionnaires_upload_area_subtitle": "XLSX, CSV, PDF, DOCX — max 5MB",
 	"questionnaires_upload_area_click": "Click to browse files",
 	"questionnaires_uploading": "Uploading...",
+	"questionnaires_upload_truncated": "This questionnaire is large — only the first 500 of {total} detected questions were imported. Split the file and upload the rest for full coverage.",
 	"questionnaires_trial_banner": "Trial: 1 questionnaire included. Upgrade for unlimited uploads and exports.",
 	"questionnaires_trial_upgrade": "Upgrade",
 	"questionnaires_trial_limit_error": "You've used your free questionnaire. Upgrade to upload more.",
