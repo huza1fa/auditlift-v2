@@ -38,7 +38,8 @@
 
 	const now = Date.now();
 	const periodEndIsFuture = $derived(
-		!!data.subscription?.currentPeriodEnd && new Date(data.subscription.currentPeriodEnd) > now
+		!!data.subscription?.currentPeriodEnd &&
+			new Date(data.subscription.currentPeriodEnd).getTime() > now
 	);
 	const unlinkedSubscription = $derived(
 		isActive && !data.subscription?.stripeSubscriptionId && !periodEndIsFuture
