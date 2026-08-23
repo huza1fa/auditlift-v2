@@ -45,6 +45,13 @@
 		shareToken?: string | null;
 	}
 
+	interface AnswerCitation {
+		sourceType: string;
+		sourceId: string;
+		sourceTitle: string;
+		excerpt: string;
+	}
+
 	interface Question {
 		id: string;
 		sectionName: string | null;
@@ -58,6 +65,7 @@
 		userEditedAnswer: string | null;
 		mappedPolicyIds: string[] | null;
 		mappedControlIds: string[] | null;
+		citations?: AnswerCitation[] | null;
 		order: number;
 	}
 
@@ -1180,6 +1188,38 @@
 												</a>
 											{/each}
 										</div>
+									</div>
+								{/if}
+
+								<!-- Answer citations with supporting excerpts -->
+								{#if selectedQuestion.citations && selectedQuestion.citations.length > 0}
+									<div class="mb-4 space-y-2">
+										<p
+											class="text-xs font-semibold tracking-wide text-[var(--foreground-subtle)] uppercase"
+										>
+											Supporting evidence
+										</p>
+										{#each selectedQuestion.citations as citation, i (i)}
+											<details
+												class="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background-alt)] px-3 py-2"
+											>
+												<summary
+													class="cursor-pointer list-none text-xs font-medium text-[var(--foreground-muted)]"
+												>
+													<span
+														class="mr-1.5 inline-block rounded bg-[var(--brand-light)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)] uppercase"
+													>
+														{citation.sourceType.replace('_', ' ')}
+													</span>
+													{citation.sourceTitle}
+												</summary>
+												<p
+													class="mt-1.5 text-xs leading-relaxed text-[var(--foreground-muted)] italic"
+												>
+													“{citation.excerpt}”
+												</p>
+											</details>
+										{/each}
 									</div>
 								{/if}
 

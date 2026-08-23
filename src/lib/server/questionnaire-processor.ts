@@ -18,11 +18,22 @@ import { hasActivePaidAccess } from '$lib/server/billing';
 import { computeReadinessScore } from '$lib/server/score';
 import { buildVerifiedFactsQuestionnaireContext } from '$lib/server/questionnaire-prompt-context';
 import { getVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts';
+import {
+	AnswerCitationSchema,
+	filterValidCitations,
+	downgradeConfidence,
+	isVerifiable,
+	type AnswerCitation,
+	type ConfidenceLevel,
+	type VerificationItem
+} from '$lib/server/answer-citations';
 
 const TRIAL_QUESTION_LIMIT = 15;
 const BATCH_SIZE = 5; // Questions per API call
 const PARALLEL_BATCHES = 3; // Concurrent API calls
 const JOB_LEASE_MS = 30 * 60 * 1000;
+const MAX_POLICY_CONTEXT_CHARS = 4000;
+const VERIFICATION_CHUNK_SIZE = 10;
 
 const QuestionClassificationSchema = z.object({
 	domain: z.string(),
@@ -31,11 +42,22 @@ const QuestionClassificationSchema = z.object({
 	gapReason: z.string().nullable(),
 	gapRemediation: z.string().nullable(),
 	mappedPolicyIds: z.array(z.string()),
-	mappedControlIds: z.array(z.string())
+	mappedControlIds: z.array(z.string()),
+	citations: z.array(AnswerCitationSchema).default([])
 });
 
 const BatchClassificationSchema = z.object({
 	results: z.array(QuestionClassificationSchema)
+});
+
+const VerificationResultSchema = z.object({
+	results: z.array(
+		z.object({
+			index: z.number().int(),
+			supported: z.boolean(),
+			reason: z.string().max(300)
+		})
+	)
 });
 
 type QuestionClassification = z.infer<typeof QuestionClassificationSchema>;
@@ -66,6 +88,55 @@ function getOpenRouterClient() {
 			'X-Title': 'AuditLift'
 		}
 	});
+}
+
+/**
+ * Model chain for questionnaire AI work. Override with a comma-separated list
+ * via QUESTIONNAIRE_AI_MODELS (e.g. "openai/gpt-4o-mini,google/gemini-flash-1.5").
+ * Each model is tried twice before falling back to the next.
+ */
+function resolveModelChain(): string[] {
+	const raw = env.QUESTIONNAIRE_AI_MODELS || 'openai/gpt-4o-mini';
+	const models = raw
+		.split(',')
+		.map((model) => model.trim())
+		.filter(Boolean);
+	return models.length > 0 ? models : ['openai/gpt-4o-mini'];
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateObjectWithFallback<T extends z.ZodType>(
+	schema: T,
+	prompt: string,
+	label: string
+): Promise<z.infer<T>> {
+	const openrouter = getOpenRouterClient();
+	const models = resolveModelChain();
+	let lastError: unknown;
+
+	for (const modelName of models) {
+		for (let attempt = 1; attempt <= 2; attempt++) {
+			try {
+				const result = await generateObject({
+					model: openrouter(modelName),
+					schema,
+					prompt
+				});
+				return result.object as z.infer<T>;
+			} catch (err) {
+				lastError = err;
+				console.warn(
+					`[questionnaire-processor] ${label}: ${modelName} attempt ${attempt} failed:`,
+					err instanceof Error ? err.message : err
+				);
+				if (attempt < 2) await sleep(800);
+			}
+		}
+	}
+	throw lastError instanceof Error ? lastError : new Error(`${label}: all models failed`);
 }
 
 async function classifyQuestion(
@@ -128,16 +199,17 @@ Instructions:
 - gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium/low confidence.
 - mappedPolicyIds: array of policy IDs you used (from the list above, empty if none)
 - mappedControlIds: array of control IDs you used (from the list above, empty if none)
+- citations: array of sources that directly support this answer. For high or medium confidence answers you MUST cite at least one source; each citation needs sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the ID in brackets from the lists above, or a short label for facts/system description), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
 
 IMPORTANT: If the item above is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
-	const result = await generateObject({
-		model: openrouter('openai/gpt-4o-mini'),
-		schema: QuestionClassificationSchema,
-		prompt
-	});
+	const result = await generateObjectWithFallback(
+		QuestionClassificationSchema,
+		prompt,
+		'classifyQuestion'
+	);
 
-	return result.object;
+	return result;
 }
 
 /**
@@ -167,8 +239,6 @@ async function classifyQuestionBatch(
 		);
 		return [{ questionId: questions[0].id, classification }];
 	}
-
-	const openrouter = getOpenRouterClient();
 
 	const policiesList = policyContext
 		.map((p) => `- [${p.id}] ${p.title}: ${p.contentSnippet}`)
@@ -223,17 +293,17 @@ For each question return:
 - gapRemediation: action to fix the gap (null unless gap)
 - mappedPolicyIds: policy IDs used (from list above)
 - mappedControlIds: control IDs used (from list above)
+- citations: sources directly supporting each answer. High or medium confidence answers MUST cite at least one source: sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the ID in brackets from the lists above, or a short label for facts/system description), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
 
 IMPORTANT: If an item is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result for it, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
 	try {
-		const result = await generateObject({
-			model: openrouter('openai/gpt-4o-mini'),
-			schema: BatchClassificationSchema,
-			prompt
-		});
-
-		const results = result.object.results;
+		const batchResult = await generateObjectWithFallback(
+			BatchClassificationSchema,
+			prompt,
+			'classifyQuestionBatch'
+		);
+		const results = (batchResult as z.infer<typeof BatchClassificationSchema>).results;
 
 		// Ensure we got the right number of results
 		if (results.length === questions.length) {
@@ -307,7 +377,7 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 		.map((p) => ({
 			id: p.id,
 			title: p.title,
-			contentSnippet: p.content.slice(0, 500)
+			contentSnippet: p.content.slice(0, MAX_POLICY_CONTEXT_CHARS)
 		}));
 
 	const orgControls = await db
@@ -434,6 +504,106 @@ async function computeAndSaveStats(questionnaireId: string, organizationId: stri
 		);
 }
 
+interface PendingVerification {
+	questionId: string;
+	questionText: string;
+	answer: string;
+	confidence: 'high' | 'medium';
+	citations: AnswerCitation[];
+}
+
+/**
+ * Second-pass verification: a cheap model checks each org-grounded answer
+ * against the cited excerpts. Unsupported answers get downgraded one level so
+ * a confident-but-wrong answer never ships silently. Fail-open on errors.
+ */
+async function verifyGroundedAnswers(
+	items: PendingVerification[],
+	orgName: string
+): Promise<Map<string, { supported: boolean; reason: string }>> {
+	const verdicts = new Map<string, { supported: boolean; reason: string }>();
+	if (items.length === 0) return verdicts;
+
+	for (let i = 0; i < items.length; i += VERIFICATION_CHUNK_SIZE) {
+		const chunk = items.slice(i, i + VERIFICATION_CHUNK_SIZE);
+		const listing = chunk
+			.map((item, offset) => {
+				const citations = item.citations
+					.map((c) => `    - [${c.sourceTitle}] "${c.excerpt}"`)
+					.join('\n');
+				return `<answer index=${i + offset}>\n  Q: ${item.questionText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}\n  A: ${item.answer.replace(/</g, '&lt;').replace(/>/g, '&gt;')}\n  Sources:\n${citations || '    (none cited)'}\n</answer>`;
+			})
+			.join('\n');
+
+		const prompt = `You are auditing draft answers to a security questionnaire for ${orgName}. For each answer, judge ONLY whether the claims about ${orgName} are fully supported by the listed source excerpts.
+
+<answers_to_audit>
+${listing}
+</answers_to_audit>
+
+For each index, return:
+- index: the exact index from the answer tag
+- supported: true if every company-specific claim in the answer is backed by at least one excerpt (general security boilerplate does not need support)
+- reason: brief justification, required when supported is false
+
+Return one result per answer, in any order.`;
+
+		try {
+			const result = await generateObjectWithFallback(
+				VerificationResultSchema,
+				prompt,
+				'verifyAnswers'
+			);
+			for (const verdict of result.results) {
+				const item = chunk[verdict.index - i];
+				if (!item) continue;
+				verdicts.set(item.questionId, { supported: verdict.supported, reason: verdict.reason });
+			}
+		} catch (err) {
+			console.warn('[questionnaire-processor] Verification pass failed, skipping:', err);
+		}
+	}
+
+	return verdicts;
+}
+
+async function applyVerificationDowngrades(
+	pending: PendingVerification[],
+	orgName: string,
+	organizationId: string
+): Promise<number> {
+	if (env.VERIFY_ANSWERS === 'false' || pending.length === 0) return 0;
+	const verdicts = await verifyGroundedAnswers(pending, orgName);
+	let downgraded = 0;
+	for (const [questionId, verdict] of verdicts) {
+		if (verdict.supported) continue;
+		const item = pending.find((candidate) => candidate.questionId === questionId);
+		if (!item) continue;
+		const next = downgradeConfidence(item.confidence);
+		if (next === item.confidence) continue;
+		await db
+			.update(questionnaireQuestions)
+			.set({
+				confidence: next,
+				gapRemediation: `Auto-verified: answer was downgraded because it was not fully supported by its sources — ${verdict.reason}`,
+				updatedAt: new Date()
+			})
+			.where(
+				and(
+					eq(questionnaireQuestions.id, questionId),
+					eq(questionnaireQuestions.organizationId, organizationId)
+				)
+			);
+		downgraded++;
+	}
+	if (downgraded > 0) {
+		console.info(
+			`[questionnaire-processor] Verification downgraded ${downgraded} of ${pending.length} grounded answers`
+		);
+	}
+	return downgraded;
+}
+
 export async function processQuestionnaire(
 	questionnaireId: string,
 	organizationId: string
@@ -483,6 +653,8 @@ export async function processQuestionnaire(
 		// 4. Process questions in batches with parallel execution
 		const validPolicyIds = new Set(policyContext.map((p) => p.id));
 		const validControlIds = new Set(controlContext.map((c) => c.id));
+		const pendingVerification: PendingVerification[] = [];
+		const questionTextById = new Map(questionsToProcess.map((q) => [q.id, q.questionText]));
 
 		// Split into batches of BATCH_SIZE
 		const batches: Array<typeof questionsToProcess> = [];
@@ -533,6 +705,11 @@ export async function processQuestionnaire(
 						const safeControlIds = classification.mappedControlIds.filter((id) =>
 							validControlIds.has(id)
 						);
+						const citations = filterValidCitations(
+							classification.citations,
+							validPolicyIds,
+							validControlIds
+						);
 
 						await db
 							.update(questionnaireQuestions)
@@ -544,6 +721,7 @@ export async function processQuestionnaire(
 								gapRemediation: classification.gapRemediation,
 								mappedPolicyIds: safePolicyIds,
 								mappedControlIds: safeControlIds,
+								citations,
 								updatedAt: new Date()
 							})
 							.where(
@@ -552,6 +730,21 @@ export async function processQuestionnaire(
 									eq(questionnaireQuestions.organizationId, organizationId)
 								)
 							);
+
+						const questionText = questionTextById.get(questionId);
+						if (
+							(classification.confidence === 'high' || classification.confidence === 'medium') &&
+							classification.answer &&
+							questionText
+						) {
+							pendingVerification.push({
+								questionId,
+								questionText,
+								answer: classification.answer,
+								confidence: classification.confidence,
+								citations
+							});
+						}
 					}
 				} else {
 					console.error('[questionnaire-processor] Batch failed:', result.reason);
@@ -573,7 +766,8 @@ export async function processQuestionnaire(
 			}
 		}
 
-		// 5. Compute and persist summary stats
+		// 5. Verification pass on grounded answers, then compute and persist summary stats
+		await applyVerificationDowngrades(pendingVerification, orgName, organizationId);
 		await computeAndSaveStats(questionnaireId, organizationId);
 		await recomputeEnrolledReadinessScores(organizationId);
 	} catch (err) {
@@ -675,6 +869,8 @@ async function reprocessQuestionnaireNow(
 		// 6. Reclassify eligible questions in batches with parallel execution
 		const validPolicyIds = new Set(policyContext.map((p) => p.id));
 		const validControlIds = new Set(controlContext.map((c) => c.id));
+		const pendingVerification: PendingVerification[] = [];
+		const questionTextById = new Map(questionsToProcess.map((q) => [q.id, q.questionText]));
 
 		const batches: Array<typeof questionsToProcess> = [];
 		for (let i = 0; i < questionsToProcess.length; i += BATCH_SIZE) {
@@ -722,6 +918,11 @@ async function reprocessQuestionnaireNow(
 						const safeControlIds = classification.mappedControlIds.filter((id) =>
 							validControlIds.has(id)
 						);
+						const citations = filterValidCitations(
+							classification.citations,
+							validPolicyIds,
+							validControlIds
+						);
 
 						await db
 							.update(questionnaireQuestions)
@@ -733,6 +934,7 @@ async function reprocessQuestionnaireNow(
 								gapRemediation: classification.gapRemediation,
 								mappedPolicyIds: safePolicyIds,
 								mappedControlIds: safeControlIds,
+								citations,
 								updatedAt: new Date()
 							})
 							.where(
@@ -741,6 +943,21 @@ async function reprocessQuestionnaireNow(
 									eq(questionnaireQuestions.organizationId, organizationId)
 								)
 							);
+
+						const questionText = questionTextById.get(questionId);
+						if (
+							(classification.confidence === 'high' || classification.confidence === 'medium') &&
+							classification.answer &&
+							questionText
+						) {
+							pendingVerification.push({
+								questionId,
+								questionText,
+								answer: classification.answer,
+								confidence: classification.confidence,
+								citations
+							});
+						}
 					}
 				} else {
 					console.error('[questionnaire-processor] reprocess batch failed:', result.reason);
@@ -766,7 +983,8 @@ async function reprocessQuestionnaireNow(
 			}
 		}
 
-		// 7. Recompute summary stats across all questions (not just reprocessed ones)
+		// 7. Verification pass, then recompute summary stats across all questions (not just reprocessed ones)
+		await applyVerificationDowngrades(pendingVerification, orgName, organizationId);
 		await computeAndSaveStats(questionnaireId, organizationId);
 		await recomputeEnrolledReadinessScores(organizationId);
 	} catch (err) {

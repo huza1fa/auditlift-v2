@@ -401,6 +401,10 @@ export const questionnaireQuestions = pgTable(
 		domain: text('domain'),
 		mappedControlIds: jsonb('mapped_control_ids').$type<string[]>().default([]),
 		mappedPolicyIds: jsonb('mapped_policy_ids').$type<string[]>().default([]),
+		citations:
+			jsonb('citations').$type<
+				Array<{ sourceType: string; sourceId: string; sourceTitle: string; excerpt: string }>
+			>(),
 		generatedAnswer: text('generated_answer'),
 		confidence: text('confidence'), // 'high' | 'medium' | 'low' | 'gap' | null = unprocessed
 		gapReason: text('gap_reason'),
