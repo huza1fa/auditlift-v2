@@ -15,6 +15,25 @@
 	let loading = $state(false);
 	let errorMsg = $state('');
 	let infoMsg = $state('');
+	let unverifiedEmail = $state<string | null>(null);
+	let resending = $state(false);
+
+	async function resendVerification() {
+		if (!unverifiedEmail || resending) return;
+		resending = true;
+		errorMsg = '';
+		try {
+			await authClient.sendVerificationEmail({
+				email: unverifiedEmail,
+				callbackURL: postLoginUrl
+			});
+			infoMsg = 'Verification email sent. Please check your inbox (and spam folder).';
+		} catch {
+			errorMsg = 'Failed to resend the verification email. Please try again.';
+		} finally {
+			resending = false;
+		}
+	}
 
 	// Read redirectTo from query params (set by invite page, etc.)
 	const redirectTo = $derived($page.url.searchParams.get('redirectTo') ?? '');
@@ -48,6 +67,7 @@
 		loading = true;
 		errorMsg = '';
 		infoMsg = '';
+		unverifiedEmail = null;
 		try {
 			if (mode === 'signin') {
 				const res = await authClient.signIn.email({
@@ -56,7 +76,17 @@
 					callbackURL: postLoginUrl
 				});
 				if (res.error) {
-					errorMsg = res.error.message ?? 'Sign in failed';
+					const code = res.error.code ?? res.error.status;
+					if (
+						code === 'EMAIL_NOT_VERIFIED' ||
+						(res.error.message ?? '').toLowerCase().includes('verif')
+					) {
+						unverifiedEmail = email.trim();
+						infoMsg =
+							'Your email address is not verified yet. Check your inbox for a verification link.';
+					} else {
+						errorMsg = res.error.message ?? 'Sign in failed';
+					}
 				} else {
 					goto(postLoginUrl);
 				}
@@ -83,8 +113,13 @@
 					} else {
 						errorMsg = msg || 'Sign up failed';
 					}
+				} else if (isInviteFlow) {
+					goto(postLoginUrl);
+				} else if (res.data?.user?.emailVerified) {
+					goto('/onboarding');
 				} else {
-					goto(isInviteFlow ? postLoginUrl : '/onboarding');
+					infoMsg =
+						'Account created! Check your inbox and verify your email to continue setting up.';
 				}
 			}
 		} catch {
@@ -247,6 +282,16 @@
 
 			{#if infoMsg}
 				<p class="text-[12px] text-[var(--brand)]">{infoMsg}</p>
+			{/if}
+			{#if unverifiedEmail}
+				<button
+					type="button"
+					onclick={resendVerification}
+					disabled={resending}
+					class="cursor-pointer text-[12px] font-medium text-[var(--brand)] hover:underline disabled:opacity-60"
+				>
+					{resending ? 'Sending...' : 'Resend verification email'}
+				</button>
 			{/if}
 			{#if errorMsg}
 				<p class="text-[12px] text-[var(--danger)]">{errorMsg}</p>
