@@ -36,6 +36,14 @@
 
 	const trialExpired = $derived(isTrial && trialDaysLeft <= 0);
 
+	const now = Date.now();
+	const periodEndIsFuture = $derived(
+		!!data.subscription?.currentPeriodEnd && new Date(data.subscription.currentPeriodEnd) > now
+	);
+	const unlinkedSubscription = $derived(
+		isActive && !data.subscription?.stripeSubscriptionId && !periodEndIsFuture
+	);
+
 	const periodEnd = $derived.by(() => {
 		if (!data.subscription?.currentPeriodEnd) return null;
 		return new Date(data.subscription.currentPeriodEnd).toLocaleDateString('en-US', {
@@ -139,6 +147,24 @@
 		</Card>
 	{/if}
 
+	{#if unlinkedSubscription}
+		<!-- Active status but no Stripe billing behind it and the access period has passed -->
+		<div
+			class="rounded-[var(--radius-lg)] border border-[var(--warning)] bg-[var(--warning-light)] p-4"
+		>
+			<div class="flex items-center gap-3">
+				<Warning size={20} color="var(--warning)" weight="fill" />
+				<div>
+					<p class="font-semibold text-[var(--warning)]">No active billing attached</p>
+					<p class="text-sm text-[var(--foreground-muted)]">
+						This subscription is not linked to Stripe and its access period ended
+						{periodEnd ?? 'already'}. Choose a plan below to set up billing.
+					</p>
+				</div>
+			</div>
+		</div>
+	{/if}
+
 	{#if isPastDue}
 		<!-- Past due warning -->
 		<div
@@ -187,7 +213,9 @@
 			<p class="mb-4 text-sm text-[var(--foreground-muted)]">
 				{data.subscription?.cancelAtPeriodEnd
 					? `Your subscription ends on ${periodEnd}.`
-					: `Your next billing date is ${periodEnd}.`}
+					: periodEndIsFuture
+						? `Your next billing date is ${periodEnd}.`
+						: `Your current access period ended on ${periodEnd}.`}
 			</p>
 		{/if}
 
@@ -226,13 +254,13 @@
 			<!-- Monthly -->
 			<div
 				class="rounded-[var(--radius-lg)] border border-[var(--border)] p-4 transition-all
-				{isActive && !data.subscription?.cancelAtPeriodEnd
+				{isActive && !data.subscription?.cancelAtPeriodEnd && !unlinkedSubscription
 					? 'border-[var(--brand)] bg-[var(--brand-light)]'
 					: ''}"
 			>
 				<div class="mb-3 flex items-center justify-between">
 					<p class="font-semibold text-[var(--foreground)]">Monthly</p>
-					{#if isActive && !data.subscription?.cancelAtPeriodEnd}
+					{#if isActive && !data.subscription?.cancelAtPeriodEnd && !unlinkedSubscription}
 						<Badge variant="success">
 							<Check size={10} weight="bold" /> Active
 						</Badge>
@@ -257,7 +285,7 @@
 						<Check size={14} color="var(--success)" weight="bold" /> Email support
 					</li>
 				</ul>
-				{#if !isActive || data.subscription?.cancelAtPeriodEnd}
+				{#if !isActive || unlinkedSubscription || data.subscription?.cancelAtPeriodEnd}
 					<Button
 						class="w-full"
 						onclick={() => startCheckout('monthly')}
