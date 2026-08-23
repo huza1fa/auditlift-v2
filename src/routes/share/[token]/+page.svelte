@@ -73,7 +73,8 @@
 
 		<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Security Questionnaire</h1>
 		<p class="mb-4 text-sm text-[var(--foreground-muted)]">
-			Prepared by <strong>{data.organizationName}</strong> · {data.questionnaire.filename} · Shared {sharedDate}
+			Prepared by <strong>{data.organizationName}</strong> · {data.questionnaire.filename} · Shared
+			{sharedDate}
 		</p>
 
 		<!-- Score + Stats -->
@@ -180,15 +181,27 @@
 	{/each}
 
 	<!-- Footer -->
-	<div class="mt-12 border-t border-[var(--border)] pt-6 text-center">
-		<div class="flex items-center justify-center gap-1.5 text-[var(--foreground-subtle)]">
-			<ShieldCheck size={14} />
-			<span class="text-xs"
-				>Powered by <a
-					href="https://auditlift.app"
-					class="font-medium text-[var(--brand)] hover:underline">AuditLift</a
-				></span
+	<div class="mt-12 border-t border-[var(--border)] pt-6">
+		<div
+			class="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-elevated)] px-6 py-5 text-center sm:flex-row sm:justify-between sm:text-left"
+		>
+			<div class="flex items-center gap-2.5">
+				<ShieldCheck size={20} color="var(--brand)" weight="fill" />
+				<div>
+					<p class="text-sm font-semibold text-[var(--foreground)]">
+						Prepared with <span class="text-[var(--brand)]">AuditLift</span>
+					</p>
+					<p class="text-xs text-[var(--foreground-muted)]">
+						Security questionnaires answered in minutes — compliance built as you close deals.
+					</p>
+				</div>
+			</div>
+			<a
+				href="https://auditlift.app"
+				class="shrink-0 rounded-[var(--radius)] bg-[var(--brand)] px-4 py-2 text-xs font-medium text-white no-underline transition-colors hover:bg-[var(--brand-hover)]"
 			>
+				Answer yours with AuditLift
+			</a>
 		</div>
 	</div>
 </div>
