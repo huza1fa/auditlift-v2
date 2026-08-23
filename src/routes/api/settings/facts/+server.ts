@@ -30,7 +30,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		'Viewers cannot create organization facts'
 	);
 
-	if (!checkRateLimit(`organization-facts:write:${organizationId}:${userId}`, 30, 60 * 1000)) {
+	if (!(await checkRateLimit(`organization-facts:write:${organizationId}:${userId}`, 30, 60 * 1000))) {
 		throw error(429, 'Too many fact changes. Please wait before trying again.');
 	}
 

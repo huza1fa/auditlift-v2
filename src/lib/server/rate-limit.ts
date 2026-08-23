@@ -1,42 +1,44 @@
-interface RateLimitEntry {
-	count: number;
-	windowStart: number;
-}
-
-const store = new Map<string, RateLimitEntry>();
-
-// Clean up old entries every 10 minutes to prevent memory leak
-setInterval(
-	() => {
-		const now = Date.now();
-		for (const [key, entry] of store.entries()) {
-			if (now - entry.windowStart > 60 * 60 * 1000) {
-				store.delete(key);
-			}
-		}
-	},
-	10 * 60 * 1000
-);
+import { sql, lt } from 'drizzle-orm';
+import { db } from './db';
+import { rateLimitCounters } from './db/schema';
 
 /**
  * Returns true if the request should be allowed, false if rate limited.
+ * Counters are persisted in PostgreSQL so limits survive restarts and are
+ * shared across app instances. Fails open if the database is unavailable so
+ * rate limiting can never take the product down.
+ *
  * @param key - unique identifier (e.g. orgId + endpoint)
  * @param limit - max requests per window
  * @param windowMs - window duration in milliseconds
  */
-export function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+export async function checkRateLimit(
+	key: string,
+	limit: number,
+	windowMs: number
+): Promise<boolean> {
 	const now = Date.now();
-	const entry = store.get(key);
+	const windowStart = new Date(Math.floor(now / windowMs) * windowMs);
 
-	if (!entry || now - entry.windowStart > windowMs) {
-		store.set(key, { count: 1, windowStart: now });
+	try {
+		const [row] = await db
+			.insert(rateLimitCounters)
+			.values({ key, windowStart, count: 1 })
+			.onConflictDoUpdate({
+				target: [rateLimitCounters.key, rateLimitCounters.windowStart],
+				set: { count: sql`${rateLimitCounters.count} + 1` }
+			})
+			.returning({ count: rateLimitCounters.count });
+
+		if (Math.random() < 0.02) {
+			db.delete(rateLimitCounters)
+				.where(lt(rateLimitCounters.windowStart, new Date(now - 2 * windowMs)))
+				.catch(() => {});
+		}
+
+		return row.count <= limit;
+	} catch (err) {
+		console.error('[rate-limit] counter unavailable, failing open:', err);
 		return true;
 	}
-
-	if (entry.count >= limit) {
-		return false;
-	}
-
-	entry.count++;
-	return true;
 }

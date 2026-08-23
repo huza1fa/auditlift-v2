@@ -32,7 +32,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	);
 	const factId = requireFactId(params.id);
 
-	if (!checkRateLimit(`organization-facts:write:${organizationId}:${userId}`, 30, 60 * 1000)) {
+	if (!(await checkRateLimit(`organization-facts:write:${organizationId}:${userId}`, 30, 60 * 1000))) {
 		throw error(429, 'Too many fact changes. Please wait before trying again.');
 	}
 
@@ -83,7 +83,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	);
 	const factId = requireFactId(params.id);
 
-	if (!checkRateLimit(`organization-facts:delete:${organizationId}:${userId}`, 10, 60 * 1000)) {
+	if (!(await checkRateLimit(`organization-facts:delete:${organizationId}:${userId}`, 10, 60 * 1000))) {
 		throw error(429, 'Too many fact deletions. Please wait before trying again.');
 	}
 

@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { organizationInvitations, userOrganizations, organizations } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { logActivity } from '$lib/server/activity';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const token = params.token;
@@ -104,6 +105,14 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		throw error(403, 'This invitation was sent to a different email address');
 	}
 
+	// Require a verified email so someone cannot claim an address they don't own
+	if (!locals.session.user.emailVerified) {
+		throw error(
+			403,
+			'Verify your email address before accepting this invitation. Check your inbox for a verification link, or sign in with a social provider.'
+		);
+	}
+
 	if (action === 'decline') {
 		await db
 			.update(organizationInvitations)
@@ -139,6 +148,17 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		.update(organizationInvitations)
 		.set({ status: 'accepted' })
 		.where(eq(organizationInvitations.id, invitation.id));
+
+	await logActivity({
+		organizationId: invitation.organizationId,
+		userId: locals.session.user.id,
+		userName: locals.session.user.name ?? locals.session.user.email,
+		action: 'team.joined',
+		entityType: 'user',
+		entityId: locals.session.user.id,
+		entityName: locals.session.user.email,
+		details: `role: ${invitation.role}, invited by ${invitation.invitedBy}`
+	});
 
 	return json({
 		success: true,

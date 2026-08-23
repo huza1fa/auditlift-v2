@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	);
 
 	// 3. Rate limit — 5 reprocesses per org per hour
-	if (!checkRateLimit(`reprocess:${orgId}`, 5, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`reprocess:${orgId}`, 5, 60 * 60 * 1000))) {
 		throw error(429, 'Too many reprocess requests. Please wait before trying again.');
 	}
 

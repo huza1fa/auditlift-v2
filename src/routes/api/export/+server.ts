@@ -17,6 +17,7 @@ import { stringify } from 'csv-stringify/sync';
 import { generatePolicyPdf } from '$lib/server/pdf';
 import { downloadFileStream, sanitizeFilename } from '$lib/server/storage';
 import { captureServerEvent } from '$lib/server/posthog';
+import { logActivity } from '$lib/server/activity';
 import { Readable } from 'node:stream';
 
 const MAX_EXPORT_FILES = 100;
@@ -71,6 +72,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const orgId = locals.organizationId;
 	const org = locals.organization!;
+	const actor = {
+		userId: locals.session.user.id,
+		userName: locals.session.user.name ?? locals.session.user.email
+	};
 
 	const bodyRaw = await request.json().catch(() => ({}));
 	const bodyResult = ExportSchema.safeParse(bodyRaw);
@@ -249,6 +254,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			}
 
 			await archive.finalize();
+			void logActivity({
+				organizationId: orgId,
+				userId: actor.userId,
+				userName: actor.userName,
+				action: 'export.created',
+				entityType: 'export',
+				entityId: folderName,
+				details: `${allPolicies.length} policies, ${allEvidence.length} evidence files, ${allControls.length} controls`
+			}).catch((err) => console.warn(`[Export] Failed to log activity: ${err}`));
 			void captureServerEvent({
 				event: 'export_created',
 				properties: {

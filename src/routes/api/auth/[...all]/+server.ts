@@ -13,14 +13,14 @@ const RATE_LIMITED_PATHS = [
 
 export const GET: RequestHandler = ({ request }) => auth.handler(request);
 
-export const POST: RequestHandler = ({ request, getClientAddress }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 	const url = new URL(request.url);
 	const authPath = url.pathname.replace('/api/auth', '');
 
 	if (RATE_LIMITED_PATHS.some((p) => authPath.startsWith(p))) {
 		const ip = getClientAddress();
 		// 10 attempts per path per IP per 15 minutes
-		if (!checkRateLimit(`auth:${authPath}:${ip}`, 10, 15 * 60 * 1000)) {
+		if (!(await checkRateLimit(`auth:${authPath}:${ip}`, 10, 15 * 60 * 1000))) {
 			throw error(429, 'Too many attempts. Please try again later.');
 		}
 	}

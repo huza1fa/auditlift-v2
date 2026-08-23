@@ -109,7 +109,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		'Your trial has expired. Please upgrade to continue.'
 	);
 
-	if (!checkRateLimit(`q-upload:${orgId}`, 20, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`q-upload:${orgId}`, 20, 60 * 60 * 1000))) {
 		throw error(429, 'Too many uploads. Please wait before uploading more questionnaires.');
 	}
 

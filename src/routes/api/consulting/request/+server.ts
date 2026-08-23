@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 
 	// Rate limit: 3 submissions per IP per hour
 	const ip = getClientAddress();
-	if (!checkRateLimit(`consulting:${ip}`, 3, 60 * 60 * 1000)) {
+	if (!(await checkRateLimit(`consulting:${ip}`, 3, 60 * 60 * 1000))) {
 		throw error(429, 'Too many requests. Please try again later.');
 	}
 

@@ -6,11 +6,15 @@ import { eq, and } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { captureServerEvent } from '$lib/server/posthog';
 import { requireOrganizationRole } from '$lib/server/auth-utils';
+import { logActivity } from '$lib/server/activity';
 
 type ShareResponse = {
 	shareToken: string | null;
 	sharedAt: Date | null;
+	shareExpiresAt: Date | null;
 };
+
+const SHARE_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const POST: RequestHandler = async ({ locals, params }) => {
 	const { organizationId: orgId } = await requireOrganizationRole(
@@ -30,6 +34,7 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 	const [questionnaire] = await db
 		.select({
 			id: questionnaires.id,
+			filename: questionnaires.filename,
 			status: questionnaires.status,
 			shareToken: questionnaires.shareToken,
 			sharedAt: questionnaires.sharedAt
@@ -50,22 +55,35 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 	// 5. Toggle sharing
 	let shareToken: string | null;
 	let sharedAt: Date | null;
+	let shareExpiresAt: Date | null;
 
 	if (questionnaire.shareToken === null) {
-		// Enable sharing — generate a fresh token
+		// Enable sharing — generate a fresh token that expires in 30 days
 		shareToken = crypto.randomUUID();
 		sharedAt = new Date();
+		shareExpiresAt = new Date(Date.now() + SHARE_LINK_TTL_MS);
 	} else {
-		// Disable sharing — clear both fields
+		// Disable sharing — clear all fields
 		shareToken = null;
 		sharedAt = null;
+		shareExpiresAt = null;
 	}
 
 	// 6. Persist the updated share state, scoped to org as a safety net
 	await db
 		.update(questionnaires)
-		.set({ shareToken, sharedAt })
+		.set({ shareToken, sharedAt, shareExpiresAt })
 		.where(and(eq(questionnaires.id, id), eq(questionnaires.organizationId, orgId)));
+
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session!.user.id,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: shareToken ? 'questionnaire.share' : 'questionnaire.unshare',
+		entityType: 'questionnaire',
+		entityId: id,
+		entityName: questionnaire.filename
+	});
 
 	await captureServerEvent({
 		event: 'questionnaire_share_toggled',
@@ -77,6 +95,6 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 		groups: { organization: orgId }
 	});
 
-	const response: ShareResponse = { shareToken, sharedAt };
+	const response: ShareResponse = { shareToken, sharedAt, shareExpiresAt };
 	return json(response);
 };
