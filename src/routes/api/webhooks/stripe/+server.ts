@@ -4,7 +4,7 @@ import type Stripe from 'stripe';
 import { constructWebhookEvent, stripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { subscriptions, userOrganizations } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { captureServerEvent } from '$lib/server/posthog';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -48,7 +48,7 @@ async function getOrgOwnerId(orgId: string): Promise<string | null> {
 	const [userOrg] = await db
 		.select()
 		.from(userOrganizations)
-		.where(eq(userOrganizations.organizationId, orgId))
+		.where(and(eq(userOrganizations.organizationId, orgId), eq(userOrganizations.role, 'owner')))
 		.limit(1);
 	return userOrg?.userId ?? null;
 }
@@ -68,39 +68,31 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 		: null;
 	const status = mapStripeStatus(stripeSub.status);
 
-	// Check if subscription exists for this org
-	const [existingSub] = await db
-		.select()
-		.from(subscriptions)
-		.where(eq(subscriptions.organizationId, organizationId))
-		.limit(1);
-
 	console.log(
 		`[Stripe] Recording subscription for org ${organizationId} (sub ${stripeSub.id}, ${status})`
 	);
 
-	if (existingSub) {
-		await db
-			.update(subscriptions)
-			.set({
-				status,
-				stripeCustomerId: session.customer as string,
-				stripeSubscriptionId: stripeSub.id,
-				currentPeriodEnd,
-				cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-				updatedAt: new Date()
-			})
-			.where(eq(subscriptions.organizationId, organizationId));
-	} else {
-		await db.insert(subscriptions).values({
+	await db
+		.insert(subscriptions)
+		.values({
 			organizationId,
 			status,
 			stripeCustomerId: session.customer as string,
 			stripeSubscriptionId: stripeSub.id,
 			currentPeriodEnd,
 			cancelAtPeriodEnd: stripeSub.cancel_at_period_end
+		})
+		.onConflictDoUpdate({
+			target: subscriptions.organizationId,
+			set: {
+				status,
+				stripeCustomerId: session.customer as string,
+				stripeSubscriptionId: stripeSub.id,
+				currentPeriodEnd,
+				cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+				updatedAt: new Date()
+			}
 		});
-	}
 
 	console.log(`[Stripe] Subscription recorded for org ${organizationId} with status=${status}`);
 

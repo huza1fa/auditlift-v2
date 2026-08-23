@@ -22,7 +22,12 @@ describe('billing access rules', () => {
 		expect(hasActiveAccess(null, past)).toBe(false);
 		expect(hasActiveAccess(subscription('trialing'), future)).toBe(true);
 		expect(hasActiveAccess(subscription('trialing'), past)).toBe(false);
-		expect(hasActiveAccess(subscription('trialing'))).toBe(true);
+	});
+
+	it('denies trialing subscriptions without a trial end date', () => {
+		expect(hasActiveAccess(subscription('trialing'))).toBe(false);
+		expect(hasActiveAccess(subscription('trialing'), null)).toBe(false);
+		expect(isReadOnly(subscription('trialing'))).toBe(true);
 	});
 
 	it('rejects inactive subscriptions and keeps them read-only', () => {

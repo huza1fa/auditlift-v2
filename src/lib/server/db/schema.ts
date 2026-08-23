@@ -104,7 +104,7 @@ export const subscriptions = pgTable(
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
 	(table) => [
-		index('subscriptions_org_id_idx').on(table.organizationId),
+		uniqueIndex('subscriptions_org_id_unique_idx').on(table.organizationId),
 		index('subscriptions_stripe_sub_id_idx').on(table.stripeSubscriptionId)
 	]
 );
