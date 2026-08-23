@@ -140,10 +140,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const trialEndsAt = locals.organization?.trialEndsAt;
 	const isActiveSubscription = locals.subscription?.status === 'active';
+	// Unclamped so the UI can distinguish "expires today" (0) from "expired" (negative)
 	const trialDaysRemaining = isActiveSubscription
 		? null
 		: trialEndsAt
-			? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000))
+			? Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000)
 			: null;
 
 	// ── Questionnaire stats ────────────────────────────────────────────────────
