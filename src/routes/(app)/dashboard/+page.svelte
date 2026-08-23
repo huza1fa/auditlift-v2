@@ -39,6 +39,7 @@
 
 	type PageData = {
 		user?: { name?: string };
+		organization?: { name?: string; trialEndsAt?: string | Date | null } | null;
 		readiness: {
 			score: number;
 			totalControls: number;
@@ -78,7 +79,41 @@
 	$effect(() => {
 		showBanner = data.justSubscribed;
 	});
-	const isTrialUrgent = $derived(data.trialDaysRemaining !== null && data.trialDaysRemaining <= 3);
+	const isTrialUrgent = $derived(
+		data.trialDaysRemaining !== null && data.trialDaysRemaining >= 0 && data.trialDaysRemaining <= 3
+	);
+	const isTrialExpired = $derived(data.trialDaysRemaining !== null && data.trialDaysRemaining < 0);
+
+	let trialExpiredBannerDismissed = $state(true);
+	let trialExpiredBannerViewTracked = false;
+	$effect(() => {
+		if (!isTrialExpired) return;
+		const dismissedKey = String(data.organization?.trialEndsAt ?? '');
+		trialExpiredBannerDismissed =
+			localStorage.getItem('al_trial_expired_dismissed') === dismissedKey;
+		if (!trialExpiredBannerDismissed && !trialExpiredBannerViewTracked) {
+			trialExpiredBannerViewTracked = true;
+			captureEvent('trial_expired_banner_viewed');
+		}
+	});
+
+	function dismissTrialExpiredBanner() {
+		trialExpiredBannerDismissed = true;
+		if (isTrialExpired) {
+			localStorage.setItem(
+				'al_trial_expired_dismissed',
+				String(data.organization?.trialEndsAt ?? '')
+			);
+			captureEvent('trial_expired_banner_dismissed');
+		}
+	}
+
+	const trialEndedOn = $derived.by(() => {
+		if (data.organization?.trialEndsAt == null) return '';
+		return new Date(data.organization.trialEndsAt).toLocaleDateString('en-US', {
+			dateStyle: 'long'
+		});
+	});
 
 	// ---------------------------------------------------------------------------
 	// Date
@@ -202,6 +237,35 @@
 			>
 				<X size={20} />
 			</button>
+		</div>
+	{/if}
+
+	<!-- Trial expired banner -->
+	{#if isTrialExpired && !trialExpiredBannerDismissed}
+		<div
+			class="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--danger)] bg-[var(--danger-light)] p-4"
+		>
+			<div class="flex items-center gap-3">
+				<Warning size={20} color="var(--danger)" weight="fill" />
+				<div>
+					<p class="font-semibold text-[var(--danger)]">{m.dashboard_trial_expired_title()}</p>
+					<p class="text-sm text-[var(--foreground-muted)]">
+						{m.dashboard_trial_expired_body({ date: trialEndedOn })}
+					</p>
+				</div>
+			</div>
+			<div class="flex shrink-0 items-center gap-2">
+				<a href="/settings/billing">
+					<Button size="sm">{m.dashboard_upgrade_now()}</Button>
+				</a>
+				<button
+					onclick={dismissTrialExpiredBanner}
+					class="rounded p-1 text-[var(--foreground-subtle)] hover:bg-[var(--background-alt)] hover:text-[var(--foreground-muted)]"
+					aria-label="Dismiss"
+				>
+					<X size={16} />
+				</button>
+			</div>
 		</div>
 	{/if}
 
@@ -643,7 +707,9 @@
 				<h2 class="mb-1 text-sm font-medium text-[var(--foreground-muted)]">
 					{m.dashboard_trial_status_title()}
 				</h2>
-				{#if data.trialDaysRemaining !== null}
+				{#if isTrialExpired}
+					<Badge variant="danger">{m.dashboard_trial_expired_title()}</Badge>
+				{:else if data.trialDaysRemaining !== null}
 					<p
 						class="text-3xl font-bold {isTrialUrgent
 							? 'text-[var(--warning)]'

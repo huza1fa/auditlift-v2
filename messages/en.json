@@ -138,6 +138,8 @@
 	"dashboard_trial_days_remaining": "{days} days remaining",
 	"dashboard_trial_days_left": "{days} days left",
 	"dashboard_trial_expires_today": "Expires today",
+	"dashboard_trial_expired_title": "Your free trial has ended",
+	"dashboard_trial_expired_body": "Your trial ended on {date}. Nothing is lost — your work is saved in read-only mode. Upgrade to restore full access.",
 	"dashboard_trial_upgrade_body": "Upgrade for unlimited questionnaires, exports, and team members.",
 	"dashboard_upgrade_now": "Upgrade now",
 	"dashboard_manage_billing": "Manage billing",
