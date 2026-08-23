@@ -87,7 +87,9 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 	const parsedId = QuestionnaireIdSchema.safeParse(params.id);
 	if (!parsedId.success) throw error(400, 'Invalid questionnaire id');
 	const questionnaireId = parsedId.data;
-	if (!(await checkRateLimit(`gap-interview:${organizationId}:${questionnaireId}`, 6, 60 * 60 * 1000))) {
+	if (
+		!(await checkRateLimit(`gap-interview:${organizationId}:${questionnaireId}`, 6, 60 * 60 * 1000))
+	) {
 		throw error(429, 'Too many gap interviews. Please wait before trying again.');
 	}
 
