@@ -9,7 +9,8 @@
 		Gear,
 		SignOut,
 		List,
-		ChatDots
+		ChatDots,
+		ClockCounterClockwise
 	} from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
@@ -82,6 +83,7 @@
 		{ href: '/policies', icon: FileText, label: 'Policies' },
 		{ href: '/questionnaires', icon: ChatDots, label: 'Questionnaires' },
 		{ href: '/evidence', icon: FolderOpen, label: 'Evidence' },
+		{ href: '/activity', icon: ClockCounterClockwise, label: 'Activity' },
 		{ href: '/export', icon: DownloadSimple, label: 'Export' },
 		{ href: '/settings', icon: Gear, label: 'Settings' }
 	];
