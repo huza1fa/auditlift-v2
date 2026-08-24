@@ -21,6 +21,7 @@ import {
 } from '$lib/server/questionnaire-parser';
 import { captureServerEvent } from '$lib/server/posthog';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
+import { logActivity } from '$lib/server/activity';
 
 const MAX_QUESTIONNAIRE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_RAW_TEXT_LENGTH = 500_000;
@@ -295,6 +296,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 		throw setupError;
 	}
+
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session!.user.id,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: 'questionnaire.upload',
+		entityType: 'questionnaire',
+		entityId: questionnaire.id,
+		entityName: filename,
+		details: `${parsed.questions.length} question${parsed.questions.length === 1 ? '' : 's'} detected`
+	});
 
 	// 11. Analytics
 	try {

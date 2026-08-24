@@ -37,7 +37,8 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 			filename: questionnaires.filename,
 			status: questionnaires.status,
 			shareToken: questionnaires.shareToken,
-			sharedAt: questionnaires.sharedAt
+			sharedAt: questionnaires.sharedAt,
+			shareExpiresAt: questionnaires.shareExpiresAt
 		})
 		.from(questionnaires)
 		.where(and(eq(questionnaires.id, id), eq(questionnaires.organizationId, orgId)))
@@ -57,7 +58,12 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 	let sharedAt: Date | null;
 	let shareExpiresAt: Date | null;
 
-	if (questionnaire.shareToken === null) {
+	const hasActiveShareLink =
+		questionnaire.shareToken !== null &&
+		questionnaire.shareExpiresAt !== null &&
+		questionnaire.shareExpiresAt > new Date();
+
+	if (!hasActiveShareLink) {
 		// Enable sharing — generate a fresh token that expires in 30 days
 		shareToken = crypto.randomUUID();
 		sharedAt = new Date();

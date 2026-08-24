@@ -97,7 +97,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		organizationId,
 		userId,
 		userName: locals.session!.user.name,
-		action: 'policy.edit',
+		action: 'policy.restore',
 		entityType: 'policy',
 		entityId: existingPolicy.id,
 		entityName: existingPolicy.title

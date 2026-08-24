@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { questionnaires, questionnaireQuestions, policies, controls } from '$lib/server/db/schema';
 import { eq, and, asc, inArray, isNull } from 'drizzle-orm';
 import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
+import { logActivity } from '$lib/server/activity';
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	const { organizationId: orgId } = await requireActiveOrganizationRole(
@@ -34,6 +35,16 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	await db
 		.delete(questionnaires)
 		.where(and(eq(questionnaires.id, id), eq(questionnaires.organizationId, orgId)));
+
+	await logActivity({
+		organizationId: orgId,
+		userId: locals.session!.user.id,
+		userName: locals.session!.user.name ?? locals.session!.user.email,
+		action: 'questionnaire.delete',
+		entityType: 'questionnaire',
+		entityId: id,
+		entityName: questionnaire.filename
+	});
 
 	return json({ success: true });
 };

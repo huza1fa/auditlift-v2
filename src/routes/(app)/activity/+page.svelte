@@ -109,6 +109,20 @@
 				color: 'var(--info)',
 				bg: 'var(--info-light)'
 			};
+		if (action === 'questionnaire.upload')
+			return {
+				label: 'Uploaded questionnaire',
+				icon: ChatDots,
+				color: 'var(--brand)',
+				bg: 'var(--brand-light)'
+			};
+		if (action === 'questionnaire.delete')
+			return {
+				label: 'Deleted questionnaire',
+				icon: ChatDots,
+				color: 'var(--danger)',
+				bg: 'var(--danger-light)'
+			};
 		if (action === 'export.created')
 			return {
 				label: 'Created auditor export',

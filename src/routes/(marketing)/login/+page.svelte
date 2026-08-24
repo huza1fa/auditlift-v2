@@ -113,13 +113,13 @@
 					} else {
 						errorMsg = msg || 'Sign up failed';
 					}
-				} else if (isInviteFlow) {
-					goto(postLoginUrl);
 				} else if (res.data?.user?.emailVerified) {
-					goto('/onboarding');
+					goto(isInviteFlow ? postLoginUrl : '/onboarding');
 				} else {
-					infoMsg =
-						'Account created! Check your inbox and verify your email to continue setting up.';
+					unverifiedEmail = email.trim();
+					infoMsg = isInviteFlow
+						? 'Account created! Check your inbox and verify your email before accepting the invitation.'
+						: 'Account created! Check your inbox and verify your email to continue setting up.';
 				}
 			}
 		} catch {

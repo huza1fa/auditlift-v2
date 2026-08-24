@@ -12,6 +12,7 @@ import {
 } from '$lib/server/db/schema';
 import { eq, and, desc, count, avg, isNull, lt } from 'drizzle-orm';
 import { computeReadinessScore } from '$lib/server/score';
+import { hasActivePaidAccess } from '$lib/server/billing';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
@@ -139,7 +140,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const trialEndsAt = locals.organization?.trialEndsAt;
-	const isActiveSubscription = locals.subscription?.status === 'active';
+	const isActiveSubscription = hasActivePaidAccess(locals.subscription);
 	// Unclamped so the UI can distinguish "expires today" (0) from "expired" (negative)
 	const trialDaysRemaining = isActiveSubscription
 		? null

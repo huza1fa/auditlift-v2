@@ -86,8 +86,8 @@
 			<h2 class="font-semibold text-[var(--foreground)]">Billing</h2>
 		</div>
 		<div class="flex items-center gap-3">
-			<Badge variant={data.subscription?.status === 'active' ? 'success' : 'warning'}>
-				{data.subscription?.status ?? 'No subscription'}
+			<Badge variant={data.hasActivePaidAccess ? 'success' : 'warning'}>
+				{data.hasActivePaidAccess ? 'active' : (data.subscription?.status ?? 'No subscription')}
 			</Badge>
 			{#if org.trialEndsAt}
 				<span class="text-sm text-[var(--foreground-muted)]">

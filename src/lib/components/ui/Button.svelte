@@ -11,6 +11,7 @@
 		disabled = false,
 		loading = false,
 		type = 'button',
+		ariaLabel,
 		class: className = '',
 		onclick,
 		children
@@ -20,6 +21,7 @@
 		disabled?: boolean;
 		loading?: boolean;
 		type?: 'button' | 'submit' | 'reset';
+		ariaLabel?: string;
 		class?: string;
 		onclick?: (e: MouseEvent) => void;
 		children: Snippet;
@@ -53,6 +55,7 @@
 
 <button
 	{type}
+	aria-label={ariaLabel}
 	disabled={isDisabled}
 	class="{base} {sizes[size]} {variants[variant]} {className}"
 	{onclick}

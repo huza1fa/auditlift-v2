@@ -101,6 +101,7 @@ export const subscriptions = pgTable(
 		status: text('status').notNull().default('trialing'),
 		currentPeriodEnd: timestamp('current_period_end'),
 		cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+		accessOverrideUntil: timestamp('access_override_until'),
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},

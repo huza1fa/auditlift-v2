@@ -21,7 +21,8 @@
 	const yearlyMonthly = $derived(Math.round(yearlyTotal / 12));
 	const yearlySavings = $derived(monthlyPrice * 12 - yearlyTotal);
 
-	const isActive = $derived(data.subscription?.status === 'active');
+	const isSubscriptionMarkedActive = $derived(data.subscription?.status === 'active');
+	const isActive = $derived(data.hasActivePaidAccess === true);
 	const isPastDue = $derived(data.subscription?.status === 'past_due');
 	const isCanceled = $derived(data.subscription?.status === 'canceled');
 	const isTrial = $derived(!data.subscription || data.subscription?.status === 'trialing');
@@ -42,7 +43,10 @@
 			new Date(data.subscription.currentPeriodEnd).getTime() > now
 	);
 	const unlinkedSubscription = $derived(
-		isActive && !data.subscription?.stripeSubscriptionId && !periodEndIsFuture
+		isSubscriptionMarkedActive &&
+			!data.subscription?.stripeSubscriptionId &&
+			!periodEndIsFuture &&
+			!data.hasActivePaidAccess
 	);
 
 	const periodEnd = $derived.by(() => {
@@ -191,17 +195,27 @@
 				<h2 class="font-semibold text-[var(--foreground)]">Current Plan</h2>
 				<div class="mt-1 flex items-center gap-2">
 					<Badge
-						variant={isActive ? 'success' : isPastDue ? 'warning' : isCanceled ? 'danger' : 'info'}
+						variant={isActive
+							? 'success'
+							: unlinkedSubscription
+								? 'danger'
+								: isPastDue
+									? 'warning'
+									: isCanceled
+										? 'danger'
+										: 'info'}
 					>
 						{isActive
 							? 'Active'
-							: isPastDue
-								? 'Past Due'
-								: isCanceled
-									? 'Canceled'
-									: isTrial
-										? 'Trial'
-										: (data.subscription?.status ?? 'Trial')}
+							: unlinkedSubscription
+								? 'Access expired'
+								: isPastDue
+									? 'Past Due'
+									: isCanceled
+										? 'Canceled'
+										: isTrial
+											? 'Trial'
+											: (data.subscription?.status ?? 'Trial')}
 					</Badge>
 					{#if data.subscription?.cancelAtPeriodEnd}
 						<Badge variant="warning">Cancels at period end</Badge>

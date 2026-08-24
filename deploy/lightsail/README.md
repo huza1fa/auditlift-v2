@@ -27,6 +27,14 @@ POSTHOG_HOST=https://us.i.posthog.com
 QUESTIONNAIRE_JOB_SECRET=<long-random-secret>
 ```
 
+### Temporary billing access overrides
+
+An `active` subscription without a Stripe subscription ID is valid only through its recorded
+`current_period_end`. For deliberate internal testing or support access, set
+`subscriptions.access_override_until` to a specific future timestamp for that organization. The
+override is time-bounded and should be cleared when it is no longer needed; do not add email-based
+exceptions to application code.
+
 Install Docker and Docker Compose on the VM. The workflow installs `docker-compose.yml` and the scheduler script at `/opt/auditlift/deploy/lightsail/` on every deployment.
 
 The VM host must run a reverse proxy on port `80` that forwards to `127.0.0.1:3000`. The Compose stack binds the app only to that loopback address, so it is not exposed directly to the internet. Allow inbound TCP port `80` in the Lightsail networking rules and terminate TLS at an upstream CDN/load balancer.

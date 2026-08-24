@@ -16,6 +16,7 @@
 	}
 
 	let { data } = $props();
+	const canManageFrameworks = $derived(data.canManageFrameworks === true);
 
 	// svelte-ignore state_referenced_locally
 	let frameworks = $state<Framework[]>(
@@ -63,6 +64,11 @@
 			Activate as many frameworks as you need. Policies, evidence, and questionnaire answers count
 			toward every active framework at once.
 		</p>
+		{#if !canManageFrameworks}
+			<p class="mt-2 text-sm text-[var(--foreground-subtle)]">
+				Only organization admins can change active frameworks.
+			</p>
+		{/if}
 	</div>
 
 	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -80,20 +86,22 @@
 					{#if framework.active}
 						<div class="flex items-center gap-2">
 							<Badge variant="success">Active</Badge>
-							<Button
-								variant="secondary"
-								size="sm"
-								disabled={busySlug !== null}
-								onclick={() => toggle(framework)}
-							>
-								{#if busySlug === framework.slug}
-									<Spinner size={14} class="animate-spin" />
-								{:else}
-									Deactivate
-								{/if}
-							</Button>
+							{#if canManageFrameworks}
+								<Button
+									variant="secondary"
+									size="sm"
+									disabled={busySlug !== null}
+									onclick={() => toggle(framework)}
+								>
+									{#if busySlug === framework.slug}
+										<Spinner size={14} class="animate-spin" />
+									{:else}
+										Deactivate
+									{/if}
+								</Button>
+							{/if}
 						</div>
-					{:else}
+					{:else if canManageFrameworks}
 						<Button
 							variant="secondary"
 							size="sm"

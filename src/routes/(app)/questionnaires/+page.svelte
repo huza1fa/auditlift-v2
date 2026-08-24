@@ -105,6 +105,28 @@
 
 	// ── SSE ───────────────────────────────────────────────────────────────────
 	const sseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+	const sseReconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+	const sseReconnectAttempts = new Map<string, number>();
+
+	function scheduleSSEReconnect(questionnaireId: string) {
+		if (sseReconnectTimers.has(questionnaireId)) return;
+		const attempts = sseReconnectAttempts.get(questionnaireId) ?? 0;
+		if (attempts >= 3) {
+			toastWarning('Live updates were interrupted. Refresh the page to check processing status.');
+			return;
+		}
+
+		sseReconnectAttempts.set(questionnaireId, attempts + 1);
+		const delay = 2000 * (attempts + 1);
+		const timer = setTimeout(async () => {
+			sseReconnectTimers.delete(questionnaireId);
+			await fetchQuestionnaires();
+			if (questionnaires.some((q) => q.id === questionnaireId && q.status === 'processing')) {
+				connectSSE(questionnaireId);
+			}
+		}, delay);
+		sseReconnectTimers.set(questionnaireId, timer);
+	}
 
 	function connectSSE(questionnaireId: string) {
 		if (sseConnections.has(questionnaireId)) return;
@@ -140,6 +162,7 @@
 				);
 				es.close();
 				sseConnections.delete(questionnaireId);
+				sseReconnectAttempts.delete(questionnaireId);
 				await fetchQuestionnaires();
 
 				if (payload.status === 'error') {
@@ -153,6 +176,7 @@
 			sseTimers.delete(questionnaireId);
 			es.close();
 			sseConnections.delete(questionnaireId);
+			scheduleSSEReconnect(questionnaireId);
 		};
 	}
 
@@ -165,6 +189,11 @@
 			clearTimeout(timer);
 		}
 		sseTimers.clear();
+		for (const timer of sseReconnectTimers.values()) {
+			clearTimeout(timer);
+		}
+		sseReconnectTimers.clear();
+		sseReconnectAttempts.clear();
 	}
 
 	// ── Delete ───────────────────────────────────────────────────────────────

@@ -8,10 +8,43 @@ function subscription(status: SubscriptionStatus) {
 }
 
 describe('billing access rules', () => {
-	it('grants access to active subscriptions regardless of trial end', () => {
-		expect(hasActiveAccess(subscription('active'), new Date(Date.now() - 1))).toBe(true);
-		expect(hasActivePaidAccess(subscription('active'))).toBe(true);
-		expect(isReadOnly(subscription('active'), new Date(Date.now() - 1))).toBe(false);
+	it('grants access to active Stripe subscriptions regardless of trial end', () => {
+		const activeStripeSubscription = {
+			status: 'active',
+			stripeSubscriptionId: 'sub_123'
+		} as Parameters<typeof hasActiveAccess>[0];
+		expect(hasActiveAccess(activeStripeSubscription, new Date(Date.now() - 1))).toBe(true);
+		expect(hasActivePaidAccess(activeStripeSubscription)).toBe(true);
+		expect(isReadOnly(activeStripeSubscription, new Date(Date.now() - 1))).toBe(false);
+	});
+
+	it('expires unlinked active subscriptions unless an explicit override is current', () => {
+		const expired = {
+			status: 'active',
+			currentPeriodEnd: new Date(Date.now() - 60_000)
+		} as Parameters<typeof hasActiveAccess>[0];
+		const overridden = {
+			...expired,
+			accessOverrideUntil: new Date(Date.now() + 60_000)
+		} as Parameters<typeof hasActiveAccess>[0];
+
+		expect(hasActiveAccess(expired)).toBe(false);
+		expect(hasActivePaidAccess(expired)).toBe(false);
+		expect(isReadOnly(expired)).toBe(true);
+		expect(hasActiveAccess(overridden)).toBe(true);
+		expect(hasActivePaidAccess(overridden)).toBe(true);
+	});
+
+	it('requires an explicit future period for unlinked active subscriptions', () => {
+		const current = {
+			status: 'active',
+			currentPeriodEnd: new Date(Date.now() + 60_000)
+		} as Parameters<typeof hasActiveAccess>[0];
+		const withoutPeriod = { status: 'active' } as Parameters<typeof hasActiveAccess>[0];
+
+		expect(hasActiveAccess(current)).toBe(true);
+		expect(hasActivePaidAccess(current)).toBe(true);
+		expect(hasActiveAccess(withoutPeriod)).toBe(false);
 	});
 
 	it('grants trial access only while the organization trial is current', () => {

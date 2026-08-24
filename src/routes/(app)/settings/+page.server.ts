@@ -3,6 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { subscriptions, userOrganizations } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { hasActivePaidAccess } from '$lib/server/billing';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
@@ -27,6 +28,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		organization: locals.organization,
 		subscription: subscription ?? null,
+		hasActivePaidAccess: hasActivePaidAccess(subscription),
 		userRole: membership?.role ?? 'member'
 	};
 };

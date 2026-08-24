@@ -24,7 +24,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
-	import { toastSuccess, toastError } from '$lib/stores/toasts.svelte';
+	import { toastSuccess, toastError, toastWarning } from '$lib/stores/toasts.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { page } from '$app/state';
 	import { getSuggestedPolicyType, getPolicyTitle } from '$lib/domain-policy-map';
@@ -43,6 +43,7 @@
 		gapCount: number;
 		dealReadinessScore: number | null;
 		shareToken?: string | null;
+		shareExpiresAt?: string | Date | null;
 	}
 
 	interface AnswerCitation {
@@ -132,6 +133,9 @@
 	let savedIndicator = $state(false);
 	let savedTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let sse: EventSource | null = null;
+	let sseTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
+	let sseReconnectTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+	let sseReconnectAttempts = $state(0);
 	let exporting = $state(false);
 	let showScoreTooltip = $state(false);
 	let showImproveInput = $state(false);
@@ -140,6 +144,7 @@
 	let improveError = $state('');
 	let reprocessing = $state(false);
 	let shareToken = $state<string | null>(null);
+	let shareExpiresAt = $state<string | Date | null>(null);
 	let sharing = $state(false);
 	let shareCopied = $state(false);
 	let existingPolicyTypes = $state<string[]>([]);
@@ -176,6 +181,17 @@
 
 	const isProcessing = $derived(questionnaire?.status === 'processing');
 	const isError = $derived(questionnaire?.status === 'error');
+	const shareLinkExpired = $derived(
+		shareToken !== null && (!shareExpiresAt || new Date(shareExpiresAt).getTime() <= Date.now())
+	);
+	const shareLinkExpiryLabel = $derived.by(() => {
+		if (!shareExpiresAt) return '';
+		return new Date(shareExpiresAt).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	});
 	const planActions = $derived(remediationPlan?.actions ?? []);
 	const selectedInterviewPrompts = $derived(
 		selectedQuestion
@@ -312,6 +328,7 @@
 			controlMap = json.controlMap ?? {};
 			existingPolicyTypes = json.existingPolicyTypes ?? [];
 			shareToken = json.questionnaire.shareToken ?? null;
+			shareExpiresAt = json.questionnaire.shareExpiresAt ?? null;
 
 			// Auto-select first question
 			if (!selectedQuestionId && questions.length > 0) {
@@ -411,6 +428,13 @@
 	function openSSE(questionnaireId: string) {
 		closeSSE();
 		sse = new EventSource(`/api/questionnaires/${questionnaireId}/stream`);
+		sseTimeout = setTimeout(async () => {
+			closeSSE();
+			await fetchData();
+			if (questionnaire?.status === 'processing') {
+				toastWarning('Processing is taking longer than expected. Refresh to check again.');
+			}
+		}, 120_000);
 
 		sse.onmessage = async (event) => {
 			let payload: { status: string };
@@ -422,6 +446,7 @@
 
 			if (payload.status === 'ready' || payload.status === 'error') {
 				closeSSE();
+				sseReconnectAttempts = 0;
 				// Reload full data — questions + coverage are now available
 				await fetchData();
 			}
@@ -429,6 +454,17 @@
 
 		sse.onerror = () => {
 			closeSSE();
+			if (sseReconnectAttempts >= 3) {
+				toastWarning('Live updates were interrupted. Refresh the page to check processing status.');
+				return;
+			}
+			const delay = 2000 * (sseReconnectAttempts + 1);
+			sseReconnectAttempts += 1;
+			sseReconnectTimer = setTimeout(async () => {
+				sseReconnectTimer = null;
+				await fetchData();
+				if (questionnaire?.status === 'processing') openSSE(questionnaireId);
+			}, delay);
 		};
 	}
 
@@ -436,6 +472,14 @@
 		if (sse !== null) {
 			sse.close();
 			sse = null;
+		}
+		if (sseTimeout !== null) {
+			clearTimeout(sseTimeout);
+			sseTimeout = null;
+		}
+		if (sseReconnectTimer !== null) {
+			clearTimeout(sseReconnectTimer);
+			sseReconnectTimer = null;
 		}
 	}
 
@@ -556,7 +600,8 @@
 			}
 			const result = await res.json();
 			shareToken = result.shareToken;
-			toastSuccess(shareToken ? 'Sharing enabled' : 'Sharing disabled');
+			shareExpiresAt = result.shareExpiresAt ?? null;
+			toastSuccess(shareToken ? 'Share link is ready' : 'Sharing disabled');
 		} catch {
 			toastError('Failed to toggle sharing.');
 		} finally {
@@ -565,12 +610,16 @@
 	}
 
 	async function copyShareLink() {
-		if (!shareToken) return;
+		if (!shareToken || shareLinkExpired) return;
 		const url = `${window.location.origin}/share/${shareToken}`;
-		await navigator.clipboard.writeText(url);
-		shareCopied = true;
-		captureEvent('questionnaire_share_link_copied', { questionnaire_id: id });
-		setTimeout(() => (shareCopied = false), 2000);
+		try {
+			await navigator.clipboard.writeText(url);
+			shareCopied = true;
+			captureEvent('questionnaire_share_link_copied', { questionnaire_id: id });
+			setTimeout(() => (shareCopied = false), 2000);
+		} catch {
+			toastError('Could not copy the share link. Please try again.');
+		}
 	}
 
 	// ── Effects ───────────────────────────────────────────────────────────────
@@ -581,6 +630,7 @@
 		});
 		return () => {
 			closeSSE();
+			if (sseReconnectTimer !== null) clearTimeout(sseReconnectTimer);
 			if (savedTimer !== null) clearTimeout(savedTimer);
 		};
 	});
@@ -848,19 +898,40 @@
 				{#if data.hasActivePaidAccess && questionnaire.status === 'ready'}
 					{#if shareToken}
 						<div class="flex items-center gap-1">
-							<Button variant="secondary" onclick={copyShareLink}>
-								{#if shareCopied}
-									<CheckCircle size={14} color="var(--success)" />
-									Copied
-								{:else}
-									<LinkIcon size={14} />
-									Copy link
-								{/if}
-							</Button>
-							<Button variant="ghost" onclick={toggleShare} disabled={sharing}>
-								<XCircle size={14} />
-							</Button>
+							{#if shareLinkExpired}
+								<Button variant="secondary" onclick={toggleShare} disabled={sharing}>
+									{#if sharing}
+										<Spinner size={14} class="animate-spin" />
+									{:else}
+										<ArrowClockwise size={14} />
+									{/if}
+									Renew link
+								</Button>
+							{:else}
+								<Button variant="secondary" onclick={copyShareLink}>
+									{#if shareCopied}
+										<CheckCircle size={14} color="var(--success)" />
+										Copied
+									{:else}
+										<LinkIcon size={14} />
+										Copy link
+									{/if}
+								</Button>
+							{/if}
+							{#if !shareLinkExpired}
+								<Button
+									variant="ghost"
+									onclick={toggleShare}
+									disabled={sharing}
+									ariaLabel="Disable sharing"
+								>
+									<XCircle size={14} />
+								</Button>
+							{/if}
 						</div>
+						<p class="basis-full text-right text-[11px] text-[var(--foreground-subtle)]">
+							{shareLinkExpired ? 'Link expired' : `Expires ${shareLinkExpiryLabel}`}
+						</p>
 					{:else}
 						<Button variant="secondary" onclick={toggleShare} disabled={sharing}>
 							{#if sharing}
