@@ -35,7 +35,7 @@ describe('filterValidCitations', () => {
 		expect(filterValidCitations(citations, policyIds, controlIds)).toEqual([]);
 	});
 
-	it('passes fact and system-description citations through without ID checks', () => {
+	it('keeps only fact citations that reference a verified fact and preserves system-description citations', () => {
 		const citations = [
 			{
 				sourceType: 'fact',
@@ -50,7 +50,12 @@ describe('filterValidCitations', () => {
 				excerpt: 'Google Workspace SSO'
 			}
 		];
-		expect(filterValidCitations(citations, new Set(), new Set())).toEqual(citations);
+		expect(
+			filterValidCitations(citations, new Set(), new Set(), new Set(['cloud_provider']))
+		).toEqual(citations);
+		expect(filterValidCitations(citations, new Set(), new Set(), new Set())).toEqual([
+			citations[1]
+		]);
 	});
 
 	it('returns an empty array for malformed input', () => {

@@ -1,4 +1,5 @@
 export interface VerifiedOrganizationFact {
+	id: string;
 	category: string;
 	label: string;
 	value: string;
@@ -18,7 +19,8 @@ export function formatVerifiedOrganizationFactsForPrompt(
 ): string {
 	if (facts.length === 0) return 'No verified organization facts are available.';
 
-	const factData = facts.map(({ category, label, value, sourceDetail }) => ({
+	const factData = facts.map(({ id, category, label, value, sourceDetail }) => ({
+		id,
 		category,
 		label,
 		value,

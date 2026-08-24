@@ -111,6 +111,11 @@ function isNonQuestion(question: RemediationQuestion): boolean {
 	return question.gapReason?.toLowerCase().includes('not a question') ?? false;
 }
 
+/** A failed AI request is retryable product work, not a company-readiness gap. */
+export function isProcessingFailure(question: RemediationQuestion): boolean {
+	return question.gapReason?.toLowerCase().includes('processing failed') ?? false;
+}
+
 export function isFounderInterviewCandidate(question: RemediationQuestion): boolean {
 	return (
 		!isNonQuestion(question) &&
@@ -160,7 +165,12 @@ function buildCandidate(
 	controlIdsWithPolicy: Set<string>,
 	controlIdsWithEvidence: Set<string>
 ): CandidateAction | null {
-	if (isNonQuestion(question) || question.userEditedAnswer || question.confidence === 'high')
+	if (
+		isNonQuestion(question) ||
+		isProcessingFailure(question) ||
+		question.userEditedAnswer ||
+		question.confidence === 'high'
+	)
 		return null;
 
 	const mappedControlIds = question.mappedControlIds ?? [];

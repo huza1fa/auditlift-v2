@@ -249,11 +249,18 @@
 		return 'default';
 	}
 
-	function confidenceExplanation(c: Confidence): string {
+	function confidenceExplanation(c: Confidence, userEditedAnswer: string | null = null): string {
+		if (c === 'high' && userEditedAnswer) {
+			return 'This answer was confirmed by a member of your organization.';
+		}
 		if (c === 'high') return m.questionnaires_confidence_explanation_high();
 		if (c === 'medium') return m.questionnaires_confidence_explanation_medium();
 		if (c === 'low') return m.questionnaires_confidence_explanation_low();
 		return '';
+	}
+
+	function isProcessingFailureGap(question: Question): boolean {
+		return question.gapReason?.toLowerCase().includes('processing failed') ?? false;
 	}
 
 	function remediationLink(remediation: string | null): string | null {
@@ -486,18 +493,24 @@
 	// ── Answer save ───────────────────────────────────────────────────────────
 	async function saveAnswer() {
 		if (!selectedQuestion) return;
+		const answer = answerDraft.trim();
+		if (!answer) {
+			toastError('Enter an answer before saving.');
+			return;
+		}
 		savingAnswer = true;
 		try {
 			const res = await fetch(`/api/questionnaires/${id}/questions/${selectedQuestion.id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ answer: answerDraft })
+				body: JSON.stringify({ answer })
 			});
 			if (!res.ok) throw new Error('Save failed');
-			questions = questions.map((q) =>
-				q.id === selectedQuestion.id ? { ...q, userEditedAnswer: answerDraft } : q
-			);
+			const { resolvedGap }: { resolvedGap?: boolean } = await res.json();
+			await fetchData();
 			showSaved();
+			if (resolvedGap)
+				toastSuccess('Answer saved and gap resolved. Deal Readiness has been updated.');
 			captureEvent('questionnaire_answer_edited', {
 				questionnaire_id: id,
 				question_id: selectedQuestion.id
@@ -1217,7 +1230,10 @@
 										class="mt-0.5 shrink-0"
 									/>
 									<p class="text-xs text-[var(--foreground-muted)]">
-										{confidenceExplanation(selectedQuestion.confidence)}
+										{confidenceExplanation(
+											selectedQuestion.confidence,
+											selectedQuestion.userEditedAnswer
+										)}
 									</p>
 								</div>
 
@@ -1409,14 +1425,23 @@
 
 								<!-- Gap state -->
 							{:else if selectedQuestion.confidence === 'gap'}
+								{@const processingFailure = isProcessingFailureGap(selectedQuestion)}
 								<div
 									class="mb-4 flex items-start gap-2.5 rounded-[var(--radius)] border border-[var(--danger)] bg-[var(--danger-light)] px-4 py-3"
 								>
 									<Warning size={16} color="var(--danger)" weight="fill" class="mt-0.5 shrink-0" />
 									<div>
 										<p class="text-sm font-medium text-[var(--danger)]">
-											{m.questionnaires_gap_title()}
+											{processingFailure
+												? 'Analysis needs to be retried'
+												: m.questionnaires_gap_title()}
 										</p>
+										{#if processingFailure}
+											<p class="mt-0.5 text-xs text-[var(--danger)] opacity-80">
+												We could not finish analyzing this question. This is not a missing company
+												fact.
+											</p>
+										{/if}
 										{#if selectedQuestion.gapReason}
 											<p class="mt-0.5 text-xs text-[var(--danger)] opacity-80">
 												{selectedQuestion.gapReason}
@@ -1425,8 +1450,59 @@
 									</div>
 								</div>
 
+								<div
+									class="mb-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--background-alt)] p-4"
+								>
+									<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+										<div>
+											<p class="text-sm font-semibold text-[var(--foreground)]">
+												Answer this question
+											</p>
+											<p class="mt-0.5 text-xs leading-relaxed text-[var(--foreground-muted)]">
+												Confirm an answer on behalf of your company to resolve this questionnaire
+												gap now.
+											</p>
+										</div>
+										{#if processingFailure}
+											<Button
+												size="sm"
+												variant="secondary"
+												onclick={handleReprocess}
+												disabled={reprocessing}
+											>
+												{#if reprocessing}<Spinner
+														size={13}
+														class="animate-spin"
+													/>{:else}<ArrowClockwise size={13} />{/if}
+												Retry analysis
+											</Button>
+										{/if}
+									</div>
+									<textarea
+										id="answer-textarea"
+										bind:value={answerDraft}
+										rows={6}
+										placeholder="Enter the answer you can confirm..."
+										class="mt-3 w-full resize-y rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 text-sm leading-relaxed text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+									></textarea>
+									<div class="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+										<p class="text-xs text-[var(--foreground-subtle)]">
+											This is saved as an owner-confirmed answer and updates Deal Readiness
+											immediately.
+										</p>
+										<Button
+											size="sm"
+											onclick={saveAnswer}
+											disabled={savingAnswer || !answerDraft.trim()}
+										>
+											{#if savingAnswer}<Spinner size={13} class="animate-spin" />{/if}
+											Mark as answered
+										</Button>
+									</div>
+								</div>
+
 								<!-- Founder interview -->
-								{#if data.hasActivePaidAccess}
+								{#if data.hasActivePaidAccess && !processingFailure}
 									<div
 										class="mb-4 rounded-[var(--radius-lg)] border border-[var(--brand)] bg-[var(--brand-light)] p-4"
 									>
@@ -1497,7 +1573,8 @@
 													</Button>
 												</div>
 												<p class="mt-2 text-xs text-[var(--foreground-subtle)]">
-													This will not alter the questionnaire answer.
+													After verification, choose Update answers to apply this reusable fact to
+													unresolved questions.
 												</p>
 											</div>
 										{/each}

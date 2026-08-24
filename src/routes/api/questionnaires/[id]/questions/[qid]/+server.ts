@@ -5,6 +5,7 @@ import { questionnaires, questionnaireQuestions } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { requireActiveOrganizationRole } from '$lib/server/auth-utils';
+import { refreshQuestionnaireStats } from '$lib/server/questionnaire-stats';
 
 const PatchAnswerSchema = z.object({
 	answer: z.string().min(1).max(10000)
@@ -63,10 +64,18 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		throw error(404, 'Question not found');
 	}
 
+	const resolvingGap = existing.confidence === 'gap';
 	const [updated] = await db
 		.update(questionnaireQuestions)
 		.set({
 			userEditedAnswer: answer,
+			...(resolvingGap
+				? {
+						confidence: 'high',
+						gapReason: null,
+						gapRemediation: null
+					}
+				: {}),
 			updatedAt: new Date()
 		})
 		.where(
@@ -78,5 +87,9 @@ export const PATCH: RequestHandler = async ({ locals, params, request }) => {
 		)
 		.returning();
 
-	return json(updated);
+	if (resolvingGap) {
+		await refreshQuestionnaireStats(id, orgId);
+	}
+
+	return json({ question: updated, resolvedGap: resolvingGap });
 };

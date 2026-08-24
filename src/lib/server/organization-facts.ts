@@ -123,6 +123,7 @@ export async function getVerifiedOrganizationFacts(
 ): Promise<VerifiedOrganizationFact[]> {
 	return db
 		.select({
+			id: organizationFacts.id,
 			category: organizationFacts.category,
 			label: organizationFacts.label,
 			value: organizationFacts.value,

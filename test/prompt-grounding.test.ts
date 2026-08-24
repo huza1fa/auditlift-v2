@@ -6,8 +6,20 @@ import { formatVerifiedOrganizationFactsForPrompt } from '../src/lib/server/orga
 describe('AI prompt grounding', () => {
 	it('adds verified facts and confirmation requirements to policy prompts', () => {
 		const verifiedFacts = formatVerifiedOrganizationFactsForPrompt([
-			{ category: 'identity', label: 'Identity provider', value: 'Okta', sourceDetail: null },
-			{ category: 'access', label: 'Administrator MFA', value: 'enforced', sourceDetail: null }
+			{
+				id: 'fact-identity-provider',
+				category: 'identity',
+				label: 'Identity provider',
+				value: 'Okta',
+				sourceDetail: null
+			},
+			{
+				id: 'fact-admin-mfa',
+				category: 'access',
+				label: 'Administrator MFA',
+				value: 'enforced',
+				sourceDetail: null
+			}
 		]);
 		const prompt = buildSystemPrompt(
 			buildRichContext({ name: 'Acme', stack: ['AWS'] }, 'SOC 2'),
@@ -24,6 +36,7 @@ describe('AI prompt grounding', () => {
 		const context = buildVerifiedFactsQuestionnaireContext(
 			formatVerifiedOrganizationFactsForPrompt([
 				{
+					id: 'fact-data-region',
 					category: 'hosting',
 					label: 'Data region',
 					value: 'AWS us-east-1',

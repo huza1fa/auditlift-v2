@@ -17,7 +17,9 @@ import { env } from '$env/dynamic/private';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { computeReadinessScore } from '$lib/server/score';
 import { buildVerifiedFactsQuestionnaireContext } from '$lib/server/questionnaire-prompt-context';
-import { getVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts';
+import { getVerifiedOrganizationFacts } from '$lib/server/organization-facts';
+import { formatVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts-format';
+import { refreshQuestionnaireStats } from '$lib/server/questionnaire-stats';
 import {
 	AnswerCitationSchema,
 	filterValidCitations,
@@ -67,6 +69,7 @@ interface ProcessingContext {
 	isPaid: boolean;
 	systemDescriptionPrompt: string;
 	verifiedFactsPrompt: string;
+	verifiedFactIds: Set<string>;
 	policyContext: Array<{ id: string; title: string; contentSnippet: string }>;
 	controlContext: Array<{
 		id: string;
@@ -193,13 +196,13 @@ Instructions:
     low = answered using general security best practices (no org-specific policy found)
     gap = question requires company-specific data (e.g. specific vendor names, exact employee counts, custom SLAs) that is not in a verified fact, policy, or system description
 - answer: draft a helpful answer. Use "low" confidence only for general-practice drafts that make no claim about ${orgName}. Return null for gaps that require unverified company-specific data.
-- Verified organization facts, policies, controls, and the system description are sources. Use relevant verified facts in the drafted answer and map supporting policy/control IDs when applicable.
+- Verified organization facts, policies, controls, and the system description are sources. If a verified organization fact directly answers the question, use it rather than returning a gap. Its exact UUID in the verified-facts JSON must be used as the citation sourceId.
 - Never state that ${orgName} uses a tool, process, certification, SLA, or security practice unless it appears in the verified facts, provided policies, or system description. Unknown company-specific facts must remain gaps or be explicitly marked as needing confirmation, never inferred from general practice.
 - gapReason: why this cannot be answered even generically (only for gap). null otherwise.
 - gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium/low confidence.
 - mappedPolicyIds: array of policy IDs you used (from the list above, empty if none)
 - mappedControlIds: array of control IDs you used (from the list above, empty if none)
-- citations: array of sources that directly support this answer. For high or medium confidence answers you MUST cite at least one source; each citation needs sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the ID in brackets from the lists above, or a short label for facts/system description), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
+- citations: array of sources that directly support this answer. For high or medium confidence answers you MUST cite at least one source; each citation needs sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the exact ID in brackets from the lists above, or the UUID from a verified fact), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
 
 IMPORTANT: If the item above is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
@@ -357,8 +360,9 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 
 	const orgName = org?.name ?? 'the organization';
 	const isPaid = hasActivePaidAccess(subscription ?? null);
+	const verifiedFacts = await getVerifiedOrganizationFacts(organizationId);
 	const verifiedFactsPrompt = buildVerifiedFactsQuestionnaireContext(
-		await getVerifiedOrganizationFactsForPrompt(organizationId)
+		formatVerifiedOrganizationFactsForPrompt(verifiedFacts)
 	);
 
 	const orgPolicies = await db
@@ -427,6 +431,7 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 		isPaid,
 		systemDescriptionPrompt,
 		verifiedFactsPrompt,
+		verifiedFactIds: new Set(verifiedFacts.map((fact) => fact.id)),
 		policyContext,
 		controlContext
 	};
@@ -444,67 +449,6 @@ async function recomputeEnrolledReadinessScores(organizationId: string): Promise
 			)
 		)
 	);
-}
-
-/**
- * Re-fetches all questions for the questionnaire, computes summary stats
- * (high/medium/low/gap counts and deal readiness score), and writes them
- * back to the questionnaires row.
- */
-async function computeAndSaveStats(questionnaireId: string, organizationId: string): Promise<void> {
-	const processedQuestions = await db
-		.select({ confidence: questionnaireQuestions.confidence })
-		.from(questionnaireQuestions)
-		.where(
-			and(
-				eq(questionnaireQuestions.questionnaireId, questionnaireId),
-				eq(questionnaireQuestions.organizationId, organizationId)
-			)
-		);
-
-	const totalQuestions = processedQuestions.length;
-	let highCount = 0;
-	let mediumCount = 0;
-	let lowCount = 0;
-	let gapCount = 0;
-
-	for (const q of processedQuestions) {
-		if (q.confidence === 'high') highCount++;
-		else if (q.confidence === 'medium') mediumCount++;
-		else if (q.confidence === 'low') lowCount++;
-		else if (q.confidence === 'gap') gapCount++;
-	}
-
-	const answeredCount = highCount + mediumCount + lowCount;
-
-	// Score over PROCESSED questions only — unprocessed (trial-locked) questions
-	// must not drag the perceived deal readiness toward zero.
-	const processedCount = highCount + mediumCount + lowCount + gapCount;
-	const dealReadinessScore =
-		processedCount > 0
-			? Math.min(
-					100,
-					Math.round((highCount * 100 + mediumCount * 70 + lowCount * 40) / processedCount)
-				)
-			: 0;
-
-	await db
-		.update(questionnaires)
-		.set({
-			status: 'ready',
-			totalQuestions,
-			answeredCount,
-			gapCount,
-			highCount,
-			mediumCount,
-			lowCount,
-			dealReadinessScore,
-			errorMessage: null,
-			updatedAt: new Date()
-		})
-		.where(
-			and(eq(questionnaires.id, questionnaireId), eq(questionnaires.organizationId, organizationId))
-		);
 }
 
 interface PendingVerification {
@@ -643,6 +587,7 @@ export async function processQuestionnaire(
 			isPaid,
 			systemDescriptionPrompt,
 			verifiedFactsPrompt,
+			verifiedFactIds,
 			policyContext,
 			controlContext
 		} = await loadProcessingContext(organizationId);
@@ -711,7 +656,8 @@ export async function processQuestionnaire(
 						const citations = filterValidCitations(
 							classification.citations,
 							validPolicyIds,
-							validControlIds
+							validControlIds,
+							verifiedFactIds
 						);
 
 						await db
@@ -771,7 +717,7 @@ export async function processQuestionnaire(
 
 		// 5. Verification pass on grounded answers, then compute and persist summary stats
 		await applyVerificationDowngrades(pendingVerification, orgName, organizationId);
-		await computeAndSaveStats(questionnaireId, organizationId);
+		await refreshQuestionnaireStats(questionnaireId, organizationId);
 		await recomputeEnrolledReadinessScores(organizationId);
 	} catch (err) {
 		console.error('[questionnaire-processor] Fatal error:', err);
@@ -859,6 +805,7 @@ async function reprocessQuestionnaireNow(
 			isPaid,
 			systemDescriptionPrompt,
 			verifiedFactsPrompt,
+			verifiedFactIds,
 			policyContext,
 			controlContext
 		} = await loadProcessingContext(organizationId);
@@ -924,7 +871,8 @@ async function reprocessQuestionnaireNow(
 						const citations = filterValidCitations(
 							classification.citations,
 							validPolicyIds,
-							validControlIds
+							validControlIds,
+							verifiedFactIds
 						);
 
 						await db
@@ -988,7 +936,7 @@ async function reprocessQuestionnaireNow(
 
 		// 7. Verification pass, then recompute summary stats across all questions (not just reprocessed ones)
 		await applyVerificationDowngrades(pendingVerification, orgName, organizationId);
-		await computeAndSaveStats(questionnaireId, organizationId);
+		await refreshQuestionnaireStats(questionnaireId, organizationId);
 		await recomputeEnrolledReadinessScores(organizationId);
 	} catch (err) {
 		console.error('[questionnaire-processor] reprocess fatal error:', err);

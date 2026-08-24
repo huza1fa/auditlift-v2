@@ -133,6 +133,32 @@ describe('buildRemediationPlan', () => {
 		});
 	});
 
+	it('does not present an internal processing failure as a customer remediation task', () => {
+		const result = buildRemediationPlan({
+			questions: [
+				{
+					id: 'retry',
+					order: 1,
+					questionText: 'Do you have an incident response plan?',
+					domain: 'incident_response',
+					confidence: 'gap',
+					gapReason: 'Processing failed due to an internal error.',
+					gapRemediation: 'Confirm company facts.',
+					generatedAnswer: null,
+					userEditedAnswer: null,
+					mappedControlIds: [],
+					mappedPolicyIds: []
+				}
+			],
+			controls,
+			existingPolicyIds: new Set(),
+			controlIdsWithPolicy: new Set(),
+			controlIdsWithEvidence: new Set()
+		});
+
+		expect(result.actions).toEqual([]);
+	});
+
 	it('groups and orders the same plan regardless of input order', () => {
 		const questions: RemediationQuestion[] = [
 			{

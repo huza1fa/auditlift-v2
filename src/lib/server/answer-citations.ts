@@ -12,14 +12,15 @@ export type AnswerCitation = z.infer<typeof AnswerCitationSchema>;
 export type ConfidenceLevel = 'high' | 'medium' | 'low' | 'gap';
 
 /**
- * Keeps only citations whose policy/control IDs actually exist for the org.
- * Fact and system-description citations have no enforceable ID, so they pass
- * through as-is.
+ * Keeps only citations whose referenced source exists for the organization.
+ * System-description citations remain contextual because that source has no
+ * individual record ID.
  */
 export function filterValidCitations(
 	citations: unknown,
 	validPolicyIds: Set<string>,
-	validControlIds: Set<string>
+	validControlIds: Set<string>,
+	validFactIds: Set<string> = new Set()
 ): AnswerCitation[] {
 	if (!Array.isArray(citations)) return [];
 	return citations.filter((c): c is AnswerCitation => {
@@ -40,6 +41,7 @@ export function filterValidCitations(
 			return false;
 		if (citation.sourceType === 'policy') return validPolicyIds.has(citation.sourceId);
 		if (citation.sourceType === 'control') return validControlIds.has(citation.sourceId);
+		if (citation.sourceType === 'fact') return validFactIds.has(citation.sourceId);
 		return true;
 	});
 }
