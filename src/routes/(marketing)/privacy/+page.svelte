@@ -4,16 +4,16 @@
 </script>
 
 <svelte:head>
-	<title>Privacy Policy — AuditLift</title>
+	<title>Privacy Policy — Auditlift</title>
 	<meta
 		name="description"
-		content="AuditLift privacy policy. Learn how we collect, use, and protect your data when using our compliance software."
+		content="Auditlift privacy policy. Learn how we collect, use, and protect your data when using our compliance software."
 	/>
 	<link rel="canonical" href="https://auditlift.app/privacy" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app/privacy" />
-	<meta property="og:title" content="Privacy Policy — AuditLift" />
-	<meta property="og:description" content="How AuditLift collects, uses, and protects your data." />
+	<meta property="og:title" content="Privacy Policy — Auditlift" />
+	<meta property="og:description" content="How Auditlift collects, uses, and protects your data." />
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -24,7 +24,7 @@
 		<a href="/" class="flex items-center gap-2 no-underline">
 			<LogoMark size={20} />
 			<span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
-				>AuditLift</span
+				>Auditlift</span
 			>
 		</a>
 		<div class="flex items-center gap-3">
@@ -45,7 +45,7 @@
 
 		<div class="prose-section">
 			<p>
-				AuditLift ("we", "us", "our") is a compliance readiness tool for startups and SMBs. This
+				Auditlift ("we", "us", "our") is a compliance readiness tool for startups and SMBs. This
 				policy explains what data we collect, how we use it, and your rights over it. We've written
 				this to be readable, not just legally defensible.
 			</p>
@@ -85,7 +85,7 @@
 		<section class="mt-10">
 			<h2>How we use your data</h2>
 			<ul>
-				<li>To provide and operate the AuditLift service</li>
+				<li>To provide and operate the Auditlift service</li>
 				<li>
 					To send transactional emails — welcome, trial reminders, billing receipts, password resets
 				</li>
@@ -99,20 +99,20 @@
 		<section class="mt-10">
 			<h2>Data storage and security</h2>
 			<p>
-				AuditLift is hosted on <strong>AWS</strong> (US-based infrastructure). Uploaded evidence
+				Auditlift is hosted on <strong>AWS</strong> (US-based infrastructure). Uploaded evidence
 				files are stored on <strong>AWS S3</strong> object storage. Data is encrypted in transit (TLS)
 				and at rest. Access to production systems is limited to the engineering team and protected by
 				MFA.
 			</p>
 			<p>
-				We take compliance seriously — we use AuditLift ourselves to manage our own security
+				We take compliance seriously — we use Auditlift ourselves to manage our own security
 				posture.
 			</p>
 		</section>
 
 		<section class="mt-10">
 			<h2>Third-party services</h2>
-			<p>We use the following third-party services to operate AuditLift:</p>
+			<p>We use the following third-party services to operate Auditlift:</p>
 			<ul>
 				<li><strong>Stripe</strong> — payment processing (stripe.com/privacy)</li>
 				<li><strong>Resend</strong> — transactional email delivery (resend.com/privacy)</li>
@@ -129,7 +129,7 @@
 			<h2>Data retention</h2>
 			<p>
 				We retain your data for as long as your account is active. If you delete your organization
-				from within AuditLift, all associated data — evidence files, policies, controls progress —
+				from within Auditlift, all associated data — evidence files, policies, controls progress —
 				is permanently deleted within 30 days. If you simply cancel your subscription without
 				deleting your account, your data is retained in read-only form for 90 days before deletion.
 			</p>
@@ -169,7 +169,7 @@
 			<h2>Changes to this policy</h2>
 			<p>
 				If we make material changes to this policy, we'll notify you by email and update the "Last
-				updated" date above. Continued use of AuditLift after changes constitutes acceptance of the
+				updated" date above. Continued use of Auditlift after changes constitutes acceptance of the
 				updated policy.
 			</p>
 		</section>
@@ -188,7 +188,7 @@
 <footer class="border-t border-[var(--border)] py-8">
 	<div class="mx-auto flex max-w-6xl items-center justify-between px-6">
 		<p class="text-[12px] text-[var(--foreground-subtle)]">
-			© 2026 AuditLift. All rights reserved.
+			© 2026 Auditlift. All rights reserved.
 		</p>
 		<div class="flex items-center gap-4">
 			<a

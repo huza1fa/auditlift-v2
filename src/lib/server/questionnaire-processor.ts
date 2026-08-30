@@ -92,7 +92,7 @@ function getOpenRouterClient() {
 		apiKey,
 		headers: {
 			'HTTP-Referer': 'https://auditlift.app',
-			'X-Title': 'AuditLift'
+			'X-Title': 'Auditlift'
 		}
 	});
 }

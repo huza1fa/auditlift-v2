@@ -4,16 +4,16 @@
 </script>
 
 <svelte:head>
-	<title>Terms of Service — AuditLift</title>
+	<title>Terms of Service — Auditlift</title>
 	<meta
 		name="description"
-		content="AuditLift terms of service. Read the terms governing your use of our compliance readiness software."
+		content="Auditlift terms of service. Read the terms governing your use of our compliance readiness software."
 	/>
 	<link rel="canonical" href="https://auditlift.app/terms" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app/terms" />
-	<meta property="og:title" content="Terms of Service — AuditLift" />
-	<meta property="og:description" content="The terms governing your use of AuditLift." />
+	<meta property="og:title" content="Terms of Service — Auditlift" />
+	<meta property="og:description" content="The terms governing your use of Auditlift." />
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -24,7 +24,7 @@
 		<a href="/" class="flex items-center gap-2 no-underline">
 			<LogoMark size={20} />
 			<span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
-				>AuditLift</span
+				>Auditlift</span
 			>
 		</a>
 		<div class="flex items-center gap-3">
@@ -47,7 +47,7 @@
 
 		<div class="prose-section">
 			<p>
-				These Terms of Service ("Terms") govern your access to and use of AuditLift ("we", "us",
+				These Terms of Service ("Terms") govern your access to and use of Auditlift ("we", "us",
 				"our") — a compliance readiness tool for startups and SMBs. By creating an account or using
 				the service, you agree to these Terms. We've written them to be readable, not just legally
 				defensible.
@@ -57,13 +57,13 @@
 		<section class="mt-10">
 			<h2>1. Acceptance of Terms</h2>
 			<p>
-				By accessing or using AuditLift, you confirm that you are at least 18 years old, that you
+				By accessing or using Auditlift, you confirm that you are at least 18 years old, that you
 				have the authority to bind yourself or your organization to these Terms, and that you agree
 				to comply with them. If you do not agree, do not use the service.
 			</p>
 			<p>
 				We may update these Terms from time to time. When we do, we'll notify you by email and
-				update the "Last updated" date above. Continued use of AuditLift after changes take effect
+				update the "Last updated" date above. Continued use of Auditlift after changes take effect
 				constitutes your acceptance of the revised Terms.
 			</p>
 		</section>
@@ -71,7 +71,7 @@
 		<section class="mt-10">
 			<h2>2. Description of Service</h2>
 			<p>
-				AuditLift is a compliance readiness platform that helps startups and small-to-medium
+				Auditlift is a compliance readiness platform that helps startups and small-to-medium
 				businesses prepare for audits against frameworks including SOC 2, PCI-DSS, and ISO 27001.
 				The service provides:
 			</p>
@@ -91,7 +91,7 @@
 		<section class="mt-10">
 			<h2>3. Account Registration &amp; Security</h2>
 			<p>
-				To use AuditLift you must create an account using a valid email address or a supported OAuth
+				To use Auditlift you must create an account using a valid email address or a supported OAuth
 				provider. You are responsible for keeping your credentials secure and for all activity that
 				occurs under your account.
 			</p>
@@ -140,7 +140,7 @@
 
 		<section class="mt-10">
 			<h2>5. Acceptable Use</h2>
-			<p>You agree not to use AuditLift to:</p>
+			<p>You agree not to use Auditlift to:</p>
 			<ul>
 				<li>Violate any applicable law or regulation</li>
 				<li>Upload malicious files, malware, or content that infringes third-party rights</li>
@@ -148,7 +148,7 @@
 					Attempt to gain unauthorized access to other users' data, our systems, or infrastructure
 				</li>
 				<li>Scrape, reverse-engineer, or create derivative products based on our platform</li>
-				<li>Resell or sublicense access to AuditLift without our written permission</li>
+				<li>Resell or sublicense access to Auditlift without our written permission</li>
 				<li>Submit false, misleading, or fraudulent compliance information</li>
 			</ul>
 			<p>
@@ -161,7 +161,7 @@
 			<h2>6. Intellectual Property</h2>
 			<h3>Your content</h3>
 			<p>
-				You own the data you bring into AuditLift — your evidence files, your uploaded policies,
+				You own the data you bring into Auditlift — your evidence files, your uploaded policies,
 				your organization details, and any content you create or generate using the service. We do
 				not claim ownership of your compliance content.
 			</p>
@@ -174,7 +174,7 @@
 
 			<h3>Our platform</h3>
 			<p>
-				AuditLift — including the application code, UI design, control frameworks, policy templates,
+				Auditlift — including the application code, UI design, control frameworks, policy templates,
 				scoring logic, and all underlying infrastructure — is owned by us and protected by
 				intellectual property laws. Nothing in these Terms grants you a right to copy, modify, or
 				distribute any part of the platform.
@@ -186,7 +186,7 @@
 			<p>
 				How we collect, store, and use your data is described in our
 				<a href="/privacy">Privacy Policy</a>, which is incorporated into these Terms by reference.
-				By using AuditLift you also agree to our Privacy Policy.
+				By using Auditlift you also agree to our Privacy Policy.
 			</p>
 			<p>
 				Your data is stored on US-based infrastructure. Evidence files are stored on Cloudflare R2
@@ -197,14 +197,14 @@
 		<section class="mt-10">
 			<h2>8. Disclaimers</h2>
 			<p>
-				<strong>AuditLift is a readiness tool, not a legal or compliance advisory service.</strong>
+				<strong>Auditlift is a readiness tool, not a legal or compliance advisory service.</strong>
 				Nothing we provide — including policy templates, control guidance, readiness scores, or audit
 				exports — constitutes legal advice or a guarantee that your organization will pass any audit or
 				certification process.
 			</p>
 			<p>
 				Compliance frameworks such as SOC 2, PCI-DSS, and ISO 27001 are governed by their respective
-				standards bodies and audited by accredited third parties. AuditLift helps you organize and
+				standards bodies and audited by accredited third parties. Auditlift helps you organize and
 				prepare your evidence, but the outcome of any audit depends on your organization's actual
 				practices and the independent judgment of your auditor.
 			</p>
@@ -219,7 +219,7 @@
 		<section class="mt-10">
 			<h2>9. Limitation of Liability</h2>
 			<p>
-				To the fullest extent permitted by law, AuditLift and its affiliates, officers, employees,
+				To the fullest extent permitted by law, Auditlift and its affiliates, officers, employees,
 				and agents will not be liable for any indirect, incidental, special, consequential, or
 				punitive damages — including lost profits, lost data, or business interruption — arising
 				from your use of or inability to use the service, even if we have been advised of the
@@ -254,7 +254,7 @@
 			<h2>11. Governing Law</h2>
 			<p>
 				These Terms are governed by and construed in accordance with the laws of the jurisdiction in
-				which AuditLift is incorporated, without regard to its conflict-of-law provisions. Any
+				which Auditlift is incorporated, without regard to its conflict-of-law provisions. Any
 				disputes arising under these Terms will be subject to the exclusive jurisdiction of the
 				courts of that jurisdiction.
 			</p>
@@ -274,7 +274,7 @@
 <footer class="border-t border-[var(--border)] py-8">
 	<div class="mx-auto flex max-w-6xl items-center justify-between px-6">
 		<p class="text-[12px] text-[var(--foreground-subtle)]">
-			© 2026 AuditLift. All rights reserved.
+			© 2026 Auditlift. All rights reserved.
 		</p>
 		<div class="flex items-center gap-4">
 			<a

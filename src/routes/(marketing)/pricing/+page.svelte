@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Pricing — AuditLift | Security Readiness for Closing Deals</title>
+	<title>Pricing — Auditlift | Security Readiness for Closing Deals</title>
 	<meta
 		name="description"
 		content="Simple, flat-rate pricing to get deal-ready for SOC 2, PCI-DSS, and ISO 27001. Starter from $149/mo. No per-seat pricing. Cancel anytime. 10-day free trial."
@@ -68,8 +68,8 @@
 
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app/pricing" />
-	<meta property="og:site_name" content="AuditLift" />
-	<meta property="og:title" content="Pricing — AuditLift | SOC 2 Compliance Software" />
+	<meta property="og:site_name" content="Auditlift" />
+	<meta property="og:title" content="Pricing — Auditlift | SOC 2 Compliance Software" />
 	<meta
 		property="og:description"
 		content="SOC 2 compliance from $149/mo. No per-seat pricing. All 3 frameworks on Growth. 10-day free trial."
@@ -77,7 +77,7 @@
 	<meta property="og:image" content="https://auditlift.app/og.png" />
 
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Pricing — AuditLift" />
+	<meta name="twitter:title" content="Pricing — Auditlift" />
 	<meta
 		name="twitter:description"
 		content="SOC 2 compliance from $149/mo. No per-seat pricing. 10-day free trial."
@@ -89,18 +89,18 @@
 <nav
 	class="fixed top-0 right-0 left-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-sm"
 >
-	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
 		<a href="/" class="flex items-center gap-2 no-underline">
 			<LogoMark size={20} />
 			<span class="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
-				>AuditLift</span
+				>Auditlift</span
 			>
 		</a>
 		<div class="flex items-center gap-3">
 			<ThemeToggle />
 			<a
 				href="/login"
-				class="text-[13px] font-medium text-[var(--foreground-muted)] no-underline hover:text-[var(--foreground)]"
+				class="hidden text-[13px] font-medium text-[var(--foreground-muted)] no-underline hover:text-[var(--foreground)] sm:inline"
 				>Sign in</a
 			>
 			<a
@@ -131,7 +131,7 @@
 				onclick={() => (billing = 'monthly')}
 				class="cursor-pointer rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all {billing ===
 				'monthly'
-					? 'bg-white text-[var(--foreground)] shadow-sm'
+					? 'bg-[var(--background-elevated)] text-[var(--foreground)] shadow-sm'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
 			>
 				Monthly
@@ -140,7 +140,7 @@
 				onclick={() => (billing = 'yearly')}
 				class="flex cursor-pointer items-center gap-2 rounded-[var(--radius-full)] px-4 py-1.5 text-[13px] font-medium transition-all {billing ===
 				'yearly'
-					? 'bg-white text-[var(--foreground)] shadow-sm'
+					? 'bg-[var(--background-elevated)] text-[var(--foreground)] shadow-sm'
 					: 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}"
 			>
 				Yearly
@@ -251,7 +251,7 @@
 
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
-			Built for the deal cycle before you need heavyweight compliance automation. AuditLift gets you
+			Built for the deal cycle before you need heavyweight compliance automation. Auditlift gets you
 			<strong>buyer-response ready from $149/mo</strong> — focused on helping you respond and close.
 		</p>
 
@@ -286,7 +286,7 @@
 	<footer class="border-t border-[var(--border)] py-8">
 		<div class="mx-auto flex max-w-6xl items-center justify-between px-6">
 			<p class="text-[12px] text-[var(--foreground-subtle)]">
-				© 2026 AuditLift. All rights reserved.
+				© 2026 Auditlift. All rights reserved.
 			</p>
 			<div class="flex items-center gap-4">
 				<a

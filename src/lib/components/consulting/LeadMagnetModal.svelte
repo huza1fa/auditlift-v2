@@ -29,13 +29,13 @@
 			title: 'Free SOC 2 Checklist for SaaS Startups',
 			description:
 				'A practical 47-point checklist covering the policies, evidence, and controls you need before your first SOC 2 audit.',
-			filename: 'AuditLift-SOC2-Checklist-SaaS-Startups.md'
+			filename: 'Auditlift-SOC2-Checklist-SaaS-Startups.md'
 		},
 		'security-review-template': {
 			title: '10-Question Enterprise Security Review Template',
 			description:
 				'The exact 10 questions every enterprise buyer asks first. Use this template to pre-answer them before the questionnaire lands.',
-			filename: 'AuditLift-10-Question-Enterprise-Security-Review.md'
+			filename: 'Auditlift-10-Question-Enterprise-Security-Review.md'
 		}
 	};
 

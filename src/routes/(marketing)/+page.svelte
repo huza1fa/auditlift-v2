@@ -11,7 +11,6 @@
 		Quotes,
 		Download
 	} from 'phosphor-svelte';
-	import { onMount } from 'svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
@@ -19,27 +18,6 @@
 	import * as m from '$lib/paraglide/messages';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
-
-	const headlines = [
-		{ line1: 'Return security questionnaires', line2: 'before the deal stalls' },
-		{ line1: 'Answer buyer security reviews', line2: 'with claims you can defend' },
-		{ line1: 'Turn every finished review', line2: 'into your next advantage' },
-		{ line1: 'Build buyer trust', line2: 'while you close deals' }
-	];
-
-	let headlineIndex = $state(0);
-	let headlineVisible = $state(true);
-
-	onMount(() => {
-		const interval = setInterval(() => {
-			headlineVisible = false;
-			setTimeout(() => {
-				headlineIndex = (headlineIndex + 1) % headlines.length;
-				headlineVisible = true;
-			}, 400);
-		}, 3500);
-		return () => clearInterval(interval);
-	});
 
 	const pricingPlans = [
 		{
@@ -121,7 +99,7 @@
 			number: '01',
 			title: 'Open the buyer review',
 			description:
-				'Create a deal workspace and upload the customer questionnaire. AuditLift identifies what can be answered now and what needs review.'
+				'Create a deal workspace and upload the customer questionnaire. Auditlift identifies what can be answered now and what needs review.'
 		},
 		{
 			number: '02',
@@ -145,14 +123,10 @@
 		leadMagnetResource = resource;
 		leadMagnetOpen = true;
 	}
-
-	function scrollTo(id: string) {
-		document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
-	}
 </script>
 
 <svelte:head>
-	<title>AuditLift - Security Questionnaires That Keep Deals Moving</title>
+	<title>Auditlift - Security Questionnaires That Keep Deals Moving</title>
 	<meta
 		name="description"
 		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps. Built for B2B SaaS teams winning enterprise deals."
@@ -161,8 +135,8 @@
 
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app" />
-	<meta property="og:site_name" content="AuditLift" />
-	<meta property="og:title" content="AuditLift - Win Deals Faster with Security Readiness" />
+	<meta property="og:site_name" content="Auditlift" />
+	<meta property="og:title" content="Auditlift - Win Deals Faster with Security Readiness" />
 	<meta
 		property="og:description"
 		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps."
@@ -171,7 +145,7 @@
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@auditlift" />
-	<meta name="twitter:title" content="AuditLift - Win Deals Faster with Security Readiness" />
+	<meta name="twitter:title" content="Auditlift - Win Deals Faster with Security Readiness" />
 	<meta
 		name="twitter:description"
 		content="Complete buyer security questionnaires with cited, reusable answers. Built for the enterprise deal cycle."
@@ -184,7 +158,7 @@
 			{
 				'@type': 'Organization',
 				'@id': 'https://auditlift.app/#organization',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				url: 'https://auditlift.app',
 				email: 'hello@auditlift.app',
 				description:
@@ -194,12 +168,12 @@
 				'@type': 'WebSite',
 				'@id': 'https://auditlift.app/#website',
 				url: 'https://auditlift.app',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				publisher: { '@id': 'https://auditlift.app/#organization' }
 			},
 			{
 				'@type': 'SoftwareApplication',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				applicationCategory: 'BusinessApplication',
 				operatingSystem: 'Web',
 				url: 'https://auditlift.app',
@@ -231,11 +205,11 @@
 	<div class="nav-inner">
 		<a href="/" class="nav-logo">
 			<LogoMark size={20} />
-			<span class="nav-logo-text">AuditLift</span>
+			<span class="nav-logo-text">Auditlift</span>
 		</a>
 		<div class="nav-links">
-			<button class="nav-link" onclick={() => scrollTo('#features')}>Features</button>
-			<button class="nav-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+			<a class="nav-link" href="#features">Features</a>
+			<a class="nav-link" href="#pricing">Pricing</a>
 			<a href="/blog" class="nav-link">Blog</a>
 		</div>
 		<div class="nav-actions">
@@ -252,102 +226,87 @@
 		<div class="hero-blob" aria-hidden="true"></div>
 		<div class="hero-dots" aria-hidden="true"></div>
 		<div class="hero-content">
-			<!-- Eyebrow pill -->
-			<div class="eyebrow-pill">SOC 2 · PCI-DSS · ISO 27001</div>
+			<div class="hero-copy">
+				<div class="eyebrow-pill">
+					<span class="eyebrow-dot"></span>Built for the enterprise deal cycle
+				</div>
 
-			<!-- Headline -->
-			<h1
-				class="hero-headline"
-				class:headline-visible={headlineVisible}
-				class:headline-hidden={!headlineVisible}
-			>
-				{headlines[headlineIndex].line1}<br />{headlines[headlineIndex].line2}
-			</h1>
+				<h1 class="hero-headline">
+					Turn buyer security reviews into <span>your next advantage.</span>
+				</h1>
 
-			<!-- Subheadline -->
-			<p class="hero-subheadline">
-				AuditLift turns your approved policies, evidence, and company facts into cited answers for
-				buyer security reviews. Close the few gaps that matter, send a defensible response, and keep
-				the approved answers for the next deal.
-			</p>
+				<p class="hero-subheadline">
+					Give your team a focused workspace for cited answers, source material, and the few gaps
+					that need attention before a buyer says yes.
+				</p>
 
-			<!-- CTA row -->
-			<div class="hero-cta-row">
-				<a href="/login" class="btn-primary btn-lg">
-					Start free trial
-					<ArrowRight size={16} weight="bold" />
-				</a>
-				<button class="btn-ghost btn-lg" onclick={() => scrollTo('#pricing')}>View pricing</button>
+				<div class="hero-cta-row">
+					<a href="/login" class="btn-primary btn-lg">
+						Start free trial
+						<ArrowRight size={16} weight="bold" />
+					</a>
+					<a class="btn-ghost btn-lg" href="#features">Explore the workflow</a>
+				</div>
+				<p class="hero-note">
+					<Check size={15} weight="bold" />10-day free trial · No credit card required
+				</p>
 			</div>
 
-			<!-- Hero mockup card -->
-			<div class="hero-card-wrapper">
-				<div class="hero-card">
-					<!-- Card header -->
-					<div class="hero-card-header">
-						<div class="hero-card-title-group">
-							<p class="hero-card-label">SOC 2 Readiness</p>
-							<p class="hero-card-score">73%</p>
+			<div class="hero-product" aria-label="Auditlift questionnaire workspace preview">
+				<div class="product-window">
+					<div class="product-toolbar">
+						<div class="window-dots" aria-hidden="true">
+							<span></span><span></span><span></span>
 						</div>
-						<!-- Progress ring -->
-						<div class="progress-ring-wrapper">
-							<svg class="progress-ring" viewBox="0 0 56 56" aria-hidden="true">
-								<circle
-									cx="28"
-									cy="28"
-									r="22"
-									fill="none"
-									stroke="var(--border)"
-									stroke-width="5"
-								/>
-								<circle
-									cx="28"
-									cy="28"
-									r="22"
-									fill="none"
-									stroke="var(--brand)"
-									stroke-width="5"
-									stroke-linecap="round"
-									stroke-dasharray="138.2"
-									stroke-dashoffset="37.3"
-								/>
-							</svg>
-							<span class="progress-ring-label">73%</span>
+						<span class="product-toolbar-title">Questionnaire workspace</span>
+						<span class="product-status">Saved</span>
+					</div>
+					<div class="product-layout">
+						<aside class="product-sidebar">
+							<p class="sidebar-label">Active deal</p>
+							<p class="sidebar-deal">Enterprise renewal</p>
+							<div class="sidebar-progress"><span></span></div>
+							<p class="sidebar-progress-text">22 of 24 answers ready</p>
+							<div class="sidebar-nav-item active"><span></span>Questionnaire</div>
+							<div class="sidebar-nav-item"><span></span>Answer library</div>
+							<div class="sidebar-nav-item"><span></span>Evidence</div>
+						</aside>
+						<div class="product-main">
+							<div class="question-heading">
+								<div>
+									<p class="question-kicker">Question 14 of 24</p>
+									<p class="question-title">How do you manage security incidents?</p>
+								</div>
+								<span class="ready-badge"><Check size={12} weight="bold" />Ready to send</span>
+							</div>
+							<div class="answer-card">
+								<p class="answer-label">Suggested answer</p>
+								<p class="answer-text">
+									We maintain a documented incident response process, with defined roles, escalation
+									paths, and post-incident review requirements.
+								</p>
+								<div class="source-row">
+									<span class="source-label">Cited sources</span>
+									<span class="source-chip">Incident Response Policy</span>
+									<span class="source-chip">Company fact</span>
+								</div>
+							</div>
+							<div class="review-alert">
+								<span class="alert-mark">!</span>
+								<div>
+									<strong>One related gap needs review</strong><span
+										>Recovery-time objective is missing from your sources.</span
+									>
+								</div>
+								<ArrowRight size={15} weight="bold" />
+							</div>
 						</div>
 					</div>
-
-					<!-- Controls list -->
-					<div class="hero-controls-list">
-						<div class="hero-control-item">
-							<span class="control-status-dot control-done">
-								<Check size={10} weight="bold" />
-							</span>
-							<span class="control-id">CC6.1</span>
-							<span class="control-name">Access Control</span>
-							<span class="control-badge control-badge-done">Done</span>
-						</div>
-						<div class="hero-control-item">
-							<span class="control-status-dot control-done">
-								<Check size={10} weight="bold" />
-							</span>
-							<span class="control-id">CC7.2</span>
-							<span class="control-name">System Monitoring</span>
-							<span class="control-badge control-badge-done">Done</span>
-						</div>
-						<div class="hero-control-item">
-							<span class="control-status-dot control-pending"></span>
-							<span class="control-id">CC8.1</span>
-							<span class="control-name">Change Management</span>
-							<span class="control-badge control-badge-pending">Pending</span>
-						</div>
-					</div>
-
-					<!-- Card footer -->
-					<div class="hero-card-footer">
-						<span>4 controls remaining</span>
-						<span class="hero-card-footer-dot">·</span>
-						<span>Updated just now</span>
-					</div>
+				</div>
+				<div class="product-proof" aria-hidden="true">
+					<span><Check size={14} weight="bold" />Source-backed</span>
+					<span><Check size={14} weight="bold" />Gap-aware</span>
+					<span><Check size={14} weight="bold" />Ready to export</span>
 				</div>
 			</div>
 		</div>
@@ -358,10 +317,10 @@
 		<div class="trusted-inner">
 			<p class="trusted-label">Trusted by teams at</p>
 			<div class="trusted-logos">
-				<span class="trusted-logo">Devrex</span>
+				<span class="trusted-logo">Devrex Digital</span>
 				<span class="trusted-logo">AWFCA</span>
-				<span class="trusted-logo">Getherap</span>
-				<span class="trusted-logo">Outcome</span>
+				<span class="trusted-logo">Getherap Outcome</span>
+				<span class="trusted-logo">Intern Insider``</span>
 			</div>
 		</div>
 	</section>
@@ -397,7 +356,7 @@
 				<div class="testimonial-card">
 					<Quotes size={20} class="testimonial-quote-icon" />
 					<p class="testimonial-text">
-						"AuditLift turned what used to be a two-week fire drill into a single afternoon. We
+						"Auditlift turned what used to be a two-week fire drill into a single afternoon. We
 						answered a 60-question security review in under three hours and closed the deal."
 					</p>
 					<div class="testimonial-author">
@@ -419,7 +378,7 @@
 				<div class="testimonial-card">
 					<Quotes size={20} class="testimonial-quote-icon" />
 					<p class="testimonial-text">
-						"We are selling into health tech - the compliance bar is brutal. AuditLift helped us
+						"We are selling into health tech - the compliance bar is brutal. Auditlift helped us
 						understand exactly what we needed before the buyer even asked."
 					</p>
 					<div class="testimonial-author">
@@ -594,7 +553,7 @@
 				<p class="competitor-compare-text">
 					Enterprise compliance tools typically cost <span class="competitor-name"
 						>$7,500–$15,000/yr</span
-					>. AuditLift starts at <span class="competitor-name">$149/mo</span>.
+					>. Auditlift starts at <span class="competitor-name">$149/mo</span>.
 				</p>
 			</div>
 		</div>
@@ -629,13 +588,13 @@
 		<div class="footer-inner">
 			<div class="footer-logo">
 				<LogoMark size={16} />
-				<span class="footer-logo-text">AuditLift</span>
+				<span class="footer-logo-text">Auditlift</span>
 				<span class="footer-copy">&copy; 2026</span>
 			</div>
 			<nav class="footer-links" aria-label="Footer navigation">
 				<a href="/" class="footer-link">Home</a>
-				<button class="footer-link" onclick={() => scrollTo('#features')}>Features</button>
-				<button class="footer-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+				<a class="footer-link" href="#features">Features</a>
+				<a class="footer-link" href="#pricing">Pricing</a>
 				<a href="/blog" class="footer-link">Blog</a>
 				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/terms" class="footer-link">Terms</a>
@@ -652,14 +611,17 @@
 	   ===================== */
 	.nav-bar {
 		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
+		top: 0.75rem;
+		left: 50%;
 		z-index: 50;
-		border-bottom: 1px solid var(--border);
-		background: color-mix(in srgb, var(--background) 85%, transparent);
+		width: min(calc(100% - 2rem), 72rem);
+		transform: translateX(-50%);
+		border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+		border-radius: var(--radius-xl);
+		background: color-mix(in srgb, var(--background-elevated) 82%, transparent);
 		backdrop-filter: blur(12px);
 		-webkit-backdrop-filter: blur(12px);
+		box-shadow: 0 8px 28px color-mix(in srgb, #000 7%, transparent);
 	}
 
 	.nav-inner {
@@ -701,6 +663,7 @@
 		font-weight: 500;
 		color: var(--foreground-muted);
 		border-radius: var(--radius);
+		text-decoration: none;
 		transition:
 			color 0.15s,
 			background 0.15s;
@@ -808,12 +771,12 @@
 	.hero-section {
 		position: relative;
 		overflow: hidden;
-		padding: 8rem 1.5rem 5rem;
+		padding: 10rem 1.5rem 7rem;
 		display: flex;
 		justify-content: center;
 		background-image: radial-gradient(
-			ellipse 80% 50% at 50% -10%,
-			color-mix(in srgb, var(--brand) 10%, transparent),
+			ellipse 65% 70% at 78% 35%,
+			color-mix(in srgb, var(--brand) 13%, transparent),
 			transparent
 		);
 	}
@@ -823,8 +786,8 @@
 		position: absolute;
 		inset: 0;
 		background-image: radial-gradient(
-			ellipse 60% 40% at 70% 60%,
-			color-mix(in srgb, var(--brand) 6%, transparent),
+			ellipse 55% 70% at 10% 5%,
+			color-mix(in srgb, var(--brand) 7%, transparent),
 			transparent
 		);
 	}
@@ -842,212 +805,306 @@
 	.hero-content {
 		position: relative;
 		z-index: 1;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: minmax(0, 0.94fr) minmax(28rem, 1.06fr);
 		align-items: center;
-		text-align: center;
-		max-width: 42rem;
+		gap: clamp(3rem, 7vw, 7rem);
+		max-width: 72rem;
 		width: 100%;
+	}
+	.hero-copy {
+		text-align: left;
 	}
 
 	.eyebrow-pill {
 		display: inline-flex;
 		align-items: center;
-		padding: 0.25rem 0.875rem;
+		gap: 0.5rem;
+		padding: 0.375rem 0.75rem;
 		border: 1px solid var(--border);
 		border-radius: var(--radius-full, 9999px);
 		font-size: 0.75rem;
 		font-weight: 500;
 		color: var(--foreground-muted);
 		background: color-mix(in srgb, var(--brand) 8%, var(--background));
-		margin-bottom: 1.5rem;
+		margin-bottom: 1.25rem;
 		letter-spacing: 0.03em;
+	}
+	.eyebrow-dot {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: var(--brand);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 15%, transparent);
 	}
 
 	.hero-headline {
-		font-size: clamp(2.5rem, 6vw, 4rem);
+		font-size: clamp(2.75rem, 5vw, 4.5rem);
 		font-weight: 800;
-		letter-spacing: -0.04em;
-		line-height: 1.08;
+		letter-spacing: -0.055em;
+		line-height: 1.02;
 		color: var(--foreground);
-		margin: 0 0 1.25rem;
-		transition:
-			opacity 0.4s ease,
-			transform 0.4s ease;
+		margin: 0 0 1.5rem;
 	}
-	.headline-visible {
-		opacity: 1;
-		transform: translateY(0);
-	}
-	.headline-hidden {
-		opacity: 0;
-		transform: translateY(8px);
+	.hero-headline span {
+		color: var(--brand);
 	}
 
 	.hero-subheadline {
 		font-size: 1.0625rem;
-		line-height: 1.65;
+		line-height: 1.7;
 		color: var(--foreground-muted);
-		max-width: 36rem;
-		margin: 0 0 2.25rem;
+		max-width: 33rem;
+		margin: 0 0 2rem;
 	}
 
 	.hero-cta-row {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 		gap: 0.75rem;
-		margin-bottom: 3.5rem;
+		margin-bottom: 1rem;
+	}
+	.hero-note {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		margin: 0;
+		color: var(--foreground-subtle);
+		font-size: 0.8125rem;
+	}
+	.hero-note :global(svg) {
+		color: var(--success);
 	}
 
-	/* Hero card */
-	.hero-card-wrapper {
+	.hero-product {
+		position: relative;
 		width: 100%;
-		max-width: 24rem;
-		filter: drop-shadow(0 16px 40px color-mix(in srgb, var(--brand) 15%, transparent));
+		filter: drop-shadow(0 24px 48px color-mix(in srgb, var(--brand) 16%, transparent));
 	}
-
-	.hero-card {
+	.product-window {
 		background: var(--background-elevated);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-xl, 1rem);
+		border: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand));
+		border-radius: 1rem;
 		overflow: hidden;
 	}
-
-	.hero-card-header {
+	.product-toolbar {
 		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		padding: 1.25rem 1.25rem 1rem;
+		align-items: center;
+		gap: 0.7rem;
+		padding: 0.7rem 0.9rem;
 		border-bottom: 1px solid var(--border);
+		background: color-mix(in srgb, var(--background-subtle) 80%, var(--background));
 	}
-
-	.hero-card-title-group {
-		text-align: left;
+	.window-dots {
+		display: flex;
+		gap: 0.3rem;
 	}
-
-	.hero-card-label {
+	.window-dots span {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: var(--border);
+	}
+	.window-dots span:first-child {
+		background: color-mix(in srgb, var(--warning) 70%, var(--border));
+	}
+	.product-toolbar-title {
+		color: var(--foreground-muted);
 		font-size: 0.6875rem;
 		font-weight: 600;
+	}
+	.product-status {
+		margin-left: auto;
+		color: var(--success);
+		font-size: 0.6875rem;
+		font-weight: 600;
+	}
+	.product-layout {
+		display: grid;
+		grid-template-columns: 9.5rem minmax(0, 1fr);
+		min-height: 20rem;
+	}
+	.product-sidebar {
+		padding: 1.25rem 0.75rem;
+		background: color-mix(in srgb, var(--background-subtle) 72%, var(--background));
+		border-right: 1px solid var(--border);
+	}
+	.sidebar-label,
+	.question-kicker,
+	.answer-label,
+	.source-label {
+		margin: 0;
+		font-size: 0.625rem;
+		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 		color: var(--foreground-subtle);
-		margin: 0 0 0.25rem;
 	}
-
-	.hero-card-score {
-		font-size: 1.75rem;
-		font-weight: 800;
-		color: var(--foreground);
-		margin: 0;
-		letter-spacing: -0.03em;
-	}
-
-	.progress-ring-wrapper {
-		position: relative;
-		width: 3.5rem;
-		height: 3.5rem;
-		flex-shrink: 0;
-	}
-
-	.progress-ring {
-		width: 100%;
-		height: 100%;
-		transform: rotate(-90deg);
-	}
-
-	.progress-ring-label {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.6875rem;
-		font-weight: 700;
-		color: var(--brand);
-	}
-
-	/* Controls list */
-	.hero-controls-list {
-		padding: 0.75rem 1.25rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.hero-control-item {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		padding: 0.5rem 0.625rem;
-		border-radius: var(--radius);
-		background: var(--background-subtle);
-		font-size: 0.8125rem;
-	}
-
-	.control-status-dot {
-		width: 1.125rem;
-		height: 1.125rem;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-
-	.control-done {
-		background: color-mix(in srgb, var(--success) 15%, transparent);
-		color: var(--success);
-	}
-
-	.control-pending {
-		background: color-mix(in srgb, var(--warning) 20%, transparent);
-		border: 1.5px solid var(--warning);
-	}
-
-	.control-id {
-		font-weight: 600;
-		color: var(--foreground);
-		font-variant-numeric: tabular-nums;
+	.sidebar-deal {
+		margin: 0.35rem 0 1rem;
 		font-size: 0.75rem;
+		font-weight: 650;
+		color: var(--foreground);
 	}
-
-	.control-name {
-		flex: 1;
-		text-align: left;
+	.sidebar-progress {
+		height: 0.3rem;
+		overflow: hidden;
+		border-radius: 999px;
+		background: var(--border);
+	}
+	.sidebar-progress span {
+		display: block;
+		width: 82%;
+		height: 100%;
+		border-radius: inherit;
+		background: var(--brand);
+	}
+	.sidebar-progress-text {
+		margin: 0.35rem 0 1.25rem;
+		font-size: 0.625rem;
+		color: var(--foreground-subtle);
+	}
+	.sidebar-nav-item {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.45rem;
+		margin: 0 -0.2rem 0.15rem;
+		border-radius: 0.375rem;
+		font-size: 0.6875rem;
 		color: var(--foreground-muted);
 	}
-
-	.control-badge {
-		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-full, 9999px);
-		font-size: 0.6875rem;
+	.sidebar-nav-item span {
+		width: 0.35rem;
+		height: 0.35rem;
+		border-radius: 50%;
+		background: var(--border);
+	}
+	.sidebar-nav-item.active {
+		background: color-mix(in srgb, var(--brand) 11%, transparent);
+		color: var(--brand);
 		font-weight: 600;
 	}
-
-	.control-badge-done {
-		background: color-mix(in srgb, var(--success) 12%, transparent);
+	.sidebar-nav-item.active span {
+		background: var(--brand);
+	}
+	.product-main {
+		padding: 1.25rem;
+	}
+	.question-heading {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+	.question-title {
+		margin: 0.3rem 0 0;
+		font-size: 0.875rem;
+		font-weight: 700;
+		letter-spacing: -0.015em;
+		color: var(--foreground);
+	}
+	.ready-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		flex-shrink: 0;
+		padding: 0.25rem 0.45rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--success) 13%, transparent);
 		color: var(--success);
+		font-size: 0.625rem;
+		font-weight: 650;
 	}
-
-	.control-badge-pending {
-		background: color-mix(in srgb, var(--warning) 15%, transparent);
-		color: var(--warning);
+	.answer-card {
+		padding: 1rem;
+		border: 1px solid var(--border);
+		border-radius: 0.625rem;
+		background: var(--background);
 	}
-
-	.hero-card-footer {
-		padding: 0.625rem 1.25rem;
-		border-top: 1px solid var(--border);
+	.answer-text {
+		margin: 0.5rem 0 0.85rem;
+		color: var(--foreground-muted);
 		font-size: 0.75rem;
-		color: var(--foreground-subtle);
+		line-height: 1.65;
+	}
+	.source-row {
 		display: flex;
 		align-items: center;
-		gap: 0.375rem;
+		gap: 0.35rem;
+		flex-wrap: wrap;
+		padding-top: 0.7rem;
+		border-top: 1px solid var(--border);
 	}
-
-	.hero-card-footer-dot {
-		opacity: 0.4;
+	.source-label {
+		margin-right: 0.1rem;
+	}
+	.source-chip {
+		padding: 0.2rem 0.4rem;
+		border-radius: 0.25rem;
+		background: color-mix(in srgb, var(--brand) 10%, transparent);
+		color: var(--brand);
+		font-size: 0.6rem;
+		font-weight: 600;
+	}
+	.review-alert {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		gap: 0.55rem;
+		align-items: center;
+		padding: 0.65rem 0.75rem;
+		margin-top: 0.75rem;
+		border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border));
+		border-radius: 0.5rem;
+		background: color-mix(in srgb, var(--warning) 7%, transparent);
+		color: var(--foreground-muted);
+	}
+	.alert-mark {
+		display: grid;
+		place-items: center;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 50%;
+		background: var(--warning);
+		color: var(--background);
+		font-size: 0.625rem;
+		font-weight: 800;
+	}
+	.review-alert strong,
+	.review-alert span {
+		display: block;
+	}
+	.review-alert strong {
+		color: var(--foreground);
+		font-size: 0.65rem;
+	}
+	.review-alert div span {
+		margin-top: 0.15rem;
+		font-size: 0.6rem;
+		line-height: 1.35;
+	}
+	.review-alert :global(svg) {
+		color: var(--warning);
+	}
+	.product-proof {
+		display: flex;
+		justify-content: center;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+		margin-top: 1rem;
+	}
+	.product-proof span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--foreground-muted);
+		font-size: 0.6875rem;
+	}
+	.product-proof :global(svg) {
+		color: var(--success);
 	}
 
 	/* =====================
@@ -1056,24 +1113,29 @@
 	.stats-bar {
 		border-top: 1px solid var(--border);
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 		padding: 2rem 1.5rem;
 	}
 
 	.stats-inner {
-		max-width: 48rem;
+		max-width: 56rem;
 		margin: 0 auto;
 		display: flex;
 		align-items: center;
 		justify-content: space-around;
-		gap: 2rem;
+		gap: 0;
 		flex-wrap: wrap;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl);
+		background: var(--background-elevated);
+		box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 5%, transparent);
+		overflow: hidden;
 	}
 
 	.stat-item {
 		text-align: center;
 		flex: 1;
 		min-width: 8rem;
+		padding: 1.125rem 1.5rem;
 	}
 
 	.stat-value {
@@ -1136,6 +1198,11 @@
 		border-bottom: 1px solid var(--border);
 	}
 
+	#features,
+	#pricing {
+		scroll-margin-top: 6rem;
+	}
+
 	.features-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
@@ -1143,18 +1210,20 @@
 	}
 
 	.feature-card {
-		padding: 1.5rem;
+		padding: 1.625rem;
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
 		transition:
-			border-color 0.2s,
-			box-shadow 0.2s;
+			border-color 0.2s ease,
+			box-shadow 0.2s ease,
+			transform 0.2s ease;
 	}
 
 	.feature-card:hover {
 		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
 		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 8%, transparent);
+		transform: translateY(-2px);
 	}
 
 	.feature-icon-box {
@@ -1206,7 +1275,6 @@
 	   ===================== */
 	.steps-section {
 		padding: 5rem 1.5rem;
-		background: var(--background-subtle);
 		border-bottom: 1px solid var(--border);
 	}
 
@@ -1223,7 +1291,11 @@
 		min-width: 12rem;
 		max-width: 20rem;
 		text-align: center;
-		padding: 1.5rem;
+		padding: 1.75rem 1.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl, 1rem);
+		background: var(--background-elevated);
+		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 5%, transparent);
 	}
 
 	.step-number-circle {
@@ -1462,17 +1534,20 @@
 	   FINAL CTA
 	   ===================== */
 	.final-cta-section {
-		padding: 6rem 1.5rem;
-		background-image: radial-gradient(
-			ellipse 70% 60% at 50% 50%,
-			color-mix(in srgb, var(--brand) 8%, transparent),
-			transparent
-		);
+		padding: 5rem 1.5rem;
 	}
 
 	.final-cta-inner {
-		max-width: 36rem;
+		position: relative;
+		overflow: hidden;
+		max-width: 52rem;
 		margin: 0 auto;
+		padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+		border-radius: 1.5rem;
+		background:
+			radial-gradient(circle at 82% 15%, rgb(255 255 255 / 0.18), transparent 26%),
+			linear-gradient(135deg, var(--brand), color-mix(in srgb, var(--brand) 72%, #203b25));
+		box-shadow: 0 20px 46px color-mix(in srgb, var(--brand) 23%, transparent);
 		text-align: center;
 		display: flex;
 		flex-direction: column;
@@ -1484,19 +1559,19 @@
 		font-size: clamp(1.75rem, 3.5vw, 2.25rem);
 		font-weight: 700;
 		letter-spacing: -0.03em;
-		color: var(--foreground);
+		color: #fff;
 		margin: 0;
 	}
 
 	.final-cta-sub {
 		font-size: 1rem;
-		color: var(--foreground-muted);
+		color: rgb(255 255 255 / 0.78);
 		margin: 0;
 	}
 
 	.final-cta-advisory {
 		font-size: 0.875rem;
-		color: var(--foreground-muted);
+		color: rgb(255 255 255 / 0.72);
 		margin: 0.5rem 0 0;
 	}
 
@@ -1504,7 +1579,7 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		color: var(--brand);
+		color: #fff;
 		font-weight: 500;
 		text-decoration: underline;
 		text-underline-offset: 2px;
@@ -1517,12 +1592,22 @@
 		opacity: 0.8;
 	}
 
+	.final-cta-inner .btn-primary {
+		background: var(--background-elevated);
+		color: var(--brand);
+		box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+	}
+
+	.final-cta-inner .btn-primary:hover {
+		background: #fff;
+	}
+
 	/* =====================
 	   TRUSTED BY
 	   ===================== */
 	.trusted-bar {
+		border-top: 1px solid var(--border);
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 		padding: 1.5rem;
 	}
 	.trusted-inner {
@@ -1550,7 +1635,7 @@
 		font-weight: 600;
 		letter-spacing: -0.02em;
 		color: var(--foreground-muted);
-		opacity: 0.7;
+		opacity: 0.76;
 		transition: opacity 0.2s;
 	}
 	.trusted-logo:hover {
@@ -1616,7 +1701,6 @@
 	.lead-magnet-section {
 		padding: 5rem 1.5rem;
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 	}
 	.lead-magnet-grid {
 		display: grid;
@@ -1744,7 +1828,84 @@
 	/* =====================
 	   RESPONSIVE
 	   ===================== */
+	@media (max-width: 900px) {
+		.hero-section {
+			padding-top: 8.25rem;
+		}
+		.hero-content {
+			grid-template-columns: minmax(0, 38rem);
+			justify-content: center;
+			gap: 3.5rem;
+		}
+		.hero-copy {
+			text-align: center;
+		}
+		.hero-subheadline {
+			margin-left: auto;
+			margin-right: auto;
+		}
+		.hero-cta-row {
+			justify-content: center;
+		}
+		.hero-note {
+			justify-content: center;
+		}
+		.hero-product {
+			max-width: 38rem;
+			margin: 0 auto;
+		}
+	}
+
 	@media (max-width: 640px) {
+		.nav-inner {
+			padding: 0 1rem;
+		}
+
+		.hero-section {
+			padding: 7.25rem 1rem 4rem;
+		}
+		.hero-content {
+			gap: 2.75rem;
+		}
+		.hero-headline {
+			font-size: clamp(2.5rem, 12vw, 3.25rem);
+		}
+		.hero-subheadline {
+			font-size: 1rem;
+		}
+		.hero-cta-row {
+			width: 100%;
+		}
+		.hero-cta-row > * {
+			flex: 1;
+			justify-content: center;
+		}
+		.hero-note {
+			font-size: 0.75rem;
+		}
+		.product-layout {
+			grid-template-columns: minmax(0, 1fr);
+			min-height: 0;
+		}
+		.product-sidebar {
+			display: none;
+		}
+		.product-main {
+			padding: 1rem;
+		}
+		.question-heading {
+			align-items: center;
+		}
+		.question-title {
+			font-size: 0.8125rem;
+		}
+		.review-alert {
+			padding: 0.6rem;
+		}
+		.product-proof {
+			margin-top: 0.75rem;
+		}
+
 		.nav-links {
 			display: none;
 		}
@@ -1754,7 +1915,48 @@
 		}
 
 		.stats-inner {
-			justify-content: center;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.stat-item {
+			min-width: 0;
+			padding: 1rem 0.35rem;
+		}
+
+		.stat-value {
+			font-size: 0.875rem;
+		}
+
+		.stat-label {
+			font-size: 0.6875rem;
+			line-height: 1.4;
+		}
+
+		.features-grid,
+		.testimonials-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.features-section,
+		.testimonials-section,
+		.lead-magnet-section,
+		.steps-section,
+		.pricing-section {
+			padding-top: 4rem;
+			padding-bottom: 4rem;
+		}
+
+		.section-inner {
+			padding: 0 1rem;
+		}
+
+		.section-header {
+			margin-bottom: 2.5rem;
+		}
+
+		.trusted-logos {
+			gap: 1rem 1.5rem;
 		}
 
 		.step-arrow {
@@ -1775,6 +1977,28 @@
 		.footer-links {
 			flex-wrap: wrap;
 			justify-content: center;
+		}
+	}
+
+	@media (max-width: 380px) {
+		.nav-signin {
+			display: none;
+		}
+
+		.nav-actions {
+			gap: 0.4rem;
+		}
+
+		.hero-cta-row {
+			flex-direction: column;
+		}
+
+		.hero-cta-row > * {
+			width: 100%;
+		}
+
+		.pricing-card-body {
+			padding: 1.5rem;
 		}
 	}
 </style>

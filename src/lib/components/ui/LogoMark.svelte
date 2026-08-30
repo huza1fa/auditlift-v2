@@ -1,34 +1,47 @@
 <script lang="ts">
 	let {
 		size = 20,
-		class: className = ''
+		class: className = '',
+		tone = 'brand'
 	}: {
 		size?: number;
 		class?: string;
+		tone?: 'brand' | 'inverse';
 	} = $props();
 </script>
 
-<!--
-  Geometric shield mark — angular hexagon with inner facet.
-  Pure straight lines, no curves. Reads as shield at any size.
--->
 <svg
 	width={size}
 	height={size}
-	viewBox="0 0 20 24"
+	viewBox="0 0 24 24"
 	fill="none"
 	xmlns="http://www.w3.org/2000/svg"
-	class={className}
+	class="logo-mark {tone === 'inverse' ? 'logo-mark--inverse' : ''} {className}"
 	aria-hidden="true"
 >
-	<!-- Outer shield polygon -->
-	<path d="M10 1L19 5V14L10 23L1 14V5L10 1Z" fill="var(--brand)" />
-	<!-- Inner facet — creates depth and geometric character -->
 	<path
-		d="M10 5L15.5 7.5V13L10 18.5L4.5 13V7.5L10 5Z"
-		fill="var(--brand-foreground)"
-		opacity="0.15"
+		d="M4.5 17.75L10.1 6.25L13.65 13.2L16.1 9.35L19.5 17.75"
+		stroke="currentColor"
+		stroke-width="2.35"
+		stroke-linecap="round"
+		stroke-linejoin="round"
 	/>
-	<!-- Center mark — small diamond -->
-	<path d="M10 8.5L12.5 11L10 13.5L7.5 11L10 8.5Z" fill="var(--brand-foreground)" opacity="0.5" />
+	<path
+		d="M16.1 9.35H19.5V12.75"
+		stroke="currentColor"
+		stroke-width="2.35"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
 </svg>
+
+<style>
+	.logo-mark {
+		display: block;
+		color: var(--brand);
+	}
+
+	.logo-mark--inverse {
+		color: var(--brand-foreground);
+	}
+</style>

@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		entityName: policy.title
 	}).catch(console.error);
 
-	const companyName = locals.organization?.name ?? 'AuditLift';
+	const companyName = locals.organization?.name ?? 'Auditlift';
 
 	const pdfBytes = await generatePolicyPdf(policy.title, policy.content, companyName);
 

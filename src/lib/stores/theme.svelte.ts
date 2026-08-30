@@ -3,6 +3,7 @@ type ThemePreference = 'light' | 'dark' | 'system';
 function createTheme() {
 	let preference = $state<ThemePreference>('system');
 	let resolved = $state<'light' | 'dark'>('light');
+	let initialized = false;
 
 	function apply(theme: 'light' | 'dark') {
 		resolved = theme;
@@ -27,13 +28,18 @@ function createTheme() {
 	}
 
 	function init() {
+		if (initialized) return;
+		initialized = true;
+
 		const stored = localStorage.getItem('auditlift-theme') as ThemePreference | null;
 		if (stored === 'light' || stored === 'dark') {
 			preference = stored;
-			resolved = stored;
+			apply(stored);
 		} else {
 			preference = 'system';
-			resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			document.documentElement.removeAttribute('data-theme');
+			resolved = dark ? 'dark' : 'light';
 		}
 
 		// Watch system preference changes

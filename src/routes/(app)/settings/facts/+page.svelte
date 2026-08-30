@@ -171,7 +171,7 @@
 		<div>
 			<h2 class="text-lg font-semibold text-[var(--foreground)]">Company Facts</h2>
 			<p class="mt-1 max-w-2xl text-sm text-[var(--foreground-muted)]">
-				Facts give AuditLift approved context for AI-generated answers. New or edited facts stay
+				Facts give Auditlift approved context for AI-generated answers. New or edited facts stay
 				pending until an admin verifies them.
 			</p>
 		</div>

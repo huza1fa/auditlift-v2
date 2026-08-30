@@ -78,7 +78,7 @@
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `AuditLift-Export-${new Date().toISOString().split('T')[0]}.zip`;
+			a.download = `Auditlift-Export-${new Date().toISOString().split('T')[0]}.zip`;
 			a.click();
 			URL.revokeObjectURL(url);
 		} catch {

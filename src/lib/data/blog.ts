@@ -41,7 +41,7 @@ Every week you spend waiting to start compliance is a week where enterprise deal
 
 Start mapping your controls now, even if you are not planning to audit this quarter. Generate the policies buyers actually ask for. Collect evidence as you build. When the questionnaire lands, you answer in hours, not weeks.
 
-That is exactly what AuditLift was built for.
+That is exactly what Auditlift was built for.
 		`.trim(),
 		ctaText: 'Start your free trial and map your first framework',
 		ctaHref: '/login'
@@ -77,7 +77,7 @@ The biggest expense is not the invoice. It is the three-month delay while you sc
 
 ## A smarter path
 
-Use templates and automation for the 80% that is standard. Bring in a human only for the 20% that is genuinely unique to your business. AuditLift generates the standard policies in minutes, tailored to your stack, so you can focus on the parts that actually need judgment.
+Use templates and automation for the 80% that is standard. Bring in a human only for the 20% that is genuinely unique to your business. Auditlift generates the standard policies in minutes, tailored to your stack, so you can focus on the parts that actually need judgment.
 
 Your runway will thank you.
 		`.trim(),
@@ -119,7 +119,7 @@ He extracted the relevant paragraphs and reformatted them as answers. For yes/no
 
 ## Step 3: Fill gaps with AI-generated drafts
 
-For questions where no policy existed, he used AuditLift's policy generator to create a first draft in minutes. The drafts were not perfect, but they were 80% there. He edited them for accuracy and added company-specific details.
+For questions where no policy existed, he used Auditlift's policy generator to create a first draft in minutes. The drafts were not perfect, but they were 80% there. He edited them for accuracy and added company-specific details.
 
 ## Step 4: Review for consistency
 
