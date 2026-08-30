@@ -192,7 +192,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const archive = archiver('zip', { zlib: { level: 9 } });
 
 	const date = new Date().toISOString().split('T')[0];
-	const folderName = `AuditLift-Export-${org.slug}-${date}`;
+	const folderName = `Auditlift-Export-${org.slug}-${date}`;
 
 	const csvRows = [
 		[
@@ -226,7 +226,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		try {
 			await appendArchiveEntry(archive, stringify(csvRows), `${folderName}/control-mapping.csv`);
 
-			const companyName = org.name ?? 'AuditLift';
+			const companyName = org.name ?? 'Auditlift';
 			for (const policy of allPolicies) {
 				const safeFilename = sanitizeFilename(policy.title).replace(/\.[^.]+$/, '') || 'policy';
 				const pdfBytes = await generatePolicyPdf(policy.title, policy.content, companyName);

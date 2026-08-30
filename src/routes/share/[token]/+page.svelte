@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Security Questionnaire — {data.organizationName} | AuditLift</title>
+	<title>Security Questionnaire — {data.organizationName} | Auditlift</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
@@ -68,7 +68,7 @@
 	<div class="mb-8 border-b border-[var(--border)] pb-8">
 		<div class="mb-4 flex items-center gap-2 text-[var(--brand)]">
 			<ShieldCheck size={24} weight="fill" />
-			<span class="text-lg font-semibold tracking-tight">AuditLift</span>
+			<span class="text-lg font-semibold tracking-tight">Auditlift</span>
 		</div>
 
 		<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Security Questionnaire</h1>
@@ -189,7 +189,7 @@
 				<ShieldCheck size={20} color="var(--brand)" weight="fill" />
 				<div>
 					<p class="text-sm font-semibold text-[var(--foreground)]">
-						Prepared with <span class="text-[var(--brand)]">AuditLift</span>
+						Prepared with <span class="text-[var(--brand)]">Auditlift</span>
 					</p>
 					<p class="text-xs text-[var(--foreground-muted)]">
 						Security questionnaires answered in minutes — compliance built as you close deals.
@@ -200,7 +200,7 @@
 				href="https://auditlift.app"
 				class="shrink-0 rounded-[var(--radius)] bg-[var(--brand)] px-4 py-2 text-xs font-medium text-white no-underline transition-colors hover:bg-[var(--brand-hover)]"
 			>
-				Answer yours with AuditLift
+				Answer yours with Auditlift
 			</a>
 		</div>
 	</div>

@@ -14,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>Blog — AuditLift</title>
+	<title>Blog — Auditlift</title>
 	<meta
 		name="description"
 		content="Practical guides for SaaS founders navigating enterprise security reviews, SOC 2 readiness, and compliance without consultants."
@@ -25,7 +25,7 @@
 	<div class="nav-inner">
 		<a href="/" class="nav-logo">
 			<LogoMark size={20} />
-			<span class="nav-logo-text">AuditLift</span>
+			<span class="nav-logo-text">Auditlift</span>
 		</a>
 		<div class="nav-actions">
 			<ThemeToggle />
@@ -38,7 +38,7 @@
 <div class="page-wrapper">
 	<section class="blog-hero">
 		<div class="blog-hero-inner">
-			<p class="blog-hero-label">AuditLift Blog</p>
+			<p class="blog-hero-label">Auditlift Blog</p>
 			<h1 class="blog-hero-title">Practical compliance for SaaS founders</h1>
 			<p class="blog-hero-sub">
 				No fluff. No consultant jargon. Just actionable guides on security questionnaires, SOC 2,
@@ -78,7 +78,7 @@
 		<div class="footer-inner">
 			<div class="footer-logo">
 				<LogoMark size={16} />
-				<span class="footer-logo-text">AuditLift</span>
+				<span class="footer-logo-text">Auditlift</span>
 				<span class="footer-copy">&copy; 2026</span>
 			</div>
 			<nav class="footer-links" aria-label="Footer navigation">

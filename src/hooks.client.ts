@@ -7,7 +7,7 @@ import { markPostHogInitialized } from '$lib/posthog';
 export async function init() {
 	if (!env.PUBLIC_POSTHOG_KEY) {
 		if (dev) {
-			throw new Error(
+			console.warn(
 				'PUBLIC_POSTHOG_KEY variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_KEY is configured'
 			);
 		}
@@ -15,7 +15,7 @@ export async function init() {
 	}
 	if (!env.PUBLIC_POSTHOG_HOST) {
 		if (dev) {
-			throw new Error(
+			console.warn(
 				'PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once PUBLIC_POSTHOG_HOST is configured'
 			);
 		}

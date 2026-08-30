@@ -26,10 +26,9 @@ const BRAND = {
 	danger: '#b84040'
 };
 
-const SHIELD_LOGO = `<svg width="28" height="28" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
-  <path d="M10 1L19 5V14L10 23L1 14V5L10 1Z" fill="${BRAND.green}"/>
-  <path d="M10 5L15.5 7.5V13L10 18.5L4.5 13V7.5L10 5Z" fill="#ffffff" opacity="0.15"/>
-  <path d="M10 8.5L12.5 11L10 13.5L7.5 11L10 8.5Z" fill="#ffffff" opacity="0.5"/>
+const LIFT_LOGO = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+  <path d="M4.5 17.75L10.1 6.25L13.65 13.2L16.1 9.35L19.5 17.75" stroke="${BRAND.green}" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16.1 9.35H19.5V12.75" stroke="${BRAND.green}" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
 function emailWrapper(title: string, bodyHtml: string): string {
@@ -58,8 +57,8 @@ function emailWrapper(title: string, bodyHtml: string): string {
             <td align="center" style="padding-bottom:28px;">
               <a href="https://auditlift.app" style="text-decoration:none;display:inline-block;">
                 <span style="display:inline-flex;align-items:center;gap:8px;">
-                  ${SHIELD_LOGO}
-                  <span style="font-size:17px;font-weight:700;color:${BRAND.foreground};letter-spacing:-0.3px;">AuditLift</span>
+				  ${LIFT_LOGO}
+				  <span style="font-size:17px;font-weight:700;color:${BRAND.foreground};letter-spacing:-0.3px;">Auditlift</span>
                 </span>
               </a>
             </td>
@@ -74,10 +73,10 @@ function emailWrapper(title: string, bodyHtml: string): string {
           <tr>
             <td align="center" style="padding-top:28px;">
               <p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:${BRAND.subtle};">
-                &copy; ${new Date().getFullYear()} AuditLift &middot; auditlift.app
+				&copy; ${new Date().getFullYear()} Auditlift &middot; auditlift.app
               </p>
               <p style="margin:0;font-size:12px;line-height:1.6;color:${BRAND.subtle};">
-                You&rsquo;re receiving this because you have an account with AuditLift.
+				You&rsquo;re receiving this because you have an account with Auditlift.
               </p>
             </td>
           </tr>
@@ -135,7 +134,7 @@ export async function sendInviteEmail(opts: {
 	const body = `
 ${heading(`You&rsquo;ve been invited to ${escapeHtml(opts.organizationName)}`)}
 ${paragraph(
-	`<strong>${escapeHtml(opts.inviterName)}</strong> invited you to join <strong>${escapeHtml(opts.organizationName)}</strong> on AuditLift as a <strong>${escapeHtml(opts.role)}</strong>.`
+	`<strong>${escapeHtml(opts.inviterName)}</strong> invited you to join <strong>${escapeHtml(opts.organizationName)}</strong> on Auditlift as a <strong>${escapeHtml(opts.role)}</strong>.`
 )}
 ${callout(`This invitation expires on <strong>${escapeHtml(expiryStr)}</strong>.`)}
 <p style="margin:0 0 8px;font-size:14px;color:${BRAND.muted};">Click below to accept your invitation:</p>
@@ -146,9 +145,9 @@ ${paragraph(
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <invites@auditlift.app>',
+		from: 'Auditlift <invites@auditlift.app>',
 		to: opts.to,
-		subject: `You're invited to join ${opts.organizationName} on AuditLift`,
+		subject: `You're invited to join ${opts.organizationName} on Auditlift`,
 		html: emailWrapper('Accept your invitation', body)
 	});
 
@@ -183,7 +182,7 @@ export async function sendWelcomeEmail(opts: {
 		: null;
 
 	const body = `
-${heading(`Welcome to AuditLift, ${firstName}`)}
+${heading(`Welcome to Auditlift, ${firstName}`)}
 ${paragraph(`Your workspace for <strong>${escapeHtml(opts.organizationName)}</strong> is ready.`)}
 ${trialStr ? callout(`Your 10-day free trial runs until <strong>${escapeHtml(trialStr)}</strong>.`) : ''}
 <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:${BRAND.foreground};">Here&rsquo;s where to start:</p>
@@ -199,10 +198,10 @@ ${paragraph(`Questions? Reply to this email or reach out to our team at any time
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
-		subject: `Welcome to AuditLift — let's get ${opts.organizationName} audit-ready`,
-		html: emailWrapper('Welcome to AuditLift', body)
+		subject: `Welcome to Auditlift — let's get ${opts.organizationName} audit-ready`,
+		html: emailWrapper('Welcome to Auditlift', body)
 	});
 
 	if (result.error) {
@@ -246,9 +245,9 @@ ${callout(`Need help choosing a plan? Reply to this email and we&rsquo;ll walk y
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
-		subject: `Your AuditLift trial ends in ${opts.daysLeft} day${s}`,
+		subject: `Your Auditlift trial ends in ${opts.daysLeft} day${s}`,
 		html: emailWrapper('Your trial is ending soon', body)
 	});
 
@@ -276,7 +275,7 @@ export async function sendTrialExpiredEmail(opts: {
 	const firstName = escapeHtml(opts.name.split(' ')[0] || 'there');
 
 	const body = `
-${heading('Your AuditLift trial has ended')}
+${heading('Your Auditlift trial has ended')}
 ${paragraph(
 	`Hi ${firstName}, your trial for <strong>${escapeHtml(opts.organizationName)}</strong> has ended. Your data is safe &mdash; subscribe anytime to regain full access.`
 )}
@@ -285,9 +284,9 @@ ${callout(`Questions? Reply to this email and we&rsquo;ll help you find the righ
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
-		subject: 'Your AuditLift trial has ended',
+		subject: 'Your Auditlift trial has ended',
 		html: emailWrapper('Your trial has ended', body)
 	});
 
@@ -316,7 +315,7 @@ export async function sendVerificationEmail(opts: {
 
 	const body = `
 ${heading('Verify your email')}
-${paragraph(`Hi ${firstName}, welcome to AuditLift! Confirm your email address to activate your account and start your trial.`)}
+${paragraph(`Hi ${firstName}, welcome to Auditlift! Confirm your email address to activate your account and start your trial.`)}
 <p style="margin:0 0 24px;">${button(opts.verificationLink, 'Verify Email')}</p>
 ${paragraph(
 	`If the button doesn&rsquo;t work, copy and paste this link: <a href="${escapeHtml(opts.verificationLink)}" style="color:${BRAND.green};text-decoration:underline;">${escapeHtml(opts.verificationLink)}</a>`
@@ -324,9 +323,9 @@ ${paragraph(
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
-		subject: 'Verify your email — AuditLift',
+		subject: 'Verify your email — Auditlift',
 		html: emailWrapper('Verify your email', body)
 	});
 
@@ -355,7 +354,7 @@ export async function sendPasswordResetEmail(opts: {
 
 	const body = `
 ${heading('Reset your password')}
-${paragraph(`Hi ${firstName}, we received a request to reset your AuditLift password. Click the button below &mdash; this link expires in 1 hour.`)}
+${paragraph(`Hi ${firstName}, we received a request to reset your Auditlift password. Click the button below &mdash; this link expires in 1 hour.`)}
 <p style="margin:0 0 8px;font-size:14px;color:${BRAND.muted};">If you didn&rsquo;t request this, you can safely ignore this email.</p>
 <p style="margin:0 0 24px;">${button(opts.resetLink, 'Reset Password')}</p>
 ${paragraph(
@@ -364,9 +363,9 @@ ${paragraph(
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
-		subject: 'Reset your AuditLift password',
+		subject: 'Reset your Auditlift password',
 		html: emailWrapper('Reset your password', body)
 	});
 
@@ -419,7 +418,7 @@ export async function sendConsultingRequestNotification(opts: {
 
 	const body = `
 ${heading('New advisory request')}
-${paragraph('A new consulting request was submitted through the AuditLift homepage.')}
+${paragraph('A new consulting request was submitted through the Auditlift homepage.')}
 <div style="background:${BRAND.greenLight};border-radius:8px;padding:18px;margin:0 0 24px;">
   <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Name:</strong> ${escapeHtml(opts.name)}</p>
   <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Email:</strong> <a href="mailto:${escapeHtml(opts.email)}" style="color:${BRAND.green};text-decoration:underline;">${escapeHtml(opts.email)}</a></p>
@@ -432,7 +431,7 @@ ${opts.message ? `${paragraph(`<strong>Message:</strong><br>${escapeHtml(opts.me
 ${paragraph(`Reply directly to this email to reach ${escapeHtml(opts.name)} at ${escapeHtml(opts.email)}.`)}`;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: advisoryEmail,
 		subject: `New advisory request — ${formatConsultingTopic(opts.topic)}`,
 		replyTo: opts.email,
@@ -466,11 +465,11 @@ export async function sendConsultingConfirmation(opts: {
 ${heading(`Thanks, ${firstName}`)}
 ${paragraph(`We received your <strong>${escapeHtml(formatConsultingTopic(opts.topic))}</strong> request. Our advisory team will review it and get back to you within one business day.`)}
 ${callout('If your request is urgent, reply to this email and we&rsquo;ll prioritize it.')}
-<p style="margin:0 0 24px;">${button('https://auditlift.app/dashboard', 'Go to AuditLift')}</p>
+<p style="margin:0 0 24px;">${button('https://auditlift.app/dashboard', 'Go to Auditlift')}</p>
 `;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: opts.to,
 		subject: 'We received your advisory request',
 		html: emailWrapper('Advisory request received', body)
@@ -517,7 +516,7 @@ export async function sendLeadMagnetNotification(opts: {
 
 	const body = `
 ${heading('New lead magnet download')}
-${paragraph('Someone downloaded a free resource from the AuditLift homepage.')}
+${paragraph('Someone downloaded a free resource from the Auditlift homepage.')}
 <div style="background:${BRAND.greenLight};border-radius:8px;padding:18px;margin:0 0 24px;">
   <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Name:</strong> ${escapeHtml(opts.name)}</p>
   <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:${BRAND.foreground};"><strong>Email:</strong> <a href="mailto:${escapeHtml(opts.email)}" style="color:${BRAND.green};text-decoration:underline;">${escapeHtml(opts.email)}</a></p>
@@ -529,7 +528,7 @@ ${paragraph('Someone downloaded a free resource from the AuditLift homepage.')}
 ${paragraph(`Reply directly to this email to reach ${escapeHtml(opts.name)} at ${escapeHtml(opts.email)}.`)}`;
 
 	const result = await resend.emails.send({
-		from: 'AuditLift <hello@auditlift.app>',
+		from: 'Auditlift <hello@auditlift.app>',
 		to: advisoryEmail,
 		subject: `New lead magnet download — ${resourceLabels[opts.resource] ?? opts.resource}`,
 		replyTo: opts.email,

@@ -120,9 +120,9 @@
 			<div
 				class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]"
 			>
-				<LogoMark size={14} />
+				<LogoMark size={14} tone="inverse" />
 			</div>
-			<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">AuditLift</span>
+			<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">Auditlift</span>
 		</div>
 		<button
 			onclick={() => (sidebarOpen = !sidebarOpen)}
@@ -152,10 +152,10 @@
 			<div
 				class="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--brand)]"
 			>
-				<LogoMark size={14} />
+				<LogoMark size={14} tone="inverse" />
 			</div>
 			<div class="flex items-center gap-1.5">
-				<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">AuditLift</span>
+				<span class="text-[14px] font-bold tracking-tight text-[var(--foreground)]">Auditlift</span>
 				{#if !data.isReadOnly && data.subscription?.status === 'active'}
 					<span
 						class="rounded-full bg-[var(--success-light)] px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[var(--success)] uppercase"

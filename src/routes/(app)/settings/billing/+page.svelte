@@ -130,7 +130,7 @@
 				<div>
 					<p class="font-semibold text-[var(--danger)]">Your free trial has expired</p>
 					<p class="text-sm text-[var(--foreground-muted)]">
-						Choose a plan below to continue using AuditLift.
+						Choose a plan below to continue using Auditlift.
 					</p>
 				</div>
 			</div>

@@ -99,7 +99,7 @@
 			number: '01',
 			title: 'Open the buyer review',
 			description:
-				'Create a deal workspace and upload the customer questionnaire. AuditLift identifies what can be answered now and what needs review.'
+				'Create a deal workspace and upload the customer questionnaire. Auditlift identifies what can be answered now and what needs review.'
 		},
 		{
 			number: '02',
@@ -123,14 +123,10 @@
 		leadMagnetResource = resource;
 		leadMagnetOpen = true;
 	}
-
-	function scrollTo(id: string) {
-		document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
-	}
 </script>
 
 <svelte:head>
-	<title>AuditLift - Security Questionnaires That Keep Deals Moving</title>
+	<title>Auditlift - Security Questionnaires That Keep Deals Moving</title>
 	<meta
 		name="description"
 		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps. Built for B2B SaaS teams winning enterprise deals."
@@ -139,8 +135,8 @@
 
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://auditlift.app" />
-	<meta property="og:site_name" content="AuditLift" />
-	<meta property="og:title" content="AuditLift - Win Deals Faster with Security Readiness" />
+	<meta property="og:site_name" content="Auditlift" />
+	<meta property="og:title" content="Auditlift - Win Deals Faster with Security Readiness" />
 	<meta
 		property="og:description"
 		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps."
@@ -149,7 +145,7 @@
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@auditlift" />
-	<meta name="twitter:title" content="AuditLift - Win Deals Faster with Security Readiness" />
+	<meta name="twitter:title" content="Auditlift - Win Deals Faster with Security Readiness" />
 	<meta
 		name="twitter:description"
 		content="Complete buyer security questionnaires with cited, reusable answers. Built for the enterprise deal cycle."
@@ -162,7 +158,7 @@
 			{
 				'@type': 'Organization',
 				'@id': 'https://auditlift.app/#organization',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				url: 'https://auditlift.app',
 				email: 'hello@auditlift.app',
 				description:
@@ -172,12 +168,12 @@
 				'@type': 'WebSite',
 				'@id': 'https://auditlift.app/#website',
 				url: 'https://auditlift.app',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				publisher: { '@id': 'https://auditlift.app/#organization' }
 			},
 			{
 				'@type': 'SoftwareApplication',
-				name: 'AuditLift',
+				name: 'Auditlift',
 				applicationCategory: 'BusinessApplication',
 				operatingSystem: 'Web',
 				url: 'https://auditlift.app',
@@ -209,11 +205,11 @@
 	<div class="nav-inner">
 		<a href="/" class="nav-logo">
 			<LogoMark size={20} />
-			<span class="nav-logo-text">AuditLift</span>
+			<span class="nav-logo-text">Auditlift</span>
 		</a>
 		<div class="nav-links">
-			<button class="nav-link" onclick={() => scrollTo('#features')}>Features</button>
-			<button class="nav-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+			<a class="nav-link" href="#features">Features</a>
+			<a class="nav-link" href="#pricing">Pricing</a>
 			<a href="/blog" class="nav-link">Blog</a>
 		</div>
 		<div class="nav-actions">
@@ -249,16 +245,14 @@
 						Start free trial
 						<ArrowRight size={16} weight="bold" />
 					</a>
-					<button class="btn-ghost btn-lg" onclick={() => scrollTo('#features')}
-						>Explore the workflow</button
-					>
+					<a class="btn-ghost btn-lg" href="#features">Explore the workflow</a>
 				</div>
 				<p class="hero-note">
 					<Check size={15} weight="bold" />10-day free trial · No credit card required
 				</p>
 			</div>
 
-			<div class="hero-product" aria-label="AuditLift questionnaire workspace preview">
+			<div class="hero-product" aria-label="Auditlift questionnaire workspace preview">
 				<div class="product-window">
 					<div class="product-toolbar">
 						<div class="window-dots" aria-hidden="true">
@@ -323,10 +317,10 @@
 		<div class="trusted-inner">
 			<p class="trusted-label">Trusted by teams at</p>
 			<div class="trusted-logos">
-				<span class="trusted-logo">Devrex</span>
+				<span class="trusted-logo">Devrex Digital</span>
 				<span class="trusted-logo">AWFCA</span>
-				<span class="trusted-logo">Getherap</span>
-				<span class="trusted-logo">Outcome</span>
+				<span class="trusted-logo">Getherap Outcome</span>
+				<span class="trusted-logo">Intern Insider``</span>
 			</div>
 		</div>
 	</section>
@@ -362,7 +356,7 @@
 				<div class="testimonial-card">
 					<Quotes size={20} class="testimonial-quote-icon" />
 					<p class="testimonial-text">
-						"AuditLift turned what used to be a two-week fire drill into a single afternoon. We
+						"Auditlift turned what used to be a two-week fire drill into a single afternoon. We
 						answered a 60-question security review in under three hours and closed the deal."
 					</p>
 					<div class="testimonial-author">
@@ -384,7 +378,7 @@
 				<div class="testimonial-card">
 					<Quotes size={20} class="testimonial-quote-icon" />
 					<p class="testimonial-text">
-						"We are selling into health tech - the compliance bar is brutal. AuditLift helped us
+						"We are selling into health tech - the compliance bar is brutal. Auditlift helped us
 						understand exactly what we needed before the buyer even asked."
 					</p>
 					<div class="testimonial-author">
@@ -559,7 +553,7 @@
 				<p class="competitor-compare-text">
 					Enterprise compliance tools typically cost <span class="competitor-name"
 						>$7,500–$15,000/yr</span
-					>. AuditLift starts at <span class="competitor-name">$149/mo</span>.
+					>. Auditlift starts at <span class="competitor-name">$149/mo</span>.
 				</p>
 			</div>
 		</div>
@@ -594,13 +588,13 @@
 		<div class="footer-inner">
 			<div class="footer-logo">
 				<LogoMark size={16} />
-				<span class="footer-logo-text">AuditLift</span>
+				<span class="footer-logo-text">Auditlift</span>
 				<span class="footer-copy">&copy; 2026</span>
 			</div>
 			<nav class="footer-links" aria-label="Footer navigation">
 				<a href="/" class="footer-link">Home</a>
-				<button class="footer-link" onclick={() => scrollTo('#features')}>Features</button>
-				<button class="footer-link" onclick={() => scrollTo('#pricing')}>Pricing</button>
+				<a class="footer-link" href="#features">Features</a>
+				<a class="footer-link" href="#pricing">Pricing</a>
 				<a href="/blog" class="footer-link">Blog</a>
 				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/terms" class="footer-link">Terms</a>
@@ -617,14 +611,17 @@
 	   ===================== */
 	.nav-bar {
 		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
+		top: 0.75rem;
+		left: 50%;
 		z-index: 50;
-		border-bottom: 1px solid var(--border);
-		background: color-mix(in srgb, var(--background) 85%, transparent);
+		width: min(calc(100% - 2rem), 72rem);
+		transform: translateX(-50%);
+		border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+		border-radius: var(--radius-xl);
+		background: color-mix(in srgb, var(--background-elevated) 82%, transparent);
 		backdrop-filter: blur(12px);
 		-webkit-backdrop-filter: blur(12px);
+		box-shadow: 0 8px 28px color-mix(in srgb, #000 7%, transparent);
 	}
 
 	.nav-inner {
@@ -666,6 +663,7 @@
 		font-weight: 500;
 		color: var(--foreground-muted);
 		border-radius: var(--radius);
+		text-decoration: none;
 		transition:
 			color 0.15s,
 			background 0.15s;
@@ -773,7 +771,7 @@
 	.hero-section {
 		position: relative;
 		overflow: hidden;
-		padding: 9rem 1.5rem 6rem;
+		padding: 10rem 1.5rem 7rem;
 		display: flex;
 		justify-content: center;
 		background-image: radial-gradient(
@@ -1115,24 +1113,29 @@
 	.stats-bar {
 		border-top: 1px solid var(--border);
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 		padding: 2rem 1.5rem;
 	}
 
 	.stats-inner {
-		max-width: 48rem;
+		max-width: 56rem;
 		margin: 0 auto;
 		display: flex;
 		align-items: center;
 		justify-content: space-around;
-		gap: 2rem;
+		gap: 0;
 		flex-wrap: wrap;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl);
+		background: var(--background-elevated);
+		box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 5%, transparent);
+		overflow: hidden;
 	}
 
 	.stat-item {
 		text-align: center;
 		flex: 1;
 		min-width: 8rem;
+		padding: 1.125rem 1.5rem;
 	}
 
 	.stat-value {
@@ -1195,6 +1198,11 @@
 		border-bottom: 1px solid var(--border);
 	}
 
+	#features,
+	#pricing {
+		scroll-margin-top: 6rem;
+	}
+
 	.features-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
@@ -1202,18 +1210,20 @@
 	}
 
 	.feature-card {
-		padding: 1.5rem;
+		padding: 1.625rem;
 		border: 1px solid var(--border);
 		border-radius: var(--radius-xl, 1rem);
 		background: var(--background-elevated);
 		transition:
-			border-color 0.2s,
-			box-shadow 0.2s;
+			border-color 0.2s ease,
+			box-shadow 0.2s ease,
+			transform 0.2s ease;
 	}
 
 	.feature-card:hover {
 		border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
 		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 8%, transparent);
+		transform: translateY(-2px);
 	}
 
 	.feature-icon-box {
@@ -1265,7 +1275,6 @@
 	   ===================== */
 	.steps-section {
 		padding: 5rem 1.5rem;
-		background: var(--background-subtle);
 		border-bottom: 1px solid var(--border);
 	}
 
@@ -1282,7 +1291,11 @@
 		min-width: 12rem;
 		max-width: 20rem;
 		text-align: center;
-		padding: 1.5rem;
+		padding: 1.75rem 1.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-xl, 1rem);
+		background: var(--background-elevated);
+		box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 5%, transparent);
 	}
 
 	.step-number-circle {
@@ -1521,17 +1534,20 @@
 	   FINAL CTA
 	   ===================== */
 	.final-cta-section {
-		padding: 6rem 1.5rem;
-		background-image: radial-gradient(
-			ellipse 70% 60% at 50% 50%,
-			color-mix(in srgb, var(--brand) 8%, transparent),
-			transparent
-		);
+		padding: 5rem 1.5rem;
 	}
 
 	.final-cta-inner {
-		max-width: 36rem;
+		position: relative;
+		overflow: hidden;
+		max-width: 52rem;
 		margin: 0 auto;
+		padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+		border-radius: 1.5rem;
+		background:
+			radial-gradient(circle at 82% 15%, rgb(255 255 255 / 0.18), transparent 26%),
+			linear-gradient(135deg, var(--brand), color-mix(in srgb, var(--brand) 72%, #203b25));
+		box-shadow: 0 20px 46px color-mix(in srgb, var(--brand) 23%, transparent);
 		text-align: center;
 		display: flex;
 		flex-direction: column;
@@ -1543,19 +1559,19 @@
 		font-size: clamp(1.75rem, 3.5vw, 2.25rem);
 		font-weight: 700;
 		letter-spacing: -0.03em;
-		color: var(--foreground);
+		color: #fff;
 		margin: 0;
 	}
 
 	.final-cta-sub {
 		font-size: 1rem;
-		color: var(--foreground-muted);
+		color: rgb(255 255 255 / 0.78);
 		margin: 0;
 	}
 
 	.final-cta-advisory {
 		font-size: 0.875rem;
-		color: var(--foreground-muted);
+		color: rgb(255 255 255 / 0.72);
 		margin: 0.5rem 0 0;
 	}
 
@@ -1563,7 +1579,7 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		color: var(--brand);
+		color: #fff;
 		font-weight: 500;
 		text-decoration: underline;
 		text-underline-offset: 2px;
@@ -1576,12 +1592,22 @@
 		opacity: 0.8;
 	}
 
+	.final-cta-inner .btn-primary {
+		background: var(--background-elevated);
+		color: var(--brand);
+		box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+	}
+
+	.final-cta-inner .btn-primary:hover {
+		background: #fff;
+	}
+
 	/* =====================
 	   TRUSTED BY
 	   ===================== */
 	.trusted-bar {
+		border-top: 1px solid var(--border);
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 		padding: 1.5rem;
 	}
 	.trusted-inner {
@@ -1609,7 +1635,7 @@
 		font-weight: 600;
 		letter-spacing: -0.02em;
 		color: var(--foreground-muted);
-		opacity: 0.7;
+		opacity: 0.76;
 		transition: opacity 0.2s;
 	}
 	.trusted-logo:hover {
@@ -1675,7 +1701,6 @@
 	.lead-magnet-section {
 		padding: 5rem 1.5rem;
 		border-bottom: 1px solid var(--border);
-		background: var(--background-subtle);
 	}
 	.lead-magnet-grid {
 		display: grid;
@@ -1805,7 +1830,7 @@
 	   ===================== */
 	@media (max-width: 900px) {
 		.hero-section {
-			padding-top: 7.5rem;
+			padding-top: 8.25rem;
 		}
 		.hero-content {
 			grid-template-columns: minmax(0, 38rem);
@@ -1832,8 +1857,12 @@
 	}
 
 	@media (max-width: 640px) {
+		.nav-inner {
+			padding: 0 1rem;
+		}
+
 		.hero-section {
-			padding: 6.75rem 1rem 4rem;
+			padding: 7.25rem 1rem 4rem;
 		}
 		.hero-content {
 			gap: 2.75rem;
@@ -1886,7 +1915,48 @@
 		}
 
 		.stats-inner {
-			justify-content: center;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.stat-item {
+			min-width: 0;
+			padding: 1rem 0.35rem;
+		}
+
+		.stat-value {
+			font-size: 0.875rem;
+		}
+
+		.stat-label {
+			font-size: 0.6875rem;
+			line-height: 1.4;
+		}
+
+		.features-grid,
+		.testimonials-grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.features-section,
+		.testimonials-section,
+		.lead-magnet-section,
+		.steps-section,
+		.pricing-section {
+			padding-top: 4rem;
+			padding-bottom: 4rem;
+		}
+
+		.section-inner {
+			padding: 0 1rem;
+		}
+
+		.section-header {
+			margin-bottom: 2.5rem;
+		}
+
+		.trusted-logos {
+			gap: 1rem 1.5rem;
 		}
 
 		.step-arrow {
@@ -1907,6 +1977,28 @@
 		.footer-links {
 			flex-wrap: wrap;
 			justify-content: center;
+		}
+	}
+
+	@media (max-width: 380px) {
+		.nav-signin {
+			display: none;
+		}
+
+		.nav-actions {
+			gap: 0.4rem;
+		}
+
+		.hero-cta-row {
+			flex-direction: column;
+		}
+
+		.hero-cta-row > * {
+			width: 100%;
+		}
+
+		.pricing-card-body {
+			padding: 1.5rem;
 		}
 	}
 </style>

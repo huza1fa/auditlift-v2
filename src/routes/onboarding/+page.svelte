@@ -195,7 +195,7 @@
 					const domainData = await domainRes.json();
 					if (domainData.hasExistingOrg && !domainData.isMember) {
 						domainBlocked = true;
-						domainBlockMsg = `An organization for ${domainData.domain} already exists on AuditLift. Ask your team admin to send you an invite.`;
+						domainBlockMsg = `An organization for ${domainData.domain} already exists on Auditlift. Ask your team admin to send you an invite.`;
 						loading = false;
 						return;
 					}

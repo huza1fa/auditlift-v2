@@ -31,7 +31,7 @@
 </script>
 
 <svelte:head>
-	<title>{post.title} — AuditLift Blog</title>
+	<title>{post.title} — Auditlift Blog</title>
 	<meta name="description" content={post.excerpt} />
 	<meta property="og:type" content="article" />
 	<meta property="og:title" content={post.title} />
@@ -46,7 +46,7 @@
 	<div class="nav-inner">
 		<a href="/" class="nav-logo">
 			<LogoMark size={20} />
-			<span class="nav-logo-text">AuditLift</span>
+			<span class="nav-logo-text">Auditlift</span>
 		</a>
 		<div class="nav-actions">
 			<ThemeToggle />
@@ -133,7 +133,7 @@
 		<div class="footer-inner">
 			<div class="footer-logo">
 				<LogoMark size={16} />
-				<span class="footer-logo-text">AuditLift</span>
+				<span class="footer-logo-text">Auditlift</span>
 				<span class="footer-copy">&copy; 2026</span>
 			</div>
 			<nav class="footer-links" aria-label="Footer navigation">

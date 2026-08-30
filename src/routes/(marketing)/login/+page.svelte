@@ -131,7 +131,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign In — AuditLift</title>
+	<title>Sign In — Auditlift</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
@@ -142,7 +142,7 @@
 
 	<div class="mb-2 flex items-center gap-2">
 		<LogoMark size={28} />
-		<span class="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">AuditLift</span>
+		<span class="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">Auditlift</span>
 	</div>
 	<p class="mb-8 text-[13px] text-[var(--foreground-muted)]">Get audit-ready in 30 days</p>
 
