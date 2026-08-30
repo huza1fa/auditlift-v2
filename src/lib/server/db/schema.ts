@@ -354,6 +354,40 @@ export const readinessSnapshots = pgTable('readiness_snapshots', {
 	snapshotAt: timestamp('snapshot_at').defaultNow().notNull()
 });
 
+// ─── Deals ──────────────────────────────────────────────────────────────────
+
+export type DealStatus = 'active' | 'submitted' | 'won' | 'lost' | 'archived';
+
+/**
+ * A customer security review. Deals keep the revenue-facing work distinct from
+ * the underlying compliance artifacts that support it.
+ */
+export const deals = pgTable(
+	'deals',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		customerName: text('customer_name').notNull(),
+		name: text('name').notNull(),
+		status: text('status').$type<DealStatus>().notNull().default('active'),
+		deadlineAt: timestamp('deadline_at'),
+		ownerId: text('owner_id').references(() => user.id, { onDelete: 'set null' }),
+		notes: text('notes'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('deals_org_status_idx').on(table.organizationId, table.status),
+		index('deals_org_deadline_idx').on(table.organizationId, table.deadlineAt),
+		check(
+			'deals_status_check',
+			sql`${table.status} in ('active', 'submitted', 'won', 'lost', 'archived')`
+		)
+	]
+);
+
 // ─── Questionnaires ───────────────────────────────────────────────────────────
 
 export const questionnaires = pgTable(
@@ -363,6 +397,7 @@ export const questionnaires = pgTable(
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id),
+		dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'set null' }),
 		filename: text('filename').notNull(),
 		storageKey: text('storage_key').notNull(),
 		sourceFormat: text('source_format').notNull(), // 'xlsx' | 'csv' | 'pdf' | 'docx'
@@ -381,7 +416,10 @@ export const questionnaires = pgTable(
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull()
 	},
-	(table) => [index('questionnaires_org_id_idx').on(table.organizationId)]
+	(table) => [
+		index('questionnaires_org_id_idx').on(table.organizationId),
+		index('questionnaires_deal_id_idx').on(table.dealId)
+	]
 );
 
 // ─── Questionnaire Questions ──────────────────────────────────────────────────
@@ -399,6 +437,11 @@ export const questionnaireQuestions = pgTable(
 		sectionName: text('section_name'),
 		questionNumber: text('question_number'),
 		questionText: text('question_text').notNull(),
+		sourceLocation: jsonb('source_location').$type<{
+			sheetName: string;
+			questionCell: string;
+			answerCell: string | null;
+		}>(),
 		domain: text('domain'),
 		mappedControlIds: jsonb('mapped_control_ids').$type<string[]>().default([]),
 		mappedPolicyIds: jsonb('mapped_policy_ids').$type<string[]>().default([]),
@@ -418,6 +461,51 @@ export const questionnaireQuestions = pgTable(
 	(table) => [
 		index('qq_questionnaire_id_idx').on(table.questionnaireId),
 		index('qq_org_id_idx').on(table.organizationId)
+	]
+);
+
+// ─── Answer Library ─────────────────────────────────────────────────────────
+
+export type AnswerLibraryStatus = 'approved' | 'stale';
+
+/**
+ * Human-approved answers harvested from finished security reviews. These are
+ * company claims with provenance, not unreviewed AI output.
+ */
+export const answerLibraryEntries = pgTable(
+	'answer_library_entries',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		organizationId: uuid('organization_id')
+			.notNull()
+			.references(() => organizations.id, { onDelete: 'cascade' }),
+		questionText: text('question_text').notNull(),
+		answer: text('answer').notNull(),
+		scope: text('scope').notNull().default('Company-wide'),
+		status: text('status').$type<AnswerLibraryStatus>().notNull().default('approved'),
+		citations:
+			jsonb('citations').$type<
+				Array<{ sourceType: string; sourceId: string; sourceTitle: string; excerpt: string }>
+			>(),
+		sourceQuestionnaireId: uuid('source_questionnaire_id').references(() => questionnaires.id, {
+			onDelete: 'set null'
+		}),
+		sourceQuestionId: uuid('source_question_id').references(() => questionnaireQuestions.id, {
+			onDelete: 'set null'
+		}),
+		reviewedBy: text('reviewed_by').references(() => user.id, { onDelete: 'set null' }),
+		reviewedAt: timestamp('reviewed_at').notNull().defaultNow(),
+		expiresAt: timestamp('expires_at'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		uniqueIndex('answer_library_source_question_unique_idx').on(
+			table.organizationId,
+			table.sourceQuestionId
+		),
+		index('answer_library_org_status_idx').on(table.organizationId, table.status),
+		index('answer_library_org_updated_idx').on(table.organizationId, table.updatedAt)
 	]
 );
 

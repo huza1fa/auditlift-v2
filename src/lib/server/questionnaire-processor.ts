@@ -7,9 +7,10 @@ import {
 	organizationFrameworks,
 	organizations,
 	subscriptions,
-	questionnaireProcessingJobs
+	questionnaireProcessingJobs,
+	answerLibraryEntries
 } from '$lib/server/db/schema';
-import { eq, and, or, lte, isNull, asc, sql } from 'drizzle-orm';
+import { eq, and, or, lte, isNull, asc, sql, gt } from 'drizzle-orm';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
@@ -35,6 +36,7 @@ const BATCH_SIZE = 5; // Questions per API call
 const PARALLEL_BATCHES = 3; // Concurrent API calls
 const JOB_LEASE_MS = 30 * 60 * 1000;
 const MAX_POLICY_CONTEXT_CHARS = 4000;
+const MAX_APPROVED_ANSWER_CONTEXT_CHARS = 2000;
 const VERIFICATION_CHUNK_SIZE = 10;
 
 const QuestionClassificationSchema = z.object({
@@ -70,6 +72,8 @@ interface ProcessingContext {
 	systemDescriptionPrompt: string;
 	verifiedFactsPrompt: string;
 	verifiedFactIds: Set<string>;
+	approvedAnswerIds: Set<string>;
+	approvedAnswerContext: Array<{ id: string; questionText: string; answer: string }>;
 	policyContext: Array<{ id: string; title: string; contentSnippet: string }>;
 	controlContext: Array<{
 		id: string;
@@ -153,6 +157,7 @@ async function classifyQuestion(
 		category: string;
 		whatAuditorExpects: string;
 	}>,
+	approvedAnswerContext: ProcessingContext['approvedAnswerContext'] = [],
 	systemDescriptionPrompt: string = '',
 	verifiedFactsPrompt: string = ''
 ): Promise<QuestionClassification> {
@@ -165,14 +170,21 @@ async function classifyQuestion(
 	const controlsList = controlContext
 		.map((c) => `- [${c.id}] ${c.code} ${c.title} (${c.category}): ${c.whatAuditorExpects}`)
 		.join('\n');
+	const approvedAnswersList = approvedAnswerContext
+		.map((entry) => `- [${entry.id}] Q: ${entry.questionText}\n  A: ${entry.answer}`)
+		.join('\n');
 
-	const hasOrgContext = policyContext.length > 0 || controlContext.length > 0;
+	const hasOrgContext =
+		policyContext.length > 0 || controlContext.length > 0 || approvedAnswerContext.length > 0;
 
 	const prompt = `You are helping answer a security questionnaire on behalf of ${orgName}.
 
 ${
 	hasOrgContext
-		? `Use the provided policies and controls as your primary source. You may supplement with general industry-standard security practices when the provided context is incomplete.
+		? `Use the provided approved answers, policies, and controls as your primary source. You may supplement with general industry-standard security practices when the provided context is incomplete.
+
+Approved reusable answers:
+${approvedAnswersList || '(none)'}
 
 Available policies:
 ${policiesList || '(none)'}
@@ -196,13 +208,13 @@ Instructions:
     low = answered using general security best practices (no org-specific policy found)
     gap = question requires company-specific data (e.g. specific vendor names, exact employee counts, custom SLAs) that is not in a verified fact, policy, or system description
 - answer: draft a helpful answer. Use "low" confidence only for general-practice drafts that make no claim about ${orgName}. Return null for gaps that require unverified company-specific data.
-- Verified organization facts, policies, controls, and the system description are sources. If a verified organization fact directly answers the question, use it rather than returning a gap. Its exact UUID in the verified-facts JSON must be used as the citation sourceId.
-- Never state that ${orgName} uses a tool, process, certification, SLA, or security practice unless it appears in the verified facts, provided policies, or system description. Unknown company-specific facts must remain gaps or be explicitly marked as needing confirmation, never inferred from general practice.
+- Verified organization facts, approved answers, policies, controls, and the system description are sources. If an approved answer directly addresses this question, reuse its meaning and cite its exact ID as sourceType "approved_answer". If a verified organization fact directly answers the question, use it rather than returning a gap. Its exact UUID in the verified-facts JSON must be used as the citation sourceId.
+- Never state that ${orgName} uses a tool, process, certification, SLA, or security practice unless it appears in an approved answer, verified fact, provided policy, or system description. Unknown company-specific facts must remain gaps or be explicitly marked as needing confirmation, never inferred from general practice.
 - gapReason: why this cannot be answered even generically (only for gap). null otherwise.
 - gapRemediation: specific action to resolve this gap e.g. "Generate an Access Control Policy" or "Upload MFA evidence for CC6.1". null if high/medium/low confidence.
 - mappedPolicyIds: array of policy IDs you used (from the list above, empty if none)
 - mappedControlIds: array of control IDs you used (from the list above, empty if none)
-- citations: array of sources that directly support this answer. For high or medium confidence answers you MUST cite at least one source; each citation needs sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the exact ID in brackets from the lists above, or the UUID from a verified fact), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
+- citations: array of sources that directly support this answer. For high or medium confidence answers you MUST cite at least one source; each citation needs sourceType ("approved_answer" | "policy" | "control" | "fact" | "system_description"), sourceId (the exact ID in brackets from the lists above, or the UUID from a verified fact), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
 
 IMPORTANT: If the item above is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
@@ -225,6 +237,7 @@ async function classifyQuestionBatch(
 	orgName: string,
 	policyContext: ProcessingContext['policyContext'],
 	controlContext: ProcessingContext['controlContext'],
+	approvedAnswerContext: ProcessingContext['approvedAnswerContext'] = [],
 	systemDescriptionPrompt: string = '',
 	verifiedFactsPrompt: string = ''
 ): Promise<Array<{ questionId: string; classification: QuestionClassification }>> {
@@ -237,6 +250,7 @@ async function classifyQuestionBatch(
 			orgName,
 			policyContext,
 			controlContext,
+			approvedAnswerContext,
 			systemDescriptionPrompt,
 			verifiedFactsPrompt
 		);
@@ -250,8 +264,12 @@ async function classifyQuestionBatch(
 	const controlsList = controlContext
 		.map((c) => `- [${c.id}] ${c.code} ${c.title} (${c.category}): ${c.whatAuditorExpects}`)
 		.join('\n');
+	const approvedAnswersList = approvedAnswerContext
+		.map((entry) => `- [${entry.id}] Q: ${entry.questionText}\n  A: ${entry.answer}`)
+		.join('\n');
 
-	const hasOrgContext = policyContext.length > 0 || controlContext.length > 0;
+	const hasOrgContext =
+		policyContext.length > 0 || controlContext.length > 0 || approvedAnswerContext.length > 0;
 
 	const questionsList = questions
 		.map(
@@ -264,7 +282,10 @@ async function classifyQuestionBatch(
 
 ${
 	hasOrgContext
-		? `Use the provided policies and controls as your primary source. Supplement with general industry-standard security practices when the provided context is incomplete.
+		? `Use the provided approved answers, policies, and controls as your primary source. Supplement with general industry-standard security practices when the provided context is incomplete.
+
+Approved reusable answers:
+${approvedAnswersList || '(none)'}
 
 Available policies:
 ${policiesList || '(none)'}
@@ -290,13 +311,13 @@ For each question return:
     low = answered using general security best practices that make no claim about ${orgName}
     gap = question requires company-specific data that is not in a verified fact, policy, or system description
 - answer: draft a helpful answer. Return null for gaps that require unverified company-specific data.
-- Verified organization facts, policies, controls, and the system description are sources. Use relevant verified facts directly in the drafted answer and map supporting policy/control IDs when applicable.
-- Never state that ${orgName} uses a tool, process, certification, SLA, or security practice unless it appears in the verified facts, provided policies, or system description. Unknown company-specific facts must remain gaps or be explicitly marked as needing confirmation, never inferred from general practice.
+- Verified organization facts, approved answers, policies, controls, and the system description are sources. Use relevant approved answers and verified facts directly in the drafted answer. Cite an approved answer with sourceType "approved_answer" and its exact ID in brackets.
+- Never state that ${orgName} uses a tool, process, certification, SLA, or security practice unless it appears in an approved answer, verified fact, provided policy, or system description. Unknown company-specific facts must remain gaps or be explicitly marked as needing confirmation, never inferred from general practice.
 - gapReason: why it can't be answered (null unless gap). If the item is a section heading or non-question fluff, set gapReason to "Not a question — this is a section heading or non-question text."
 - gapRemediation: action to fix the gap (null unless gap)
 - mappedPolicyIds: policy IDs used (from list above)
 - mappedControlIds: control IDs used (from list above)
-- citations: sources directly supporting each answer. High or medium confidence answers MUST cite at least one source: sourceType ("policy" | "control" | "fact" | "system_description"), sourceId (the ID in brackets from the lists above, or a short label for facts/system description), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
+- citations: sources directly supporting each answer. High or medium confidence answers MUST cite at least one source: sourceType ("approved_answer" | "policy" | "control" | "fact" | "system_description"), sourceId (the ID in brackets from the lists above, or a short label for facts/system description), sourceTitle, and excerpt (verbatim quote ≤200 chars proving the claim). Low-confidence general-practice answers may have empty citations. Never fabricate an excerpt.
 
 IMPORTANT: If an item is clearly a section heading, table of contents, introduction, or non-question fluff (e.g. "Introduction", "Background", "Security Overview", "Document Control"), you must still return a result for it, but set confidence to "gap", gapReason to "Not a question — this is a section heading or non-question text.", and answer to null. The system will filter it out automatically.`;
 
@@ -332,6 +353,7 @@ IMPORTANT: If an item is clearly a section heading, table of contents, introduct
 			orgName,
 			policyContext,
 			controlContext,
+			approvedAnswerContext,
 			systemDescriptionPrompt,
 			verifiedFactsPrompt
 		);
@@ -402,6 +424,25 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 		whatAuditorExpects: c.whatAuditorExpects
 	}));
 
+	const approvedAnswers = await db
+		.select({
+			id: answerLibraryEntries.id,
+			questionText: answerLibraryEntries.questionText,
+			answer: answerLibraryEntries.answer
+		})
+		.from(answerLibraryEntries)
+		.where(
+			and(
+				eq(answerLibraryEntries.organizationId, organizationId),
+				eq(answerLibraryEntries.status, 'approved'),
+				or(isNull(answerLibraryEntries.expiresAt), gt(answerLibraryEntries.expiresAt, new Date()))
+			)
+		);
+	const approvedAnswerContext = approvedAnswers.map((entry) => ({
+		...entry,
+		answer: entry.answer.slice(0, MAX_APPROVED_ANSWER_CONTEXT_CHARS)
+	}));
+
 	// Build system description context string for AI prompts
 	const sd = (org?.systemDescription ?? null) as Record<string, unknown> | null;
 	const sdParts: string[] = [];
@@ -432,6 +473,8 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 		systemDescriptionPrompt,
 		verifiedFactsPrompt,
 		verifiedFactIds: new Set(verifiedFacts.map((fact) => fact.id)),
+		approvedAnswerIds: new Set(approvedAnswers.map((entry) => entry.id)),
+		approvedAnswerContext,
 		policyContext,
 		controlContext
 	};
@@ -588,8 +631,10 @@ export async function processQuestionnaire(
 			systemDescriptionPrompt,
 			verifiedFactsPrompt,
 			verifiedFactIds,
+			approvedAnswerIds,
 			policyContext,
-			controlContext
+			controlContext,
+			approvedAnswerContext
 		} = await loadProcessingContext(organizationId);
 
 		// 3. Determine how many questions to process
@@ -621,6 +666,7 @@ export async function processQuestionnaire(
 						orgName,
 						policyContext,
 						controlContext,
+						approvedAnswerContext,
 						systemDescriptionPrompt,
 						verifiedFactsPrompt
 					)
@@ -657,7 +703,8 @@ export async function processQuestionnaire(
 							classification.citations,
 							validPolicyIds,
 							validControlIds,
-							verifiedFactIds
+							verifiedFactIds,
+							approvedAnswerIds
 						);
 
 						await db
@@ -806,8 +853,10 @@ async function reprocessQuestionnaireNow(
 			systemDescriptionPrompt,
 			verifiedFactsPrompt,
 			verifiedFactIds,
+			approvedAnswerIds,
 			policyContext,
-			controlContext
+			controlContext,
+			approvedAnswerContext
 		} = await loadProcessingContext(organizationId);
 
 		// 5. Apply trial question limit to the eligible set
@@ -837,6 +886,7 @@ async function reprocessQuestionnaireNow(
 						orgName,
 						policyContext,
 						controlContext,
+						approvedAnswerContext,
 						systemDescriptionPrompt,
 						verifiedFactsPrompt
 					)
@@ -872,7 +922,8 @@ async function reprocessQuestionnaireNow(
 							classification.citations,
 							validPolicyIds,
 							validControlIds,
-							verifiedFactIds
+							verifiedFactIds,
+							approvedAnswerIds
 						);
 
 						await db

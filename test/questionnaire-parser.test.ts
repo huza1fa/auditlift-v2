@@ -31,13 +31,15 @@ describe('questionnaire parser', () => {
 				sectionName: 'Access Control',
 				questionNumber: '1.',
 				questionText: 'Is MFA required for all administrator accounts?',
-				order: 0
+				order: 0,
+				sourceLocation: { sheetName: 'Sheet1', questionCell: 'A2', answerCell: null }
 			},
 			{
 				sectionName: 'Data Protection',
 				questionNumber: null,
 				questionText: 'Do you encrypt customer data at rest and in transit?',
-				order: 1
+				order: 1,
+				sourceLocation: { sheetName: 'Sheet1', questionCell: 'A3', answerCell: null }
 			}
 		]);
 		expect(result.truncated).toBe(false);
@@ -137,6 +139,25 @@ describe('questionnaire parser', () => {
 			expect(q.questionText).not.toContain('TLS');
 			expect(q.questionText).not.toContain('quarterly');
 		}
+		expect(result.questions.map((q) => q.sourceLocation?.answerCell)).toEqual(['B2', 'B3']);
+	});
+
+	it('retains original sheet row coordinates through blank template rows', async () => {
+		const buffer = buildXlsx({
+			Sheet1: [
+				['Question', 'Answer'],
+				['Do you encrypt customer data at rest?', ''],
+				[],
+				['Do you maintain an incident response plan?', '']
+			]
+		});
+
+		const result = await parseQuestionnaire(buffer, 'xlsx');
+
+		expect(result.questions.map((q) => q.sourceLocation)).toEqual([
+			{ sheetName: 'Sheet1', questionCell: 'A2', answerCell: 'B2' },
+			{ sheetName: 'Sheet1', questionCell: 'A4', answerCell: 'B4' }
+		]);
 	});
 
 	it('treats single-cell ALL-CAPS rows as section boundaries inside grids', async () => {

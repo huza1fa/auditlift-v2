@@ -24,18 +24,24 @@
 	};
 </script>
 
-<div class="fixed top-14 right-4 z-50 flex w-80 max-w-sm flex-col gap-2">
+<div
+	class="pointer-events-none fixed right-4 bottom-4 z-[60] flex w-[calc(100vw-2rem)] max-w-md flex-col gap-2 sm:right-6 sm:bottom-6"
+	aria-live="polite"
+	aria-atomic="true"
+>
 	{#each $toasts as toast (toast.id)}
 		{@const Icon = icons[toast.type]}
 		<div
-			class="flex items-start gap-3 rounded-[var(--radius-lg)] border p-4 shadow-lg transition-all"
+			class="pointer-events-auto flex items-start gap-3 rounded-[var(--radius-lg)] border bg-[var(--background-elevated)] p-4 shadow-xl ring-1 ring-black/5 transition-all"
 			class:typeClasses[toast.type]
+			role={toast.type === 'error' ? 'alert' : 'status'}
 		>
 			<Icon size={18} color={iconColors[toast.type]} weight="fill" class="mt-0.5 flex-shrink-0" />
-			<p class="flex-1 text-sm text-[var(--foreground)]">{toast.message}</p>
+			<p class="flex-1 text-sm leading-5 font-medium text-[var(--foreground)]">{toast.message}</p>
 			<button
 				onclick={() => dismissToast(toast.id)}
-				class="flex-shrink-0 cursor-pointer text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+				class="flex-shrink-0 cursor-pointer rounded p-0.5 text-[var(--foreground-muted)] hover:bg-[var(--background-alt)] hover:text-[var(--foreground)]"
+				aria-label="Dismiss notification"
 			>
 				<X size={14} />
 			</button>

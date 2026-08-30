@@ -15,7 +15,7 @@
 			id: 'starter',
 			name: 'Starter',
 			description:
-				'For founders who need to answer security questionnaires and close their first enterprise deals.',
+				'For founders who need a defensible, reusable answer base for their first enterprise security reviews.',
 			monthlyPrice: 149,
 			yearlyPrice: 1431,
 			highlighted: false,
@@ -25,6 +25,7 @@
 				'1 compliance framework (SOC 2)',
 				'Unlimited controls & evidence',
 				'AI-powered policy generator',
+				'Approved answer library',
 				'Auditor-ready export package',
 				'Up to 5 team members',
 				'Email support',
@@ -36,7 +37,7 @@
 			id: 'growth',
 			name: 'Growth',
 			description:
-				'For teams responding to multiple frameworks across a growing pipeline of enterprise deals.',
+				'For teams managing a growing pipeline of buyer security reviews and reusable company knowledge.',
 			monthlyPrice: 299,
 			yearlyPrice: 2870,
 			highlighted: true,
@@ -46,6 +47,7 @@
 				'All 3 frameworks (SOC 2, PCI-DSS, ISO 27001)',
 				'Unlimited controls & evidence',
 				'AI-powered policy generator',
+				'Approved answer library & deal workspaces',
 				'Auditor-ready export package',
 				'Unlimited team members',
 				'Priority email support',
@@ -249,8 +251,8 @@
 
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
-			Vanta and Drata start at $7,500/yr and are built for post-audit maintenance. AuditLift gets
-			you <strong>deal-ready from $149/mo</strong> — focused on helping you respond and close.
+			Built for the deal cycle before you need heavyweight compliance automation. AuditLift gets you
+			<strong>buyer-response ready from $149/mo</strong> — focused on helping you respond and close.
 		</p>
 
 		<!-- Advisory CTA -->

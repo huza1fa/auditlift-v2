@@ -36,6 +36,9 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 			id: questionnaires.id,
 			filename: questionnaires.filename,
 			status: questionnaires.status,
+			totalQuestions: questionnaires.totalQuestions,
+			answeredCount: questionnaires.answeredCount,
+			gapCount: questionnaires.gapCount,
 			shareToken: questionnaires.shareToken,
 			sharedAt: questionnaires.sharedAt,
 			shareExpiresAt: questionnaires.shareExpiresAt
@@ -51,6 +54,9 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 	// 4. Only ready questionnaires can be shared
 	if (questionnaire.status !== 'ready') {
 		throw error(400, 'Questionnaire must be fully processed before sharing.');
+	}
+	if (questionnaire.gapCount > 0 || questionnaire.answeredCount < questionnaire.totalQuestions) {
+		throw error(400, 'Resolve every questionnaire gap before sharing a buyer-facing response.');
 	}
 
 	// 5. Toggle sharing

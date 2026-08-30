@@ -6,6 +6,13 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { requireOrganizationRole } from '$lib/server/auth-utils';
 import { logActivity } from '$lib/server/activity';
+import { downloadFile } from '$lib/server/storage';
+import {
+	writeAnswersToCsv,
+	writeAnswersToXlsx,
+	type ReturnAnswer,
+	type SpreadsheetSourceLocation
+} from '$lib/server/questionnaire-return';
 
 function escapeCsvField(value: string): string {
 	// Wrap in double quotes, escape internal double quotes by doubling them
@@ -15,6 +22,16 @@ function escapeCsvField(value: string): string {
 
 function buildCsvRow(fields: string[]): string {
 	return fields.map(escapeCsvField).join(',');
+}
+
+function isSpreadsheetSourceLocation(value: unknown): value is SpreadsheetSourceLocation {
+	if (!value || typeof value !== 'object') return false;
+	const location = value as Record<string, unknown>;
+	return (
+		typeof location.sheetName === 'string' &&
+		typeof location.questionCell === 'string' &&
+		(typeof location.answerCell === 'string' || location.answerCell === null)
+	);
 }
 
 export const GET: RequestHandler = async ({ locals, params }) => {
@@ -49,6 +66,62 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 			)
 		)
 		.orderBy(questionnaireQuestions.order);
+
+	const nativeAnswers: ReturnAnswer[] = [];
+	let canReturnNativeFile =
+		questionnaire.sourceFormat === 'xlsx' || questionnaire.sourceFormat === 'csv';
+	for (const question of questions) {
+		const answer = (question.userEditedAnswer ?? question.generatedAnswer ?? '').trim();
+		const sourceLocation = question.sourceLocation;
+		if (!answer || !isSpreadsheetSourceLocation(sourceLocation) || !sourceLocation.answerCell) {
+			canReturnNativeFile = false;
+			break;
+		}
+		nativeAnswers.push({ answer, sourceLocation });
+	}
+
+	const safeFilename = questionnaire.filename
+		.replace(/[^a-zA-Z0-9._-]/g, '_')
+		.replace(/\.[^.]+$/, '');
+	const dateStr = new Date().toISOString().slice(0, 10);
+
+	if (canReturnNativeFile) {
+		try {
+			const original = await downloadFile(questionnaire.storageKey);
+			const isXlsx = questionnaire.sourceFormat === 'xlsx';
+			const body = isXlsx
+				? await writeAnswersToXlsx(original, nativeAnswers)
+				: writeAnswersToCsv(original, nativeAnswers);
+			const extension = isXlsx ? 'xlsx' : 'csv';
+			const contentType = isXlsx
+				? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+				: 'text/csv; charset=utf-8';
+
+			logActivity({
+				organizationId: orgId,
+				userId,
+				userName: locals.session!.user.name ?? locals.session!.user.email,
+				action: 'questionnaire.export',
+				entityType: 'questionnaire',
+				entityId: id,
+				entityName: questionnaire.filename,
+				details: `${questions.length} answers returned in the original ${extension.toUpperCase()} template`
+			}).catch(console.error);
+
+			return new Response(new Uint8Array(body), {
+				status: 200,
+				headers: {
+					'Content-Type': contentType,
+					'Content-Disposition': `attachment; filename="completed-${safeFilename}-${dateStr}.${extension}"`,
+					'Cache-Control': 'no-store',
+					'X-AuditLift-Export-Mode': 'native'
+				}
+			});
+		} catch (cause) {
+			console.error('Failed to build native questionnaire export:', cause);
+			throw error(500, 'Could not return answers to the original spreadsheet. Please try again.');
+		}
+	}
 
 	// Collect all referenced policy IDs across all questions
 	const allPolicyIds = [
@@ -99,11 +172,6 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
 	const csvContent = [header, ...rows].join('\r\n');
 
-	// Build a safe filename
-	const safeFilename = questionnaire.filename
-		.replace(/[^a-zA-Z0-9._-]/g, '_')
-		.replace(/\.[^.]+$/, '');
-	const dateStr = new Date().toISOString().slice(0, 10);
 	const exportFilename = `questionnaire-answers-${safeFilename}-${dateStr}.csv`;
 
 	logActivity({
@@ -114,7 +182,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		entityType: 'questionnaire',
 		entityId: id,
 		entityName: questionnaire.filename,
-		details: `${questions.length} questions exported`
+		details: `${questions.length} questions exported as a review CSV`
 	}).catch(console.error);
 
 	return new Response(csvContent, {
@@ -122,7 +190,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		headers: {
 			'Content-Type': 'text/csv; charset=utf-8',
 			'Content-Disposition': `attachment; filename="${exportFilename}"`,
-			'Cache-Control': 'no-store'
+			'Cache-Control': 'no-store',
+			'X-AuditLift-Export-Mode': 'review'
 		}
 	});
 };

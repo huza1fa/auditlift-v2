@@ -15,6 +15,10 @@ export type ActivityAction =
 	| 'questionnaire.share'
 	| 'questionnaire.unshare'
 	| 'questionnaire.export'
+	| 'questionnaire.deal_assign'
+	| 'deal.create'
+	| 'deal.update'
+	| 'answer_library.approve'
 	| 'export.created'
 	| 'team.invited'
 	| 'team.role_changed'
@@ -29,7 +33,9 @@ export type ActivityEntityType =
 	| 'questionnaire'
 	| 'export'
 	| 'user'
-	| 'framework';
+	| 'framework'
+	| 'deal'
+	| 'answer_library_entry';
 
 export async function logActivity(opts: {
 	organizationId: string;

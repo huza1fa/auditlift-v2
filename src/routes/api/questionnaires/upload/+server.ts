@@ -273,6 +273,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					sectionName: q.sectionName,
 					questionNumber: q.questionNumber,
 					questionText: q.questionText,
+					sourceLocation: q.sourceLocation ?? null,
 					order: q.order
 				}))
 			);

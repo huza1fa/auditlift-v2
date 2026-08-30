@@ -19,7 +19,8 @@
 		ShareNetwork,
 		Link as LinkIcon,
 		ChatCenteredDots,
-		PaperPlaneTilt
+		PaperPlaneTilt,
+		BookOpenText
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -37,6 +38,7 @@
 	interface QuestionnaireData {
 		id: string;
 		filename: string;
+		sourceFormat: 'xlsx' | 'csv' | 'docx' | 'pdf' | 'text';
 		status: QuestionnaireStatus;
 		totalQuestions: number;
 		answeredCount: number;
@@ -44,6 +46,7 @@
 		dealReadinessScore: number | null;
 		shareToken?: string | null;
 		shareExpiresAt?: string | Date | null;
+		dealId?: string | null;
 	}
 
 	interface AnswerCitation {
@@ -155,6 +158,9 @@
 	let interviewLoading = $state(false);
 	let interviewError = $state('');
 	let savingPromptId = $state<string | null>(null);
+	let approvingAnswerId = $state<string | null>(null);
+	let selectedDealId = $state<string>('');
+	let savingDeal = $state(false);
 
 	// ── Derived ───────────────────────────────────────────────────────────────
 	const selectedQuestion = $derived(questions.find((q) => q.id === selectedQuestionId) ?? null);
@@ -336,6 +342,7 @@
 			existingPolicyTypes = json.existingPolicyTypes ?? [];
 			shareToken = json.questionnaire.shareToken ?? null;
 			shareExpiresAt = json.questionnaire.shareExpiresAt ?? null;
+			selectedDealId = json.questionnaire.dealId ?? '';
 
 			// Auto-select first question
 			if (!selectedQuestionId && questions.length > 0) {
@@ -350,6 +357,26 @@
 			}
 		} catch {
 			fetchError = 'Failed to load questionnaire.';
+		}
+	}
+
+	async function saveDealAssignment() {
+		savingDeal = true;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ dealId: selectedDealId || null })
+			});
+			const body: { message?: string } = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(body.message ?? 'Could not update deal assignment.');
+			toastSuccess(
+				selectedDealId ? 'Questionnaire attached to deal.' : 'Questionnaire removed from deal.'
+			);
+		} catch (err) {
+			toastError(err instanceof Error ? err.message : 'Could not update deal assignment.');
+		} finally {
+			savingDeal = false;
 		}
 	}
 
@@ -530,6 +557,32 @@
 		}, 2000);
 	}
 
+	async function approveForReuse() {
+		if (!selectedQuestion) return;
+		approvingAnswerId = selectedQuestion.id;
+		try {
+			const res = await fetch(
+				`/api/questionnaires/${id}/questions/${selectedQuestion.id}/library`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ scope: 'Company-wide' })
+				}
+			);
+			const body: { message?: string } = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(body.message ?? 'Could not approve this answer for reuse.');
+			toastSuccess('Approved for reuse in the Answer Library.');
+			captureEvent('answer_library_entry_approved', {
+				questionnaire_id: id,
+				question_id: selectedQuestion.id
+			});
+		} catch (err) {
+			toastError(err instanceof Error ? err.message : 'Could not approve this answer for reuse.');
+		} finally {
+			approvingAnswerId = null;
+		}
+	}
+
 	// ── Improve answer ────────────────────────────────────────────────────────
 	async function improveAnswer() {
 		if (!selectedQuestion || !refinementPrompt.trim()) return;
@@ -574,7 +627,29 @@
 		exporting = true;
 		captureEvent('questionnaire_export_clicked', { questionnaire_id: id });
 		try {
-			window.open(`/api/questionnaires/${id}/export`, '_blank');
+			const response = await fetch(`/api/questionnaires/${id}/export`);
+			if (!response.ok) {
+				const body = await response.json().catch(() => ({}));
+				throw new Error((body as { message?: string }).message ?? 'Could not export answers.');
+			}
+			const filename = response.headers
+				.get('Content-Disposition')
+				?.match(/filename="?([^";]+)"?/)?.[1];
+			const url = URL.createObjectURL(await response.blob());
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = filename ?? 'questionnaire-answers.csv';
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+			toastSuccess(
+				response.headers.get('X-AuditLift-Export-Mode') === 'native'
+					? 'Completed response template downloaded'
+					: 'Answer review CSV downloaded'
+			);
+		} catch (err) {
+			toastError(err instanceof Error ? err.message : 'Could not export answers.');
 		} finally {
 			exporting = false;
 		}
@@ -890,6 +965,27 @@
 							</div>
 						{/if}
 					{/if}
+					{#if data.dealOptions.length > 0}
+						<div class="mt-3 flex flex-wrap items-center gap-2">
+							<label
+								for="deal-assignment"
+								class="text-xs font-medium text-[var(--foreground-muted)]">Deal</label
+							>
+							<select
+								id="deal-assignment"
+								bind:value={selectedDealId}
+								onchange={saveDealAssignment}
+								disabled={savingDeal}
+								class="max-w-xs rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--foreground)]"
+							>
+								<option value="">Not attached to a deal</option>
+								{#each data.dealOptions as deal (deal.id)}
+									<option value={deal.id}>{deal.customerName} — {deal.name}</option>
+								{/each}
+							</select>
+							{#if savingDeal}<Spinner size={13} class="animate-spin text-[var(--brand)]" />{/if}
+						</div>
+					{/if}
 				</div>
 			</div>
 
@@ -969,7 +1065,9 @@
 						{:else}
 							<DownloadSimple size={14} />
 						{/if}
-						{m.questionnaires_export_button()}
+						{questionnaire.sourceFormat === 'xlsx' || questionnaire.sourceFormat === 'csv'
+							? 'Download completed file'
+							: m.questionnaires_export_button()}
 					</Button>
 				{:else}
 					<div class="group relative">
@@ -1353,6 +1451,20 @@
 											{/if}
 										</div>
 										<div class="flex items-center gap-2">
+											{#if data.canApproveAnswers && answerDraft.trim()}
+												<Button
+													size="sm"
+													variant="secondary"
+													onclick={approveForReuse}
+													disabled={approvingAnswerId === selectedQuestion.id}
+												>
+													{#if approvingAnswerId === selectedQuestion.id}<Spinner
+															size={13}
+															class="animate-spin"
+														/>{:else}<BookOpenText size={13} />{/if}
+													Approve for reuse
+												</Button>
+											{/if}
 											<Button
 												size="sm"
 												variant="ghost"
