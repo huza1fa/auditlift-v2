@@ -317,10 +317,10 @@ function collectSheets(workbook: XLSX.WorkBook, warnings: string[]): ParsedQuest
 		if (!sheet) continue;
 		fillMergedCells(sheet);
 		const gridRows = // Keep physical row positions. They are needed to safely return answers to
-		// the original workbook, even when the buyer left spacer rows in a template.
-		(
-			XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: true }) as unknown[][]
-		).map((row) => row.map((_, c) => cellText(row, c)));
+			// the original workbook, even when the buyer left spacer rows in a template.
+			(
+				XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: true }) as unknown[][]
+			).map((row) => row.map((_, c) => cellText(row, c)));
 		const questions = parseGridRows(gridRows, warnings, name);
 		if (questions.length > 0) perSheet.push({ name, questions });
 	}
