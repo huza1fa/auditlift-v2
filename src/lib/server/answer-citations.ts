@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const AnswerCitationSchema = z.object({
-	sourceType: z.enum(['policy', 'control', 'fact', 'system_description']),
+	sourceType: z.enum(['policy', 'control', 'fact', 'system_description', 'approved_answer']),
 	sourceId: z.string(),
 	sourceTitle: z.string(),
 	excerpt: z.string().max(300)
@@ -20,7 +20,8 @@ export function filterValidCitations(
 	citations: unknown,
 	validPolicyIds: Set<string>,
 	validControlIds: Set<string>,
-	validFactIds: Set<string> = new Set()
+	validFactIds: Set<string> = new Set(),
+	validApprovedAnswerIds: Set<string> = new Set()
 ): AnswerCitation[] {
 	if (!Array.isArray(citations)) return [];
 	return citations.filter((c): c is AnswerCitation => {
@@ -36,12 +37,15 @@ export function filterValidCitations(
 			citation.sourceType !== 'policy' &&
 			citation.sourceType !== 'control' &&
 			citation.sourceType !== 'fact' &&
-			citation.sourceType !== 'system_description'
+			citation.sourceType !== 'system_description' &&
+			citation.sourceType !== 'approved_answer'
 		)
 			return false;
 		if (citation.sourceType === 'policy') return validPolicyIds.has(citation.sourceId);
 		if (citation.sourceType === 'control') return validControlIds.has(citation.sourceId);
 		if (citation.sourceType === 'fact') return validFactIds.has(citation.sourceId);
+		if (citation.sourceType === 'approved_answer')
+			return validApprovedAnswerIds.has(citation.sourceId);
 		return true;
 	});
 }

@@ -10,7 +10,9 @@
 		SignOut,
 		List,
 		ChatDots,
-		ClockCounterClockwise
+		ClockCounterClockwise,
+		Briefcase,
+		BookOpenText
 	} from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
@@ -79,9 +81,11 @@
 
 	const navLinks = [
 		{ href: '/dashboard', icon: House, label: 'Dashboard' },
+		{ href: '/deals', icon: Briefcase, label: 'Deals' },
 		{ href: '/controls', icon: CheckSquare, label: 'Controls' },
 		{ href: '/policies', icon: FileText, label: 'Policies' },
 		{ href: '/questionnaires', icon: ChatDots, label: 'Questionnaires' },
+		{ href: '/answer-library', icon: BookOpenText, label: 'Answer Library' },
 		{ href: '/evidence', icon: FolderOpen, label: 'Evidence' },
 		{ href: '/activity', icon: ClockCounterClockwise, label: 'Activity' },
 		{ href: '/export', icon: DownloadSimple, label: 'Export' },

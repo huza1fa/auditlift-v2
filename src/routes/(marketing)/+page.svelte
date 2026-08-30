@@ -21,10 +21,10 @@
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
 
 	const headlines = [
-		{ line1: 'Stop losing deals to', line2: 'security questions' },
-		{ line1: 'Answer questionnaires', line2: 'in minutes, not weeks' },
-		{ line1: 'Build SOC 2 readiness', line2: 'while closing deals' },
-		{ line1: 'Turn compliance into', line2: 'a competitive edge' }
+		{ line1: 'Return security questionnaires', line2: 'before the deal stalls' },
+		{ line1: 'Answer buyer security reviews', line2: 'with claims you can defend' },
+		{ line1: 'Turn every finished review', line2: 'into your next advantage' },
+		{ line1: 'Build buyer trust', line2: 'while you close deals' }
 	];
 
 	let headlineIndex = $state(0);
@@ -74,37 +74,37 @@
 	const features = [
 		{
 			icon: CheckSquare,
-			title: 'Framework Mapping',
+			title: 'Cited Answer Workspace',
 			description:
-				'Every SOC 2, PCI-DSS, and ISO 27001 requirement pre-loaded and mapped. Know exactly which controls a questionnaire is asking about.',
+				'Every answer is tied back to an approved policy, evidence source, or confirmed company fact — so reviewers know exactly what they can send.',
 			iconBg: 'feature-icon-brand'
 		},
 		{
 			icon: FileText,
-			title: 'Policy Generator',
+			title: 'Reusable Answer Library',
 			description:
-				'Generate the policies buyers actually ask for - tailored to your stack in minutes, editable in-browser.',
+				'Approve the answers your team trusts. The next buyer review starts with proven company language, not a blank page.',
 			iconBg: 'feature-icon-success'
 		},
 		{
 			icon: FolderOpen,
-			title: 'Evidence Locker',
+			title: 'Policies & Evidence',
 			description:
 				'Keep your proof organized and tagged to controls. Share instantly when a prospect asks for it.',
 			iconBg: 'feature-icon-info'
 		},
 		{
 			icon: ChartBar,
-			title: 'Gap Visibility',
+			title: 'Deal-Critical Gaps',
 			description:
-				"See what's incomplete before a prospect asks. Prioritize the gaps that are most likely to block a deal.",
+				'Know which missing facts, policies, or evidence block this buyer — and what to resolve before the deadline.',
 			iconBg: 'feature-icon-warning'
 		},
 		{
 			icon: Users,
-			title: 'Team Collaboration',
+			title: 'Deal Workspaces',
 			description:
-				'Assign controls to the right owners - engineering, HR, legal. Everyone works from the same source of truth.',
+				'Keep each customer security review, deadline, questionnaire, and submission status in one clear place.',
 			iconBg: 'feature-icon-brand'
 		},
 		{
@@ -119,21 +119,21 @@
 	const steps = [
 		{
 			number: '01',
-			title: 'Map your security posture',
+			title: 'Open the buyer review',
 			description:
-				'Select the frameworks your prospects care about. Every requirement is pre-loaded - no setup from scratch.'
+				'Create a deal workspace and upload the customer questionnaire. AuditLift identifies what can be answered now and what needs review.'
 		},
 		{
 			number: '02',
-			title: 'Fill gaps, generate policies',
+			title: 'Review only what matters',
 			description:
-				"See exactly what you can already answer and what needs work. Generate policies for the controls you're missing."
+				'Confirm buyer-specific facts, attach supporting evidence, and approve reusable answers for the next security review.'
 		},
 		{
 			number: '03',
-			title: 'Respond with confidence',
+			title: 'Send a defensible response',
 			description:
-				'Answer questionnaires knowing your exact posture. Export a clean package for auditors or enterprise security reviews.'
+				'Export a clear response package, then reuse the work you validated when the next enterprise buyer asks the same questions.'
 		}
 	];
 
@@ -152,10 +152,10 @@
 </script>
 
 <svelte:head>
-	<title>AuditLift - Win Deals Faster with Security Readiness</title>
+	<title>AuditLift - Security Questionnaires That Keep Deals Moving</title>
 	<meta
 		name="description"
-		content="Stop losing deals to unanswered security questionnaires. AuditLift maps your policies to SOC 2, PCI-DSS, and ISO 27001, surfaces gaps, and gives you the confidence to respond. From $149/mo."
+		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps. Built for B2B SaaS teams winning enterprise deals."
 	/>
 	<link rel="canonical" href="https://auditlift.app" />
 
@@ -165,7 +165,7 @@
 	<meta property="og:title" content="AuditLift - Win Deals Faster with Security Readiness" />
 	<meta
 		property="og:description"
-		content="Stop losing deals to unanswered security questionnaires. Map your policies, surface gaps, and respond with confidence. No consultant needed."
+		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps."
 	/>
 	<meta property="og:image" content="https://auditlift.app/og.png" />
 
@@ -174,7 +174,7 @@
 	<meta name="twitter:title" content="AuditLift - Win Deals Faster with Security Readiness" />
 	<meta
 		name="twitter:description"
-		content="Stop losing deals to unanswered security questionnaires. Map policies, surface gaps, respond with confidence. From $149/mo."
+		content="Complete buyer security questionnaires with cited, reusable answers. Built for the enterprise deal cycle."
 	/>
 	<meta name="twitter:image" content="https://auditlift.app/og.png" />
 
@@ -188,7 +188,7 @@
 				url: 'https://auditlift.app',
 				email: 'hello@auditlift.app',
 				description:
-					'Deal-enablement platform that helps teams respond to security questionnaires, map policies to frameworks, and surface gaps before they cost you a deal.'
+					'Buyer security-response workspace that helps teams complete questionnaires with cited answers, approved company knowledge, and clear gap remediation.'
 			},
 			{
 				'@type': 'WebSite',
@@ -204,7 +204,7 @@
 				operatingSystem: 'Web',
 				url: 'https://auditlift.app',
 				description:
-					'Stop losing deals to unanswered security questionnaires. Map policies to frameworks, surface gaps, and respond with confidence.',
+					'Complete buyer security questionnaires with cited answers, approved company knowledge, and clear next steps for gaps.',
 				offers: [
 					{
 						'@type': 'Offer',
@@ -266,9 +266,9 @@
 
 			<!-- Subheadline -->
 			<p class="hero-subheadline">
-				AuditLift maps your policies to the frameworks buyers care about, surfaces exactly where
-				you're ready and where you're not - so you can respond to security questionnaires with
-				confidence, not guesswork.
+				AuditLift turns your approved policies, evidence, and company facts into cited answers for
+				buyer security reviews. Close the few gaps that matter, send a defensible response, and keep
+				the approved answers for the next deal.
 			</p>
 
 			<!-- CTA row -->

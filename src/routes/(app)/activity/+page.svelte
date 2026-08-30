@@ -9,7 +9,9 @@
 		Gear,
 		ShieldCheck,
 		Users,
-		PencilSimple
+		PencilSimple,
+		Briefcase,
+		BookOpenText
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 
@@ -122,6 +124,34 @@
 				icon: ChatDots,
 				color: 'var(--danger)',
 				bg: 'var(--danger-light)'
+			};
+		if (action === 'questionnaire.deal_assign')
+			return {
+				label: 'Attached questionnaire to deal',
+				icon: Briefcase,
+				color: 'var(--brand)',
+				bg: 'var(--brand-light)'
+			};
+		if (action === 'deal.create')
+			return {
+				label: 'Opened buyer security review',
+				icon: Briefcase,
+				color: 'var(--brand)',
+				bg: 'var(--brand-light)'
+			};
+		if (action === 'deal.update')
+			return {
+				label: 'Updated buyer security review',
+				icon: Briefcase,
+				color: 'var(--info)',
+				bg: 'var(--info-light)'
+			};
+		if (action === 'answer_library.approve')
+			return {
+				label: 'Approved answer for reuse',
+				icon: BookOpenText,
+				color: 'var(--success)',
+				bg: 'var(--success-light)'
 			};
 		if (action === 'export.created')
 			return {

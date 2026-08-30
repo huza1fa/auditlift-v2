@@ -201,7 +201,11 @@
 			'evidence.upload': 'uploaded evidence',
 			'evidence.delete': 'removed evidence',
 			'policy.generate': 'generated a policy',
-			'policy.edit': 'edited a policy'
+			'policy.edit': 'edited a policy',
+			'deal.create': 'opened a buyer security review',
+			'deal.update': 'updated a buyer security review',
+			'questionnaire.deal_assign': 'attached a questionnaire to a deal',
+			'answer_library.approve': 'approved an answer for reuse'
 		};
 		return map[action] ?? action;
 	}

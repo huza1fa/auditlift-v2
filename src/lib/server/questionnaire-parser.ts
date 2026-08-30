@@ -7,6 +7,12 @@ export interface ParsedQuestion {
 	questionNumber: string | null;
 	questionText: string;
 	order: number;
+	/** Original spreadsheet coordinates used for native return-to-sender export. */
+	sourceLocation?: {
+		sheetName: string;
+		questionCell: string;
+		answerCell: string | null;
+	};
 }
 
 export interface ParseResult {
@@ -189,6 +195,7 @@ function isNumericColumn(values: string[]): boolean {
 interface ColumnMap {
 	questionCol: number;
 	sectionCol: number | null;
+	answerCol: number | null;
 	headerRowIndex: number | null;
 }
 
@@ -201,7 +208,13 @@ function detectGridColumns(rows: string[][]): ColumnMap | null {
 		const questionCol = row.findIndex((c) => matchesAny(c, QUESTION_HEADERS));
 		if (questionCol !== -1) {
 			const sectionCol = row.findIndex((c) => matchesAny(c, SECTION_HEADERS));
-			return { questionCol, sectionCol: sectionCol !== -1 ? sectionCol : null, headerRowIndex: i };
+			const answerCol = row.findIndex((c) => matchesAny(c, ANSWER_HEADERS));
+			return {
+				questionCol,
+				sectionCol: sectionCol !== -1 ? sectionCol : null,
+				answerCol: answerCol !== -1 ? answerCol : null,
+				headerRowIndex: i
+			};
 		}
 	}
 
@@ -237,10 +250,10 @@ function detectGridColumns(rows: string[][]): ColumnMap | null {
 		}
 	}
 
-	return { questionCol, sectionCol, headerRowIndex: null };
+	return { questionCol, sectionCol, answerCol: null, headerRowIndex: null };
 }
 
-function parseGridRows(rows: string[][], warnings: string[]): ParsedQuestion[] {
+function parseGridRows(rows: string[][], warnings: string[], sheetName: string): ParsedQuestion[] {
 	const columns = detectGridColumns(rows);
 	if (!columns) return [];
 
@@ -278,7 +291,13 @@ function parseGridRows(rows: string[][], warnings: string[]): ParsedQuestion[] {
 			sectionName: currentSection,
 			questionNumber: numbered ? numbered.number : null,
 			questionText: numbered ? numbered.text : questionText,
-			order: order++
+			order: order++,
+			sourceLocation: {
+				sheetName,
+				questionCell: XLSX.utils.encode_cell({ r: i, c: columns.questionCol }),
+				answerCell:
+					columns.answerCol === null ? null : XLSX.utils.encode_cell({ r: i, c: columns.answerCol })
+			}
 		});
 
 		if (questions.length >= MAX_QUESTIONS) {
@@ -297,10 +316,12 @@ function collectSheets(workbook: XLSX.WorkBook, warnings: string[]): ParsedQuest
 		const sheet = workbook.Sheets[name];
 		if (!sheet) continue;
 		fillMergedCells(sheet);
-		const gridRows = (
-			XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false }) as unknown[][]
+		const gridRows = // Keep physical row positions. They are needed to safely return answers to
+		// the original workbook, even when the buyer left spacer rows in a template.
+		(
+			XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: true }) as unknown[][]
 		).map((row) => row.map((_, c) => cellText(row, c)));
-		const questions = parseGridRows(gridRows, warnings);
+		const questions = parseGridRows(gridRows, warnings, name);
 		if (questions.length > 0) perSheet.push({ name, questions });
 	}
 

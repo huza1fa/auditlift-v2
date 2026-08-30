@@ -1,10 +1,19 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { questionnaires, questionnaireQuestions, policies, controls } from '$lib/server/db/schema';
+import {
+	deals,
+	questionnaires,
+	questionnaireQuestions,
+	policies,
+	controls
+} from '$lib/server/db/schema';
 import { eq, and, asc, inArray, isNull } from 'drizzle-orm';
 import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
 import { logActivity } from '$lib/server/activity';
+import { z } from 'zod';
+
+const PatchQuestionnaireSchema = z.object({ dealId: z.string().uuid().nullable() });
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	const { organizationId: orgId } = await requireActiveOrganizationRole(
@@ -47,6 +56,52 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 	});
 
 	return json({ success: true });
+};
+
+/** Attach a questionnaire to the customer security review it belongs to. */
+export const PATCH: RequestHandler = async ({ locals, params, request }) => {
+	const {
+		organizationId: orgId,
+		userId,
+		userEmail
+	} = await requireActiveOrganizationRole(
+		locals,
+		'member',
+		'Viewers cannot update questionnaires',
+		'Trial expired. Upgrade to organize questionnaires into deals.'
+	);
+	const parsed = PatchQuestionnaireSchema.safeParse(await request.json().catch(() => null));
+	if (!parsed.success) throw error(400, 'Select a valid deal.');
+	const [questionnaire] = await db
+		.select({ id: questionnaires.id, filename: questionnaires.filename })
+		.from(questionnaires)
+		.where(and(eq(questionnaires.id, params.id), eq(questionnaires.organizationId, orgId)))
+		.limit(1);
+	if (!questionnaire) throw error(404, 'Questionnaire not found.');
+	if (parsed.data.dealId) {
+		const [deal] = await db
+			.select({ id: deals.id, name: deals.name })
+			.from(deals)
+			.where(and(eq(deals.id, parsed.data.dealId), eq(deals.organizationId, orgId)))
+			.limit(1);
+		if (!deal) throw error(400, 'The selected deal does not belong to this organization.');
+	}
+	const [updated] = await db
+		.update(questionnaires)
+		.set({ dealId: parsed.data.dealId, updatedAt: new Date() })
+		.where(and(eq(questionnaires.id, questionnaire.id), eq(questionnaires.organizationId, orgId)))
+		.returning();
+	await logActivity({
+		organizationId: orgId,
+		userId,
+		userName: locals.session!.user.name ?? userEmail,
+		action: 'questionnaire.deal_assign',
+		entityType: 'questionnaire',
+		entityId: questionnaire.id,
+		entityName: questionnaire.filename,
+		details: parsed.data.dealId ? 'Attached to a deal' : 'Removed from deal'
+	});
+	return json({ questionnaire: updated });
 };
 
 export const GET: RequestHandler = async ({ locals, params }) => {

@@ -1,8 +1,8 @@
 # AuditLift
 
-> Deal enablement and compliance foundation tool for pre-compliance startups.
-> Close enterprise deals faster by answering security questionnaires intelligently.
-> Build SOC2/ISO27001 readiness as a natural byproduct of winning those deals.
+> Buyer security-response workspace for early-stage B2B SaaS teams.
+> Return enterprise security questionnaires with cited, defensible answers.
+> Build an approved answer base and compliance foundation as a byproduct of winning deals.
 
 **Live URL:** [https://auditlift.app](https://auditlift.app)
 

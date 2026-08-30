@@ -1,0 +1,1 @@
+ALTER TABLE "questionnaire_questions" ADD COLUMN "source_location" jsonb;

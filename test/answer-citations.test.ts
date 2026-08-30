@@ -58,6 +58,19 @@ describe('filterValidCitations', () => {
 		]);
 	});
 
+	it('keeps only approved answer citations that reference a real library entry', () => {
+		const citation = {
+			sourceType: 'approved_answer',
+			sourceId: 'answer-1',
+			sourceTitle: 'Approved company answer',
+			excerpt: 'All privileged access requires MFA.'
+		};
+		expect(
+			filterValidCitations([citation], new Set(), new Set(), new Set(), new Set(['answer-1']))
+		).toEqual([citation]);
+		expect(filterValidCitations([citation], new Set(), new Set())).toEqual([]);
+	});
+
 	it('returns an empty array for malformed input', () => {
 		expect(filterValidCitations(null, policyIds, controlIds)).toEqual([]);
 		expect(filterValidCitations([null, 'string', 42], policyIds, controlIds)).toEqual([]);
