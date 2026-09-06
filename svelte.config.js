@@ -25,7 +25,8 @@ const config = {
 				'script-src': [
 					'self',
 					'https://us-assets.i.posthog.com',
-					'https://static.cloudflareinsights.com'
+					'https://static.cloudflareinsights.com',
+					'https://www.googletagmanager.com'
 				],
 				'worker-src': ['self', 'blob:', 'data:'],
 				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
@@ -37,6 +38,8 @@ const config = {
 					'https://api.stripe.com',
 					'https://us.i.posthog.com',
 					'https://us-assets.i.posthog.com',
+					'https://www.google-analytics.com',
+					'https://region1.google-analytics.com',
 					'https://cloudflareinsights.com',
 					'https://*.cloudflareinsights.com',
 					'https://auditlift-storage-676799697185-us-east-1.s3.us-east-1.amazonaws.com'
