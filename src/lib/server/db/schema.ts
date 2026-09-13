@@ -43,6 +43,11 @@ export const organizations = pgTable('organizations', {
 		additionalContext?: string;
 	}>(),
 	trialEndsAt: timestamp('trial_ends_at'),
+	// A trial organization may download one completed buyer questionnaire. The claim ID
+	// lets an interrupted export release only its own reservation without reopening an
+	// export that another request has already completed.
+	trialQuestionnaireExportedAt: timestamp('trial_questionnaire_exported_at'),
+	trialQuestionnaireExportClaimId: uuid('trial_questionnaire_export_claim_id'),
 	onboardingComplete: boolean('onboarding_complete').default(false),
 	trialReminderSentAt: timestamp('trial_reminder_sent_at'),
 	trialExpiredEmailSentAt: timestamp('trial_expired_email_sent_at'),

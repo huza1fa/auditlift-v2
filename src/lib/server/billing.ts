@@ -42,6 +42,22 @@ export function hasActivePaidAccess(subscription: Subscription): boolean {
 	return subscription ? hasValidPaidAccess(subscription, new Date()) : false;
 }
 
+/**
+ * Paid organizations retain unrestricted questionnaire exports. During an active
+ * unpaid trial, an organization can return one completed questionnaire.
+ */
+export function hasTrialQuestionnaireExportAvailable(
+	subscription: Subscription,
+	trialEndsAt: Date | null | undefined,
+	trialQuestionnaireExportedAt: Date | null | undefined
+): boolean {
+	return (
+		!hasActivePaidAccess(subscription) &&
+		hasActiveAccess(subscription, trialEndsAt) &&
+		!trialQuestionnaireExportedAt
+	);
+}
+
 export function isReadOnly(subscription: Subscription, trialEndsAt?: Date | null): boolean {
 	return !hasActiveAccess(subscription, trialEndsAt);
 }

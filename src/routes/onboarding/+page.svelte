@@ -482,10 +482,11 @@
 								>
 									<Database size={24} color="var(--brand)" weight="fill" />
 								</div>
-								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Data & customers</h1>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
+									{m.onboarding_step4_profile_title()}
+								</h1>
 								<p class="text-sm text-[var(--foreground-muted)]">
-									This helps us tailor your policies to the right regulations and customer
-									expectations.
+									{m.onboarding_step4_profile_subtitle()}
 								</p>
 							</div>
 
@@ -605,10 +606,11 @@
 								>
 									<Shield size={24} color="var(--brand)" weight="fill" />
 								</div>
-								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">Security posture</h1>
+								<h1 class="mb-1 text-2xl font-bold text-[var(--foreground)]">
+									{m.onboarding_step5_posture_title()}
+								</h1>
 								<p class="text-sm text-[var(--foreground-muted)]">
-									What do you already have in place? We'll use this to make your policies reference
-									your real tools instead of generic placeholders.
+									{m.onboarding_step5_posture_subtitle()}
 								</p>
 							</div>
 
@@ -647,7 +649,7 @@
 							</div>
 
 							<p class="mt-3 text-xs text-[var(--foreground-muted)]">
-								Nothing selected yet? No problem — skip ahead and add this later.
+								{m.onboarding_security_posture_optional_hint()}
 							</p>
 
 							<!-- Step 6: Intent Choice -->
@@ -819,6 +821,14 @@
 								<div class="mb-6 flex justify-center">
 									<Badge variant="success">{m.onboarding_done_trial_badge()}</Badge>
 								</div>
+
+								{#if intent === 'questionnaire'}
+									<div
+										class="mb-6 rounded-[var(--radius)] border border-[var(--brand)] bg-[var(--brand-light)] px-4 py-3 text-sm font-medium text-[var(--brand)]"
+									>
+										{m.onboarding_done_context_ready()}
+									</div>
+								{/if}
 
 								<!-- Summary card -->
 								<div
