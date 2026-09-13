@@ -161,6 +161,10 @@
 	let interviewLoading = $state(false);
 	let interviewError = $state('');
 	let savingPromptId = $state<string | null>(null);
+	let promoteFactOpen = $state(false);
+	let factLabel = $state('');
+	let factScope = $state<'company' | 'questionnaire'>('company');
+	let savingFact = $state(false);
 	let approvingAnswerId = $state<string | null>(null);
 	let selectedDealId = $state<string>('');
 	let savingDeal = $state(false);
@@ -453,13 +457,26 @@
 					category: prompt.proposedFact.category,
 					label: prompt.proposedFact.label,
 					value: answer,
+					...(data.canApproveAnswers ? { status: 'verified' } : {}),
 					sourceDetail: `Founder interview for questionnaire ${id}: ${prompt.question}`
 				})
 			});
-			const json: { message?: string } = await res.json().catch(() => ({}));
+			const json: { message?: string; refreshedQuestionnaires?: number } = await res
+				.json()
+				.catch(() => ({}));
 			if (!res.ok) throw new Error(json.message ?? 'Unable to save the suggested fact.');
 			interviewPrompts = interviewPrompts.filter((item) => item.question !== prompt.question);
-			toastSuccess('Saved as a pending company fact');
+			if (data.canApproveAnswers) {
+				toastSuccess(
+					json.refreshedQuestionnaires
+						? `Saved as verified knowledge. Refreshing ${json.refreshedQuestionnaires} questionnaire${json.refreshedQuestionnaires === 1 ? '' : 's'} now.`
+						: 'Saved as verified company knowledge.'
+				);
+				await fetchData();
+				if (questionnaire?.status === 'processing') openSSE(id);
+			} else {
+				toastSuccess('Saved as a pending company fact for an admin to verify.');
+			}
 		} catch (error) {
 			toastError(error instanceof Error ? error.message : 'Unable to save the suggested fact.');
 		} finally {
@@ -589,6 +606,44 @@
 			toastError(err instanceof Error ? err.message : 'Could not approve this answer for reuse.');
 		} finally {
 			approvingAnswerId = null;
+		}
+	}
+
+	function openFactPromotion() {
+		if (!selectedQuestion) return;
+		factLabel = selectedQuestion.questionText
+			.replace(/^\s*(?:\d+[.)-]?\s*)/, '')
+			.replace(/[?!.]+$/, '')
+			.slice(0, 200);
+		factScope = 'company';
+		promoteFactOpen = true;
+	}
+
+	async function promoteAnswerToFact() {
+		if (!selectedQuestion || !factLabel.trim()) return;
+		savingFact = true;
+		try {
+			const res = await fetch(`/api/questionnaires/${id}/questions/${selectedQuestion.id}/fact`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ label: factLabel.trim(), scope: factScope })
+			});
+			const body: { refreshedQuestionnaires?: number; message?: string } = await res
+				.json()
+				.catch(() => ({}));
+			if (!res.ok) throw new Error(body.message ?? 'Could not save the company fact.');
+			promoteFactOpen = false;
+			toastSuccess(
+				body.refreshedQuestionnaires
+					? `Saved as verified knowledge. Refreshing ${body.refreshedQuestionnaires} questionnaire${body.refreshedQuestionnaires === 1 ? '' : 's'} now.`
+					: 'Saved as verified knowledge.'
+			);
+			await fetchData();
+			if (questionnaire?.status === 'processing') openSSE(id);
+		} catch (error) {
+			toastError(error instanceof Error ? error.message : 'Could not save the company fact.');
+		} finally {
+			savingFact = false;
 		}
 	}
 
@@ -1517,6 +1572,10 @@
 														/>{:else}<BookOpenText size={13} />{/if}
 													Approve for reuse
 												</Button>
+												<Button size="sm" variant="secondary" onclick={openFactPromotion}>
+													<ShieldCheck size={13} />
+													Make reusable fact
+												</Button>
 											{/if}
 											<Button
 												size="sm"
@@ -1538,6 +1597,68 @@
 											</Button>
 										</div>
 									</div>
+
+									{#if promoteFactOpen && data.canApproveAnswers && answerDraft.trim()}
+										<div
+											class="mt-3 rounded-[var(--radius-lg)] border border-[var(--brand)] bg-[var(--brand-light)] p-3.5"
+										>
+											<p class="text-sm font-semibold text-[var(--foreground)]">
+												Save verified company knowledge
+											</p>
+											<p class="mt-1 text-xs leading-relaxed text-[var(--foreground-muted)]">
+												This keeps the confirmed answer available to future policy drafts and
+												unanswered questionnaire items. It will never overwrite a human-edited
+												response.
+											</p>
+											<label
+												class="mt-3 block text-xs font-medium text-[var(--foreground-muted)]"
+												for="fact-label"
+											>
+												Fact label
+											</label>
+											<input
+												id="fact-label"
+												bind:value={factLabel}
+												maxlength="200"
+												class="mt-1 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--brand)] focus:outline-none"
+											/>
+											<div class="mt-3 flex flex-wrap gap-2">
+												<button
+													type="button"
+													onclick={() => (factScope = 'company')}
+													class="cursor-pointer rounded-[var(--radius)] border px-2.5 py-1.5 text-xs font-medium {factScope ===
+													'company'
+														? 'border-[var(--brand)] bg-[var(--background)] text-[var(--brand)]'
+														: 'border-[var(--border)] text-[var(--foreground-muted)]'}"
+												>
+													Company-wide
+												</button>
+												<button
+													type="button"
+													onclick={() => (factScope = 'questionnaire')}
+													class="cursor-pointer rounded-[var(--radius)] border px-2.5 py-1.5 text-xs font-medium {factScope ===
+													'questionnaire'
+														? 'border-[var(--brand)] bg-[var(--background)] text-[var(--brand)]'
+														: 'border-[var(--border)] text-[var(--foreground-muted)]'}"
+												>
+													This questionnaire only
+												</button>
+											</div>
+											<div class="mt-3 flex justify-end gap-2">
+												<Button size="sm" variant="ghost" onclick={() => (promoteFactOpen = false)}
+													>Cancel</Button
+												>
+												<Button
+													size="sm"
+													onclick={promoteAnswerToFact}
+													disabled={savingFact || !factLabel.trim()}
+												>
+													{#if savingFact}<Spinner size={13} class="animate-spin" />{/if}
+													Save as verified fact
+												</Button>
+											</div>
+										</div>
+									{/if}
 
 									{#if showImproveInput}
 										<div

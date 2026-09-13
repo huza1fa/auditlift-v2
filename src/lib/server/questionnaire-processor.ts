@@ -367,7 +367,10 @@ IMPORTANT: If an item is clearly a section heading, table of contents, introduct
  * paid status, policy snippets, and the global control list. Questionnaire mappings
  * may surface framework coverage before an organization enrolls in that framework.
  */
-async function loadProcessingContext(organizationId: string): Promise<ProcessingContext> {
+async function loadProcessingContext(
+	organizationId: string,
+	questionnaireId?: string
+): Promise<ProcessingContext> {
 	const [org] = await db
 		.select()
 		.from(organizations)
@@ -382,7 +385,7 @@ async function loadProcessingContext(organizationId: string): Promise<Processing
 
 	const orgName = org?.name ?? 'the organization';
 	const isPaid = hasActivePaidAccess(subscription ?? null);
-	const verifiedFacts = await getVerifiedOrganizationFacts(organizationId);
+	const verifiedFacts = await getVerifiedOrganizationFacts(organizationId, { questionnaireId });
 	const verifiedFactsPrompt = buildVerifiedFactsQuestionnaireContext(
 		formatVerifiedOrganizationFactsForPrompt(verifiedFacts)
 	);
@@ -635,7 +638,7 @@ export async function processQuestionnaire(
 			policyContext,
 			controlContext,
 			approvedAnswerContext
-		} = await loadProcessingContext(organizationId);
+		} = await loadProcessingContext(organizationId, questionnaireId);
 
 		// 3. Determine how many questions to process
 		const processLimit = isPaid
@@ -857,7 +860,7 @@ async function reprocessQuestionnaireNow(
 			policyContext,
 			controlContext,
 			approvedAnswerContext
-		} = await loadProcessingContext(organizationId);
+		} = await loadProcessingContext(organizationId, questionnaireId);
 
 		// 5. Apply trial question limit to the eligible set
 		const processLimit = isPaid

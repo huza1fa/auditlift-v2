@@ -59,6 +59,7 @@ export const organizations = pgTable('organizations', {
 
 export type OrganizationFactSource = 'manual' | 'system';
 export type OrganizationFactStatus = 'pending' | 'verified';
+export type OrganizationFactScope = 'company' | 'questionnaire';
 
 export const organizationFacts = pgTable(
 	'organization_facts',
@@ -70,6 +71,10 @@ export const organizationFacts = pgTable(
 		category: text('category').notNull(),
 		label: text('label').notNull(),
 		value: text('value').notNull(),
+		scope: text('scope').$type<OrganizationFactScope>().notNull().default('company'),
+		// Questionnaire-scoped facts are intentionally kept out of the global answer base.
+		// They are useful for buyer-specific commitments without teaching the whole company a claim.
+		questionnaireId: uuid('questionnaire_id'),
 		source: text('source').$type<OrganizationFactSource>().notNull().default('manual'),
 		status: text('status').$type<OrganizationFactStatus>().notNull().default('pending'),
 		sourceDetail: text('source_detail'),
@@ -87,8 +92,14 @@ export const organizationFacts = pgTable(
 			table.label
 		),
 		index('organization_facts_org_status_idx').on(table.organizationId, table.status),
+		index('organization_facts_org_scope_idx').on(
+			table.organizationId,
+			table.scope,
+			table.questionnaireId
+		),
 		check('organization_facts_source_check', sql`${table.source} in ('manual', 'system')`),
-		check('organization_facts_status_check', sql`${table.status} in ('pending', 'verified')`)
+		check('organization_facts_status_check', sql`${table.status} in ('pending', 'verified')`),
+		check('organization_facts_scope_check', sql`${table.scope} in ('company', 'questionnaire')`)
 	]
 );
 

@@ -250,13 +250,20 @@
 				stopGenerationProgress(false);
 				return;
 			}
-			const newPolicy: Policy = await res.json();
+			const newPolicy: Policy & { refreshedQuestionnaires?: number } = await res.json();
 			policyList = [newPolicy, ...policyList];
 			controlsByPolicy = {
 				...controlsByPolicy,
 				[newPolicy.id]: newPolicy.linkedControls ?? []
 			};
 			stopGenerationProgress(true);
+			if (newPolicy.refreshedQuestionnaires) {
+				toastSuccess(
+					`Policy generated. Refreshing ${newPolicy.refreshedQuestionnaires} buyer questionnaire${newPolicy.refreshedQuestionnaires === 1 ? '' : 's'} with the new policy.`
+				);
+			} else {
+				toastSuccess('Policy generated and added to your company knowledge.');
+			}
 		} catch {
 			errorMessage = m.policies_error_generic();
 			stopGenerationProgress(false);

@@ -15,6 +15,7 @@
 		label: string;
 		value: string;
 		status: FactStatus;
+		scope?: 'company' | 'questionnaire';
 		source?: string | null;
 		sourceDetail?: string | null;
 		createdAt: string;
@@ -171,8 +172,8 @@
 		<div>
 			<h2 class="text-lg font-semibold text-[var(--foreground)]">Company Facts</h2>
 			<p class="mt-1 max-w-2xl text-sm text-[var(--foreground-muted)]">
-				Facts give Auditlift approved context for AI-generated answers. New or edited facts stay
-				pending until an admin verifies them.
+				Facts are the shared knowledge engine for policy drafts and questionnaire answers. New or
+				edited facts stay pending until an admin verifies them.
 			</p>
 		</div>
 		<Button onclick={openCreateForm} class="w-full sm:w-auto">
@@ -184,8 +185,9 @@
 	<div class="flex items-start gap-2.5 rounded-[var(--radius)] bg-[var(--info-light)] px-4 py-3">
 		<Info size={16} color="var(--info)" class="mt-0.5 shrink-0" />
 		<p class="text-xs leading-relaxed text-[var(--info)]">
-			Verified facts can be used as trusted company context. Pending facts are visible here for
-			review but are not confirmed company information.
+			Company-wide facts improve future policies and questionnaires. Questionnaire-only facts stay
+			inside their source buyer review. Pending facts are visible here for review but are not used
+			as confirmed company information.
 		</p>
 	</div>
 
@@ -232,7 +234,14 @@
 							>
 								<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 									<div class="min-w-0">
-										<p class="text-sm font-semibold text-[var(--foreground)]">{fact.label}</p>
+										<div class="flex flex-wrap items-center gap-2">
+											<p class="text-sm font-semibold text-[var(--foreground)]">{fact.label}</p>
+											<Badge variant="info"
+												>{fact.scope === 'questionnaire'
+													? 'Questionnaire-only'
+													: 'Company-wide'}</Badge
+											>
+										</div>
 										<p class="mt-1 text-sm whitespace-pre-wrap text-[var(--foreground-muted)]">
 											{fact.value}
 										</p>
@@ -378,7 +387,12 @@
 	<div class="rounded-[var(--radius)] border border-[var(--border)] p-4">
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 			<div class="min-w-0">
-				<p class="text-sm font-semibold text-[var(--foreground)]">{fact.label}</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<p class="text-sm font-semibold text-[var(--foreground)]">{fact.label}</p>
+					<Badge variant="info"
+						>{fact.scope === 'questionnaire' ? 'Questionnaire-only' : 'Company-wide'}</Badge
+					>
+				</div>
 				<p class="mt-1 text-sm whitespace-pre-wrap text-[var(--foreground-muted)]">{fact.value}</p>
 				<p class="mt-3 text-xs text-[var(--foreground-subtle)]">
 					Source: {sourceLabel(fact.source)}

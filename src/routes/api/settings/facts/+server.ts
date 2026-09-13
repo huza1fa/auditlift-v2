@@ -8,6 +8,7 @@ import {
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { CreateOrganizationFactSchema } from '$lib/server/validation';
 import { createOrganizationFact, listOrganizationFacts } from '$lib/server/organization-facts';
+import { queueKnowledgeRefresh } from '$lib/server/knowledge-sync';
 
 function isDuplicateFactError(exception: unknown): boolean {
 	return (
@@ -64,5 +65,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw exception;
 	}
 
-	return json({ fact }, { status: 201 });
+	const refreshedQuestionnaires =
+		fact.status === 'verified' ? await queueKnowledgeRefresh({ organizationId }) : 0;
+
+	return json({ fact, refreshedQuestionnaires }, { status: 201 });
 };

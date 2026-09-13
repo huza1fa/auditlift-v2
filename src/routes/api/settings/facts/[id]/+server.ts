@@ -4,6 +4,7 @@ import { requireActiveOrganizationRole, requireMinimumRole } from '$lib/server/a
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { UpdateOrganizationFactSchema } from '$lib/server/validation';
 import { deleteOrganizationFact, updateOrganizationFact } from '$lib/server/organization-facts';
+import { queueKnowledgeRefresh } from '$lib/server/knowledge-sync';
 
 function isDuplicateFactError(exception: unknown): boolean {
 	return (
@@ -74,7 +75,10 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	}
 	if (!fact) throw error(404, 'Organization fact not found');
 
-	return json({ fact });
+	const refreshedQuestionnaires =
+		fact.status === 'verified' ? await queueKnowledgeRefresh({ organizationId }) : 0;
+
+	return json({ fact, refreshedQuestionnaires });
 };
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {

@@ -1,8 +1,9 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, or } from 'drizzle-orm';
 import { db } from './db';
 import {
 	organizationFacts,
 	type OrganizationFactSource,
+	type OrganizationFactScope,
 	type OrganizationFactStatus
 } from './db/schema';
 import {
@@ -25,6 +26,8 @@ export interface CreateOrganizationFactInput {
 	value: string;
 	source?: OrganizationFactSource;
 	status?: OrganizationFactStatus;
+	scope?: OrganizationFactScope;
+	questionnaireId?: string | null;
 	sourceDetail?: string | null;
 }
 
@@ -66,6 +69,8 @@ export async function createOrganizationFact(input: CreateOrganizationFactInput)
 			category: input.category,
 			label: input.label,
 			value: input.value,
+			scope: input.scope ?? 'company',
+			questionnaireId: input.questionnaireId ?? null,
 			source: input.source ?? 'manual',
 			status: input.status ?? 'pending',
 			sourceDetail: input.sourceDetail ?? null,
@@ -119,8 +124,18 @@ export async function deleteOrganizationFact(organizationId: string, factId: str
 }
 
 export async function getVerifiedOrganizationFacts(
-	organizationId: string
+	organizationId: string,
+	options: { questionnaireId?: string } = {}
 ): Promise<VerifiedOrganizationFact[]> {
+	const scopeCondition = options.questionnaireId
+		? or(
+				eq(organizationFacts.scope, 'company'),
+				and(
+					eq(organizationFacts.scope, 'questionnaire'),
+					eq(organizationFacts.questionnaireId, options.questionnaireId)
+				)
+			)
+		: eq(organizationFacts.scope, 'company');
 	return db
 		.select({
 			id: organizationFacts.id,
@@ -133,16 +148,18 @@ export async function getVerifiedOrganizationFacts(
 		.where(
 			and(
 				eq(organizationFacts.organizationId, organizationId),
-				eq(organizationFacts.status, 'verified')
+				eq(organizationFacts.status, 'verified'),
+				scopeCondition
 			)
 		)
 		.orderBy(asc(organizationFacts.category), asc(organizationFacts.label));
 }
 
 export async function getVerifiedOrganizationFactsForPrompt(
-	organizationId: string
+	organizationId: string,
+	options: { questionnaireId?: string } = {}
 ): Promise<string> {
 	return formatVerifiedOrganizationFactsForPrompt(
-		await getVerifiedOrganizationFacts(organizationId)
+		await getVerifiedOrganizationFacts(organizationId, options)
 	);
 }
