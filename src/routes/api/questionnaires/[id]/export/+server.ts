@@ -1,9 +1,15 @@
 import { error } from '@sveltejs/kit';
+import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { questionnaires, questionnaireQuestions, policies } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
-import { hasActivePaidAccess } from '$lib/server/billing';
+import {
+	organizations,
+	questionnaires,
+	questionnaireQuestions,
+	policies
+} from '$lib/server/db/schema';
+import { eq, and, gt, inArray, isNull } from 'drizzle-orm';
+import { hasActivePaidAccess, hasTrialQuestionnaireExportAvailable } from '$lib/server/billing';
 import { requireOrganizationRole } from '$lib/server/auth-utils';
 import { logActivity } from '$lib/server/activity';
 import { downloadFile } from '$lib/server/storage';
@@ -34,12 +40,82 @@ function isSpreadsheetSourceLocation(value: unknown): value is SpreadsheetSource
 	);
 }
 
+/**
+ * Atomically reserves the organization's one trial export. The reservation is
+ * finalized only after the response is successfully constructed, and released
+ * by its unique claim ID if construction fails.
+ */
+async function claimTrialQuestionnaireExport(organizationId: string): Promise<string | null> {
+	const claimId = randomUUID();
+	const [claimed] = await db
+		.update(organizations)
+		.set({
+			trialQuestionnaireExportedAt: new Date(),
+			trialQuestionnaireExportClaimId: claimId,
+			updatedAt: new Date()
+		})
+		.where(
+			and(
+				eq(organizations.id, organizationId),
+				isNull(organizations.trialQuestionnaireExportedAt),
+				gt(organizations.trialEndsAt, new Date())
+			)
+		)
+		.returning({ id: organizations.id });
+
+	return claimed ? claimId : null;
+}
+
+async function finalizeTrialQuestionnaireExport(
+	organizationId: string,
+	claimId: string
+): Promise<void> {
+	await db
+		.update(organizations)
+		.set({ trialQuestionnaireExportClaimId: null, updatedAt: new Date() })
+		.where(
+			and(
+				eq(organizations.id, organizationId),
+				eq(organizations.trialQuestionnaireExportClaimId, claimId)
+			)
+		);
+}
+
+async function releaseTrialQuestionnaireExport(
+	organizationId: string,
+	claimId: string
+): Promise<void> {
+	await db
+		.update(organizations)
+		.set({
+			trialQuestionnaireExportedAt: null,
+			trialQuestionnaireExportClaimId: null,
+			updatedAt: new Date()
+		})
+		.where(
+			and(
+				eq(organizations.id, organizationId),
+				eq(organizations.trialQuestionnaireExportClaimId, claimId)
+			)
+		);
+}
+
 export const GET: RequestHandler = async ({ locals, params }) => {
 	const { organizationId: orgId, userId } = await requireOrganizationRole(locals);
 
-	// Export is a paid-only feature
-	if (!hasActivePaidAccess(locals.subscription)) {
-		throw error(402, 'Upgrade to export questionnaire answers.');
+	const hasPaidAccess = hasActivePaidAccess(locals.subscription);
+	if (
+		!hasPaidAccess &&
+		!hasTrialQuestionnaireExportAvailable(
+			locals.subscription,
+			locals.organization?.trialEndsAt,
+			locals.organization?.trialQuestionnaireExportedAt
+		)
+	) {
+		throw error(
+			402,
+			'Your trial questionnaire export is no longer available. Upgrade to export additional questionnaires.'
+		);
 	}
 
 	const { id } = params;
@@ -84,114 +160,139 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		.replace(/[^a-zA-Z0-9._-]/g, '_')
 		.replace(/\.[^.]+$/, '');
 	const dateStr = new Date().toISOString().slice(0, 10);
+	const trialExportClaimId = hasPaidAccess ? null : await claimTrialQuestionnaireExport(orgId);
 
-	if (canReturnNativeFile) {
-		try {
-			const original = await downloadFile(questionnaire.storageKey);
-			const isXlsx = questionnaire.sourceFormat === 'xlsx';
-			const body = isXlsx
-				? await writeAnswersToXlsx(original, nativeAnswers)
-				: writeAnswersToCsv(original, nativeAnswers);
-			const extension = isXlsx ? 'xlsx' : 'csv';
-			const contentType = isXlsx
-				? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-				: 'text/csv; charset=utf-8';
+	if (!hasPaidAccess && !trialExportClaimId) {
+		throw error(
+			402,
+			'Your trial questionnaire export has already been used. Upgrade to export additional questionnaires.'
+		);
+	}
 
-			logActivity({
-				organizationId: orgId,
-				userId,
-				userName: locals.session!.user.name ?? locals.session!.user.email,
-				action: 'questionnaire.export',
-				entityType: 'questionnaire',
-				entityId: id,
-				entityName: questionnaire.filename,
-				details: `${questions.length} answers returned in the original ${extension.toUpperCase()} template`
-			}).catch(console.error);
+	try {
+		if (canReturnNativeFile) {
+			try {
+				const original = await downloadFile(questionnaire.storageKey);
+				const isXlsx = questionnaire.sourceFormat === 'xlsx';
+				const body = isXlsx
+					? await writeAnswersToXlsx(original, nativeAnswers)
+					: writeAnswersToCsv(original, nativeAnswers);
+				const extension = isXlsx ? 'xlsx' : 'csv';
+				const contentType = isXlsx
+					? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+					: 'text/csv; charset=utf-8';
 
-			return new Response(new Uint8Array(body), {
-				status: 200,
-				headers: {
-					'Content-Type': contentType,
-					'Content-Disposition': `attachment; filename="completed-${safeFilename}-${dateStr}.${extension}"`,
-					'Cache-Control': 'no-store',
-					'X-AuditLift-Export-Mode': 'native'
+				if (trialExportClaimId) {
+					await finalizeTrialQuestionnaireExport(orgId, trialExportClaimId);
 				}
-			});
-		} catch (cause) {
-			console.error('Failed to build native questionnaire export:', cause);
-			throw error(500, 'Could not return answers to the original spreadsheet. Please try again.');
+
+				logActivity({
+					organizationId: orgId,
+					userId,
+					userName: locals.session!.user.name ?? locals.session!.user.email,
+					action: 'questionnaire.export',
+					entityType: 'questionnaire',
+					entityId: id,
+					entityName: questionnaire.filename,
+					details: `${questions.length} answers returned in the original ${extension.toUpperCase()} template${trialExportClaimId ? ' (trial export)' : ''}`
+				}).catch(console.error);
+
+				return new Response(new Uint8Array(body), {
+					status: 200,
+					headers: {
+						'Content-Type': contentType,
+						'Content-Disposition': `attachment; filename="completed-${safeFilename}-${dateStr}.${extension}"`,
+						'Cache-Control': 'no-store',
+						'X-AuditLift-Export-Mode': 'native'
+					}
+				});
+			} catch (cause) {
+				console.error('Failed to build native questionnaire export:', cause);
+				throw error(500, 'Could not return answers to the original spreadsheet. Please try again.');
+			}
 		}
-	}
 
-	// Collect all referenced policy IDs across all questions
-	const allPolicyIds = [
-		...new Set(questions.flatMap((q) => (q.mappedPolicyIds as string[]) ?? []))
-	];
+		// Collect all referenced policy IDs across all questions
+		const allPolicyIds = [
+			...new Set(questions.flatMap((q) => (q.mappedPolicyIds as string[]) ?? []))
+		];
 
-	// Fetch policy titles for those IDs (scoped to org)
-	const policyMap = new Map<string, string>();
-	if (allPolicyIds.length > 0) {
-		const policyRows = await db
-			.select({ id: policies.id, title: policies.title })
-			.from(policies)
-			.where(and(eq(policies.organizationId, orgId), inArray(policies.id, allPolicyIds)));
-		for (const row of policyRows) {
-			policyMap.set(row.id, row.title);
+		// Fetch policy titles for those IDs (scoped to org)
+		const policyMap = new Map<string, string>();
+		if (allPolicyIds.length > 0) {
+			const policyRows = await db
+				.select({ id: policies.id, title: policies.title })
+				.from(policies)
+				.where(and(eq(policies.organizationId, orgId), inArray(policies.id, allPolicyIds)));
+			for (const row of policyRows) {
+				policyMap.set(row.id, row.title);
+			}
 		}
-	}
 
-	// Build CSV
-	const header = buildCsvRow([
-		'Section',
-		'#',
-		'Question',
-		'Answer',
-		'Confidence',
-		'Source Policies',
-		'Gap Remediation'
-	]);
-
-	const rows = questions.map((q) => {
-		const answer = (q.userEditedAnswer ?? q.generatedAnswer ?? '').trim();
-		const sourcePolicies = ((q.mappedPolicyIds as string[]) ?? [])
-			.map((pid) => policyMap.get(pid) ?? pid)
-			.join('; ');
-		const gapRemediation = q.gapRemediation ?? '';
-		const confidence = q.confidence ?? 'unprocessed';
-
-		return buildCsvRow([
-			q.sectionName ?? '',
-			q.questionNumber ?? '',
-			q.questionText,
-			answer,
-			confidence,
-			sourcePolicies,
-			gapRemediation
+		// Build CSV
+		const header = buildCsvRow([
+			'Section',
+			'#',
+			'Question',
+			'Answer',
+			'Confidence',
+			'Source Policies',
+			'Gap Remediation'
 		]);
-	});
 
-	const csvContent = [header, ...rows].join('\r\n');
+		const rows = questions.map((q) => {
+			const answer = (q.userEditedAnswer ?? q.generatedAnswer ?? '').trim();
+			const sourcePolicies = ((q.mappedPolicyIds as string[]) ?? [])
+				.map((pid) => policyMap.get(pid) ?? pid)
+				.join('; ');
+			const gapRemediation = q.gapRemediation ?? '';
+			const confidence = q.confidence ?? 'unprocessed';
 
-	const exportFilename = `questionnaire-answers-${safeFilename}-${dateStr}.csv`;
+			return buildCsvRow([
+				q.sectionName ?? '',
+				q.questionNumber ?? '',
+				q.questionText,
+				answer,
+				confidence,
+				sourcePolicies,
+				gapRemediation
+			]);
+		});
 
-	logActivity({
-		organizationId: orgId,
-		userId,
-		userName: locals.session!.user.name ?? locals.session!.user.email,
-		action: 'questionnaire.export',
-		entityType: 'questionnaire',
-		entityId: id,
-		entityName: questionnaire.filename,
-		details: `${questions.length} questions exported as a review CSV`
-	}).catch(console.error);
+		const csvContent = [header, ...rows].join('\r\n');
 
-	return new Response(csvContent, {
-		status: 200,
-		headers: {
-			'Content-Type': 'text/csv; charset=utf-8',
-			'Content-Disposition': `attachment; filename="${exportFilename}"`,
-			'Cache-Control': 'no-store',
-			'X-AuditLift-Export-Mode': 'review'
+		const exportFilename = `questionnaire-answers-${safeFilename}-${dateStr}.csv`;
+
+		if (trialExportClaimId) {
+			await finalizeTrialQuestionnaireExport(orgId, trialExportClaimId);
 		}
-	});
+
+		logActivity({
+			organizationId: orgId,
+			userId,
+			userName: locals.session!.user.name ?? locals.session!.user.email,
+			action: 'questionnaire.export',
+			entityType: 'questionnaire',
+			entityId: id,
+			entityName: questionnaire.filename,
+			details: `${questions.length} questions exported as a review CSV${trialExportClaimId ? ' (trial export)' : ''}`
+		}).catch(console.error);
+
+		return new Response(csvContent, {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/csv; charset=utf-8',
+				'Content-Disposition': `attachment; filename="${exportFilename}"`,
+				'Cache-Control': 'no-store',
+				'X-AuditLift-Export-Mode': 'review'
+			}
+		});
+	} catch (cause) {
+		if (trialExportClaimId) {
+			await releaseTrialQuestionnaireExport(orgId, trialExportClaimId).catch((releaseCause) => {
+				console.error('Failed to release trial questionnaire export claim:', releaseCause);
+			});
+		}
+		throw cause;
+	}
 };

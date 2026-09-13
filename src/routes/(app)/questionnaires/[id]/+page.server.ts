@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { hasActivePaidAccess } from '$lib/server/billing';
+import { hasActivePaidAccess, hasTrialQuestionnaireExportAvailable } from '$lib/server/billing';
 import { db } from '$lib/server/db';
 import { deals, userOrganizations } from '$lib/server/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
@@ -33,6 +33,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		: [];
 	return {
 		hasActivePaidAccess: hasActivePaidAccess(locals.subscription),
+		hasTrialQuestionnaireExportAvailable: hasTrialQuestionnaireExportAvailable(
+			locals.subscription,
+			locals.organization?.trialEndsAt,
+			locals.organization?.trialQuestionnaireExportedAt
+		),
 		canApproveAnswers: membership?.role === 'owner' || membership?.role === 'admin',
 		dealOptions
 	};

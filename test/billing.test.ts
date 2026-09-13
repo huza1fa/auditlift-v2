@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { hasActiveAccess, hasActivePaidAccess, isReadOnly } from '../src/lib/server/billing';
+import {
+	hasActiveAccess,
+	hasActivePaidAccess,
+	hasTrialQuestionnaireExportAvailable,
+	isReadOnly
+} from '../src/lib/server/billing';
 
 type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete';
 
@@ -69,5 +74,25 @@ describe('billing access rules', () => {
 			expect(hasActivePaidAccess(subscription(status))).toBe(false);
 			expect(isReadOnly(subscription(status), new Date(Date.now() + 60_000))).toBe(true);
 		}
+	});
+
+	it('allows exactly one questionnaire export during an active unpaid trial', () => {
+		const future = new Date(Date.now() + 60_000);
+		const past = new Date(Date.now() - 60_000);
+
+		expect(hasTrialQuestionnaireExportAvailable(subscription('trialing'), future, null)).toBe(true);
+		expect(hasTrialQuestionnaireExportAvailable(subscription('trialing'), future, new Date())).toBe(
+			false
+		);
+		expect(hasTrialQuestionnaireExportAvailable(subscription('trialing'), past, null)).toBe(false);
+	});
+
+	it('does not classify paid organizations as trial-export eligible', () => {
+		const future = new Date(Date.now() + 60_000);
+		const paidSubscription = {
+			status: 'active',
+			stripeSubscriptionId: 'sub_123'
+		} as Parameters<typeof hasActiveAccess>[0];
+		expect(hasTrialQuestionnaireExportAvailable(paidSubscription, future, null)).toBe(false);
 	});
 });

@@ -144,7 +144,9 @@
 		<LogoMark size={28} />
 		<span class="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">Auditlift</span>
 	</div>
-	<p class="mb-8 text-[13px] text-[var(--foreground-muted)]">Get audit-ready in 30 days</p>
+	<p class="mb-8 max-w-[290px] text-center text-[13px] text-[var(--foreground-muted)]">
+		Build company-specific security answers grounded in your product, stack, and practices.
+	</p>
 
 	<div
 		class="relative w-full max-w-[340px] rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background-elevated)] p-8 shadow-[var(--shadow-md)]"

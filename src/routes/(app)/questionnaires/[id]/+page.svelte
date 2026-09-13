@@ -140,6 +140,9 @@
 	let sseReconnectTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let sseReconnectAttempts = $state(0);
 	let exporting = $state(false);
+	// The server is the source of truth for this entitlement. This only updates the UI immediately
+	// after a successful trial download, before the next server-data refresh.
+	let trialExportConsumedInSession = $state(false);
 	let showScoreTooltip = $state(false);
 	let showImproveInput = $state(false);
 	let refinementPrompt = $state('');
@@ -187,6 +190,12 @@
 
 	const isProcessing = $derived(questionnaire?.status === 'processing');
 	const isError = $derived(questionnaire?.status === 'error');
+	const trialQuestionnaireExportAvailable = $derived(
+		data.hasTrialQuestionnaireExportAvailable === true && !trialExportConsumedInSession
+	);
+	const canExportQuestionnaire = $derived(
+		data.hasActivePaidAccess || trialQuestionnaireExportAvailable
+	);
 	const shareLinkExpired = $derived(
 		shareToken !== null && (!shareExpiresAt || new Date(shareExpiresAt).getTime() <= Date.now())
 	);
@@ -623,7 +632,7 @@
 
 	// ── Export ────────────────────────────────────────────────────────────────
 	async function handleExport() {
-		if (!data.hasActivePaidAccess) return;
+		if (!canExportQuestionnaire) return;
 		exporting = true;
 		captureEvent('questionnaire_export_clicked', { questionnaire_id: id });
 		try {
@@ -643,6 +652,9 @@
 			link.click();
 			link.remove();
 			URL.revokeObjectURL(url);
+			if (!data.hasActivePaidAccess) {
+				trialExportConsumedInSession = true;
+			}
 			toastSuccess(
 				response.headers.get('X-AuditLift-Export-Mode') === 'native'
 					? 'Completed response template downloaded'
@@ -755,6 +767,45 @@
 			<p class="font-medium text-[var(--foreground)]">{fetchError}</p>
 		</Card>
 	{:else if questionnaire}
+		{#if !data.hasActivePaidAccess && questionnaire.status === 'ready'}
+			{#if trialQuestionnaireExportAvailable}
+				<div
+					class="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--brand)] bg-[var(--brand-light)] px-4 py-3"
+				>
+					<ShieldCheck size={20} color="var(--brand)" class="mt-0.5 shrink-0" />
+					<div>
+						<p class="text-sm font-semibold text-[var(--foreground)]">
+							Your first completed questionnaire export is included
+						</p>
+						<p class="mt-0.5 text-sm leading-relaxed text-[var(--foreground-muted)]">
+							Your company context helps tailor these answers to your product and security
+							practices. Review them, then download this completed questionnaire at no cost.
+						</p>
+					</div>
+				</div>
+			{:else}
+				<div
+					class="flex flex-wrap items-start justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--warning)] bg-[var(--warning-light)] px-4 py-3"
+				>
+					<div class="flex items-start gap-3">
+						<Lock size={20} color="var(--warning)" class="mt-0.5 shrink-0" />
+						<div>
+							<p class="text-sm font-semibold text-[var(--foreground)]">
+								Your included questionnaire export has been used
+							</p>
+							<p class="mt-0.5 text-sm leading-relaxed text-[var(--foreground-muted)]">
+								Keep refining this response, then upgrade to export this or future questionnaires
+								again.
+							</p>
+						</div>
+					</div>
+					<a href="/settings/billing" class="shrink-0">
+						<Button variant="secondary">Upgrade to export</Button>
+					</a>
+				</div>
+			{/if}
+		{/if}
+
 		<!-- Page header -->
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div class="flex items-start gap-4">
@@ -1054,7 +1105,7 @@
 				{/if}
 
 				<!-- Export button -->
-				{#if data.hasActivePaidAccess}
+				{#if canExportQuestionnaire}
 					<Button
 						variant="secondary"
 						onclick={handleExport}
@@ -1066,19 +1117,21 @@
 							<DownloadSimple size={14} />
 						{/if}
 						{questionnaire.sourceFormat === 'xlsx' || questionnaire.sourceFormat === 'csv'
-							? 'Download completed file'
+							? trialQuestionnaireExportAvailable && !data.hasActivePaidAccess
+								? 'Download included completed file'
+								: 'Download completed file'
 							: m.questionnaires_export_button()}
 					</Button>
 				{:else}
 					<div class="group relative">
 						<Button variant="secondary" disabled>
 							<DownloadSimple size={14} />
-							{m.questionnaires_export_button()}
+							Upgrade to export
 						</Button>
 						<div
 							class="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden w-max max-w-[200px] -translate-x-1/2 rounded-[var(--radius)] bg-[var(--foreground)] px-2.5 py-1.5 text-center text-xs text-[var(--background)] group-hover:block"
 						>
-							{m.questionnaires_export_trial_tooltip()}
+							Your included export has been used. Upgrade for more exports.
 						</div>
 					</div>
 				{/if}
