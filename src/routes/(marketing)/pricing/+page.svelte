@@ -6,6 +6,12 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
 	import * as m from '$lib/paraglide/messages';
+	import SEO from '$lib/components/marketing/SEO.svelte';
+	import FAQ from '$lib/components/marketing/FAQ.svelte';
+	import { productFAQs } from '$lib/data/marketing';
+	import { breadcrumbSchema, faqSchema, organizationSchema, softwareSchema } from '$lib/seo';
+
+	const pricingFAQs = [productFAQs[5], productFAQs[4]];
 
 	let billing = $state<'monthly' | 'yearly'>('monthly');
 	let consultingOpen = $state(false);
@@ -58,32 +64,20 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Pricing — Auditlift | Security Readiness for Closing Deals</title>
-	<meta
-		name="description"
-		content="Simple, flat-rate pricing to get deal-ready for SOC 2, PCI-DSS, and ISO 27001. Starter from $149/mo. No per-seat pricing. Cancel anytime. 10-day free trial."
-	/>
-	<link rel="canonical" href="https://auditlift.app/pricing" />
-
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://auditlift.app/pricing" />
-	<meta property="og:site_name" content="Auditlift" />
-	<meta property="og:title" content="Pricing — Auditlift | SOC 2 Compliance Software" />
-	<meta
-		property="og:description"
-		content="SOC 2 compliance from $149/mo. No per-seat pricing. All 3 frameworks on Growth. 10-day free trial."
-	/>
-	<meta property="og:image" content="https://auditlift.app/og.png" />
-
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Pricing — Auditlift" />
-	<meta
-		name="twitter:description"
-		content="SOC 2 compliance from $149/mo. No per-seat pricing. 10-day free trial."
-	/>
-	<meta name="twitter:image" content="https://auditlift.app/og.png" />
-</svelte:head>
+<SEO
+	title="Security Questionnaire Software Pricing | AuditLift"
+	description="AuditLift Starter is $149 USD/month; Growth is $299 USD/month. Compare security questionnaire and compliance readiness features. Try free for 10 days."
+	path="/pricing"
+	schemas={[
+		organizationSchema,
+		softwareSchema,
+		faqSchema(pricingFAQs),
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Pricing', path: '/pricing' }
+		])
+	]}
+/>
 
 <!-- Nav -->
 <nav
@@ -116,7 +110,7 @@
 	<section class="mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-32 pb-24">
 		<div class="mb-3 text-center">
 			<h1 class="text-4xl font-bold tracking-tight text-[var(--foreground)]">
-				Simple, transparent pricing
+				Security questionnaire software pricing
 			</h1>
 			<p class="mt-3 text-[15px] text-[var(--foreground-muted)]">
 				No hidden fees. No per-seat pricing. Cancel any time.
@@ -254,6 +248,22 @@
 			Built for the deal cycle before you need heavyweight compliance automation. Auditlift gets you
 			<strong>buyer-response ready from $149/mo</strong> — focused on helping you respond and close.
 		</p>
+		<p class="mt-3 text-center text-[13px] text-[var(--foreground-muted)]">
+			All prices in USD. Annual billing: Starter $1,431/year; Growth $2,870/year. The 10-day free
+			trial requires no credit card and includes one completed questionnaire export.
+		</p>
+
+		<section class="mt-14 w-full" aria-labelledby="pricing-faq">
+			<h2 id="pricing-faq" class="mb-4 text-center text-2xl font-semibold text-[var(--foreground)]">
+				Pricing and readiness questions
+			</h2>
+			<FAQ items={pricingFAQs} />
+			<p class="mt-6 text-center text-[14px]">
+				<a href="/solutions/security-questionnaire-automation" class="text-[var(--brand)]"
+					>Explore the security questionnaire workflow</a
+				>
+			</p>
+		</section>
 
 		<!-- Advisory CTA -->
 		<div

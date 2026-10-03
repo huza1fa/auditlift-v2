@@ -1,5 +1,12 @@
+# Public marketing pages are open to search engines and AI search crawlers.
+# These rules are crawl guidance, not access control for private data.
 User-agent: *
 Disallow: /dashboard
+Disallow: /activity
+Disallow: /answer-library
+Disallow: /deals
+Disallow: /questionnaires
+Disallow: /frameworks
 Disallow: /controls
 Disallow: /policies
 Disallow: /evidence
@@ -11,5 +18,6 @@ Disallow: /login
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /invite/
+Disallow: /share/
 
 Sitemap: https://auditlift.app/sitemap.xml

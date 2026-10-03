@@ -8,6 +8,7 @@ import { eq, asc, and } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { dev } from '$app/environment';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { isPrivateSearchPath } from '$lib/search-discovery';
 
 const authHandle: Handle = async ({ event, resolve }) => {
 	// CSRF protection for JSON API routes
@@ -103,6 +104,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	if (isPrivateSearchPath(event.url.pathname)) {
+		response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+	}
 	if (!dev) {
 		response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 	}

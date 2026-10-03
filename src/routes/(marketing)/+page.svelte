@@ -15,7 +15,10 @@
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import ConsultingModal from '$lib/components/consulting/ConsultingModal.svelte';
 	import LeadMagnetModal from '$lib/components/consulting/LeadMagnetModal.svelte';
-	import * as m from '$lib/paraglide/messages';
+	import SEO from '$lib/components/marketing/SEO.svelte';
+	import FAQ from '$lib/components/marketing/FAQ.svelte';
+	import { product, productFAQs, solutions } from '$lib/data/marketing';
+	import { faqSchema, organizationSchema, softwareSchema } from '$lib/seo';
 
 	let pricingPlan = $state<'monthly' | 'yearly'>('monthly');
 
@@ -125,80 +128,23 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Auditlift - Security Questionnaires That Keep Deals Moving</title>
-	<meta
-		name="description"
-		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps. Built for B2B SaaS teams winning enterprise deals."
-	/>
-	<link rel="canonical" href="https://auditlift.app" />
-
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://auditlift.app" />
-	<meta property="og:site_name" content="Auditlift" />
-	<meta property="og:title" content="Auditlift - Win Deals Faster with Security Readiness" />
-	<meta
-		property="og:description"
-		content="Return buyer-ready security questionnaires with cited answers, approved company knowledge, and exact next steps for any gaps."
-	/>
-	<meta property="og:image" content="https://auditlift.app/og.png" />
-
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:site" content="@auditlift" />
-	<meta name="twitter:title" content="Auditlift - Win Deals Faster with Security Readiness" />
-	<meta
-		name="twitter:description"
-		content="Complete buyer security questionnaires with cited, reusable answers. Built for the enterprise deal cycle."
-	/>
-	<meta name="twitter:image" content="https://auditlift.app/og.png" />
-
-	{@html `<script type="application/ld+json">${JSON.stringify({
-		'@context': 'https://schema.org',
-		'@graph': [
-			{
-				'@type': 'Organization',
-				'@id': 'https://auditlift.app/#organization',
-				name: 'Auditlift',
-				url: 'https://auditlift.app',
-				email: 'hello@auditlift.app',
-				description:
-					'Buyer security-response workspace that helps teams complete questionnaires with cited answers, approved company knowledge, and clear gap remediation.'
-			},
-			{
-				'@type': 'WebSite',
-				'@id': 'https://auditlift.app/#website',
-				url: 'https://auditlift.app',
-				name: 'Auditlift',
-				publisher: { '@id': 'https://auditlift.app/#organization' }
-			},
-			{
-				'@type': 'SoftwareApplication',
-				name: 'Auditlift',
-				applicationCategory: 'BusinessApplication',
-				operatingSystem: 'Web',
-				url: 'https://auditlift.app',
-				description:
-					'Complete buyer security questionnaires with cited answers, approved company knowledge, and clear next steps for gaps.',
-				offers: [
-					{
-						'@type': 'Offer',
-						name: 'Starter',
-						price: '149.00',
-						priceCurrency: 'USD',
-						description: '1 compliance framework, up to 5 team members, 10-day free trial'
-					},
-					{
-						'@type': 'Offer',
-						name: 'Growth',
-						price: '299.00',
-						priceCurrency: 'USD',
-						description: 'All 3 frameworks, unlimited team members, 10-day free trial'
-					}
-				]
-			}
-		]
-	})}</script>`}
-</svelte:head>
+<SEO
+	title="Security Questionnaire Automation for Startups | AuditLift"
+	description="AI-assisted security questionnaire software for B2B SaaS teams. Draft cited answers, reuse approved responses, and review buyer-specific gaps. From $149/month."
+	path="/"
+	schemas={[
+		organizationSchema,
+		{
+			'@type': 'WebSite',
+			'@id': `${product.url}/#website`,
+			url: `${product.url}/`,
+			name: product.name,
+			publisher: { '@id': `${product.url}/#organization` }
+		},
+		softwareSchema,
+		faqSchema(productFAQs)
+	]}
+/>
 
 <!-- Nav -->
 <nav class="nav-bar">
@@ -209,7 +155,7 @@
 		</a>
 		<div class="nav-links">
 			<a class="nav-link" href="#features">Features</a>
-			<a class="nav-link" href="#pricing">Pricing</a>
+			<a class="nav-link" href="/pricing">Pricing</a>
 			<a href="/blog" class="nav-link">Blog</a>
 		</div>
 		<div class="nav-actions">
@@ -232,12 +178,13 @@
 				</div>
 
 				<h1 class="hero-headline">
-					Turn buyer security reviews into <span>your next advantage.</span>
+					Answer security questionnaires with <span>source-backed confidence.</span>
 				</h1>
 
 				<p class="hero-subheadline">
-					Give your team a focused workspace for cited answers, source material, and the few gaps
-					that need attention before a buyer says yes.
+					AuditLift is AI-assisted security questionnaire software for B2B SaaS startups. Draft
+					cited answers from your policies, evidence, and company facts, review the gaps, and reuse
+					approved responses for your next enterprise buyer.
 				</p>
 
 				<div class="hero-cta-row">
@@ -329,8 +276,8 @@
 	<section class="stats-bar">
 		<div class="stats-inner">
 			<div class="stat-item">
-				<p class="stat-value">30 days or less</p>
-				<p class="stat-label">Average time to audit-ready</p>
+				<p class="stat-value">Source-backed answers</p>
+				<p class="stat-label">Review citations before you send</p>
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
 			<div class="stat-item">
@@ -339,8 +286,8 @@
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
 			<div class="stat-item">
-				<p class="stat-value">SOC 2 + PCI + ISO</p>
-				<p class="stat-label">All major frameworks</p>
+				<p class="stat-value">SOC 2 + PCI-DSS + ISO 27001</p>
+				<p class="stat-label">Build a framework readiness foundation</p>
 			</div>
 		</div>
 	</section>
@@ -443,7 +390,9 @@
 		<div class="section-inner">
 			<div class="section-header">
 				<p class="section-label">Everything you need</p>
-				<h2 class="section-headline">Everything you need to get audit-ready</h2>
+				<h2 class="section-headline">
+					A security questionnaire workspace, not another spreadsheet
+				</h2>
 			</div>
 			<div class="features-grid">
 				{#each features as feature (feature.title)}
@@ -464,7 +413,7 @@
 		<div class="section-inner">
 			<div class="section-header">
 				<p class="section-label">Simple process</p>
-				<h2 class="section-headline">Three steps to audit-ready</h2>
+				<h2 class="section-headline">From buyer questionnaire to reviewed response</h2>
 			</div>
 			<div class="steps-row">
 				{#each steps as step, i (step.number)}
@@ -548,14 +497,42 @@
 				{/each}
 			</div>
 
-			<!-- Competitor compare -->
+			<!-- Pricing details -->
 			<div class="competitor-compare">
 				<p class="competitor-compare-text">
-					Enterprise compliance tools typically cost <span class="competitor-name"
-						>$7,500–$15,000/yr</span
-					>. Auditlift starts at <span class="competitor-name">$149/mo</span>.
+					Prices in USD. Starter is $1,431/year and Growth is $2,870/year when billed annually.
+					<a href="/pricing" class="competitor-name">Compare plans and included features</a>.
 				</p>
 			</div>
+		</div>
+	</section>
+
+	<section class="features-section" aria-labelledby="solutions-heading">
+		<div class="section-inner">
+			<div class="section-header">
+				<p class="section-label">Built around your next buyer review</p>
+				<h2 id="solutions-heading" class="section-headline">Where AuditLift fits your workflow</h2>
+			</div>
+			<div class="features-grid">
+				{#each solutions as solution (solution.slug)}
+					<article class="feature-card">
+						<h3 class="feature-title">
+							<a class="solution-link" href="/solutions/{solution.slug}">{solution.headline}</a>
+						</h3>
+						<p class="feature-description">{solution.summary}</p>
+					</article>
+				{/each}
+			</div>
+		</div>
+	</section>
+
+	<section id="faq" class="steps-section" aria-labelledby="faq-heading">
+		<div class="section-inner">
+			<div class="section-header">
+				<p class="section-label">Product questions, answered</p>
+				<h2 id="faq-heading" class="section-headline">Security questionnaire software FAQ</h2>
+			</div>
+			<FAQ items={productFAQs} />
 		</div>
 	</section>
 
@@ -594,7 +571,8 @@
 			<nav class="footer-links" aria-label="Footer navigation">
 				<a href="/" class="footer-link">Home</a>
 				<a class="footer-link" href="#features">Features</a>
-				<a class="footer-link" href="#pricing">Pricing</a>
+				<a class="footer-link" href="/pricing">Pricing</a>
+				<a class="footer-link" href="#solutions-heading">Solutions</a>
 				<a href="/blog" class="footer-link">Blog</a>
 				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/terms" class="footer-link">Terms</a>
@@ -606,6 +584,15 @@
 </div>
 
 <style>
+	.solution-link {
+		color: var(--foreground);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.solution-link:hover {
+		color: var(--brand);
+	}
+
 	/* =====================
 	   NAV
 	   ===================== */

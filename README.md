@@ -6,6 +6,8 @@
 
 **Live URL:** [https://auditlift.app](https://auditlift.app)
 
+**Search discovery:** See [SEO and AI search discovery](docs/search-discovery.md) for marketing content sources, crawler rules, and the post-deployment indexing checklist.
+
 ---
 
 ## What is AuditLift?

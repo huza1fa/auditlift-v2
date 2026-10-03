@@ -3,6 +3,8 @@
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { blogPosts } from '$lib/data/blog';
+	import SEO from '$lib/components/marketing/SEO.svelte';
+	import { breadcrumbSchema, canonicalUrl } from '$lib/seo';
 
 	function formatDate(dateStr: string): string {
 		return new Date(dateStr).toLocaleDateString('en-US', {
@@ -13,13 +15,29 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Blog — Auditlift</title>
-	<meta
-		name="description"
-		content="Practical guides for SaaS founders navigating enterprise security reviews, SOC 2 readiness, and compliance without consultants."
-	/>
-</svelte:head>
+<SEO
+	title="Security Questionnaire & SOC 2 Readiness Guides | AuditLift"
+	description="Practical guides for SaaS founders responding to enterprise security questionnaires, building approved answers, and preparing a SOC 2 readiness foundation."
+	path="/blog"
+	schemas={[
+		{
+			'@type': 'Blog',
+			'@id': canonicalUrl('/blog'),
+			name: 'AuditLift Guides',
+			url: canonicalUrl('/blog'),
+			blogPost: blogPosts.map((post) => ({
+				'@type': 'BlogPosting',
+				headline: post.title,
+				url: canonicalUrl(`/blog/${post.slug}`),
+				datePublished: post.date
+			}))
+		},
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Guides', path: '/blog' }
+		])
+	]}
+/>
 
 <nav class="nav-bar">
 	<div class="nav-inner">
@@ -84,6 +102,10 @@
 			<nav class="footer-links" aria-label="Footer navigation">
 				<a href="/" class="footer-link">Home</a>
 				<a href="/blog" class="footer-link">Blog</a>
+				<a href="/solutions/security-questionnaire-automation" class="footer-link"
+					>Questionnaire automation</a
+				>
+				<a href="/pricing" class="footer-link">Pricing</a>
 				<a href="/privacy" class="footer-link">Privacy</a>
 				<a href="/terms" class="footer-link">Terms</a>
 				<a href="/login" class="footer-link">Sign in</a>

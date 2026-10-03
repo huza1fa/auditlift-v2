@@ -2,6 +2,8 @@
 	import { ArrowLeft, ArrowRight, Calendar, Clock, ShareNetwork } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import SEO from '$lib/components/marketing/SEO.svelte';
+	import { breadcrumbSchema, canonicalUrl, organizationSchema } from '$lib/seo';
 
 	let { data } = $props();
 	const post = $derived(data.post);
@@ -30,17 +32,32 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{post.title} — Auditlift Blog</title>
-	<meta name="description" content={post.excerpt} />
-	<meta property="og:type" content="article" />
-	<meta property="og:title" content={post.title} />
-	<meta property="og:description" content={post.excerpt} />
-	<meta property="og:url" content="https://auditlift.app/blog/{post.slug}" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={post.title} />
-	<meta name="twitter:description" content={post.excerpt} />
-</svelte:head>
+<SEO
+	title={`${post.title} — AuditLift Guides`}
+	description={post.excerpt}
+	path={`/blog/${post.slug}`}
+	type="article"
+	publishedTime={post.date}
+	schemas={[
+		organizationSchema,
+		{
+			'@type': 'BlogPosting',
+			'@id': canonicalUrl(`/blog/${post.slug}`),
+			headline: post.title,
+			description: post.excerpt,
+			datePublished: post.date,
+			author: { '@id': organizationSchema['@id'] },
+			publisher: { '@id': organizationSchema['@id'] },
+			image: canonicalUrl('/og.png'),
+			mainEntityOfPage: canonicalUrl(`/blog/${post.slug}`)
+		},
+		breadcrumbSchema([
+			{ name: 'Home', path: '/' },
+			{ name: 'Guides', path: '/blog' },
+			{ name: post.title, path: `/blog/${post.slug}` }
+		])
+	]}
+/>
 
 <nav class="nav-bar">
 	<div class="nav-inner">
@@ -118,6 +135,13 @@
 					{/if}
 				{/each}
 			</div>
+
+			<p class="blog-post-excerpt">
+				Explore how AuditLift supports
+				<a href="/solutions/security-questionnaire-automation">security questionnaire automation</a
+				>, an <a href="/solutions/security-answer-library">approved answer library</a>, and
+				<a href="/solutions/soc-2-readiness">SOC 2 readiness</a>.
+			</p>
 
 			<div class="blog-cta">
 				<p class="blog-cta-text">{post.ctaText}</p>
