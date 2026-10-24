@@ -8,6 +8,10 @@
 
 **Search discovery:** See [SEO and AI search discovery](docs/search-discovery.md) for marketing content sources, crawler rules, and the post-deployment indexing checklist.
 
+**Answer freshness:** See [Answer freshness and review](docs/answer-freshness.md) for source-change detection, human review safeguards, rollout behavior, and verification.
+
+**Pricing:** Starter is $49/month or $490/year; Growth is $99/month or $990/year (USD). Annual billing includes two months free. Prices are shared with checkout through `src/lib/pricing.ts`.
+
 ---
 
 ## What is AuditLift?

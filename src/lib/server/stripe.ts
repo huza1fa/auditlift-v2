@@ -1,6 +1,9 @@
 import Stripe from 'stripe';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { resolveCheckoutPrice } from './checkout-price';
+import type { PlanInterval, PlanTier } from '$lib/pricing';
+export type { PlanInterval, PlanTier } from '$lib/pricing';
 
 const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
@@ -17,9 +20,6 @@ if (!STRIPE_SECRET_KEY) {
 export const stripe = new Stripe(STRIPE_SECRET_KEY, {
 	typescript: true
 });
-
-export type PlanInterval = 'monthly' | 'yearly';
-export type PlanTier = 'starter' | 'growth';
 
 export function getPriceId(tier: PlanTier, interval: PlanInterval): string {
 	const map: Record<string, string | undefined> = {
@@ -57,7 +57,13 @@ export async function createCheckoutSession(
 	successUrl: string,
 	cancelUrl: string
 ): Promise<string> {
-	const priceId = getPriceId(tier, interval);
+	let priceId: string;
+	try {
+		priceId = await resolveCheckoutPrice(stripe, getPriceId(tier, interval), tier, interval);
+	} catch (cause) {
+		console.error('[Stripe] Could not verify checkout price:', cause);
+		throw error(503, 'Checkout pricing is temporarily unavailable. Please try again shortly.');
+	}
 
 	const session = await stripe.checkout.sessions.create({
 		mode: 'subscription',

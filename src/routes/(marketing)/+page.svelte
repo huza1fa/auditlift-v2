@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { planPrices } from '$lib/pricing';
+	import * as m from '$lib/paraglide/messages';
 	import {
 		Check,
 		ArrowRight,
@@ -26,8 +28,8 @@
 		{
 			id: 'starter',
 			name: 'Starter',
-			monthlyPrice: 149,
-			yearlyPrice: 1431,
+			monthlyPrice: planPrices.starter.monthly,
+			yearlyPrice: planPrices.starter.yearly,
 			features: [
 				'1 framework (SOC 2)',
 				'Unlimited evidence & policies',
@@ -39,8 +41,8 @@
 		{
 			id: 'growth',
 			name: 'Growth',
-			monthlyPrice: 299,
-			yearlyPrice: 2870,
+			monthlyPrice: planPrices.growth.monthly,
+			yearlyPrice: planPrices.growth.yearly,
 			highlighted: true,
 			features: [
 				'All 3 frameworks',
@@ -130,7 +132,7 @@
 
 <SEO
 	title="Security Questionnaire Automation for Startups | AuditLift"
-	description="AI-assisted security questionnaire software for B2B SaaS teams. Draft cited answers, reuse approved responses, and review buyer-specific gaps. From $149/month."
+	description={`AI-assisted security questionnaire software for B2B SaaS teams. Draft cited answers, reuse approved responses, and review buyer-specific gaps. From $${planPrices.starter.monthly}/month.`}
 	path="/"
 	schemas={[
 		organizationSchema,
@@ -281,7 +283,7 @@
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
 			<div class="stat-item">
-				<p class="stat-value">From $149/mo</p>
+				<p class="stat-value">From ${planPrices.starter.monthly}/mo</p>
 				<p class="stat-label">No per-seat pricing</p>
 			</div>
 			<div class="stat-divider" aria-hidden="true"></div>
@@ -443,19 +445,17 @@
 			<!-- Toggle -->
 			<div class="pricing-toggle-wrapper">
 				<button
-					class="pricing-toggle-btn"
-					class:active={pricingPlan === 'monthly'}
+					class={['pricing-toggle-btn', { active: pricingPlan === 'monthly' }]}
 					onclick={() => (pricingPlan = 'monthly')}
 				>
 					Monthly
 				</button>
 				<button
-					class="pricing-toggle-btn"
-					class:active={pricingPlan === 'yearly'}
+					class={['pricing-toggle-btn', { active: pricingPlan === 'yearly' }]}
 					onclick={() => (pricingPlan = 'yearly')}
 				>
 					Yearly
-					<span class="pricing-save-badge">Save 20%</span>
+					<span class="pricing-save-badge">{m.pricing_annual_bonus()}</span>
 				</button>
 			</div>
 
@@ -500,7 +500,8 @@
 			<!-- Pricing details -->
 			<div class="competitor-compare">
 				<p class="competitor-compare-text">
-					Prices in USD. Starter is $1,431/year and Growth is $2,870/year when billed annually.
+					Prices in USD. Starter is ${planPrices.starter.yearly}/year and Growth is ${planPrices
+						.growth.yearly}/year when billed annually.
 					<a href="/pricing" class="competitor-name">Compare plans and included features</a>.
 				</p>
 			</div>

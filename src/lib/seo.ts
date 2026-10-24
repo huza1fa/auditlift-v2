@@ -1,4 +1,5 @@
 import { product, type FAQ } from './data/marketing';
+import { planPrices } from './pricing';
 
 export function canonicalUrl(path: string): string {
 	const url = new URL(path, `${product.url}/`);
@@ -58,14 +59,14 @@ export const softwareSchema = {
 	offers: [
 		{
 			name: 'Starter',
-			price: '149.00',
-			yearlyPrice: '1431.00',
+			price: planPrices.starter.monthly.toFixed(2),
+			yearlyPrice: planPrices.starter.yearly.toFixed(2),
 			description: 'SOC 2, up to 5 team members'
 		},
 		{
 			name: 'Growth',
-			price: '299.00',
-			yearlyPrice: '2870.00',
+			price: planPrices.growth.monthly.toFixed(2),
+			yearlyPrice: planPrices.growth.yearly.toFixed(2),
 			description: 'SOC 2, ISO 27001, PCI-DSS, unlimited team members'
 		}
 	].map(({ name, price, yearlyPrice, description }) => ({

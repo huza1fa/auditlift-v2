@@ -30,6 +30,8 @@
 	import { page } from '$app/state';
 	import { getSuggestedPolicyType, getPolicyTitle } from '$lib/domain-policy-map';
 	import { captureEvent } from '$lib/posthog';
+	import QuestionSourceReview from '$lib/components/answers/QuestionSourceReview.svelte';
+	import type { CurrentAnswerSource } from '$lib/answer-sources';
 
 	// ── Types ─────────────────────────────────────────────────────────────────
 	type Confidence = 'high' | 'medium' | 'low' | 'gap' | null;
@@ -57,6 +59,7 @@
 	}
 
 	interface Question {
+		reviewRevision: string;
 		id: string;
 		sectionName: string | null;
 		questionNumber: string | null;
@@ -70,10 +73,13 @@
 		mappedPolicyIds: string[] | null;
 		mappedControlIds: string[] | null;
 		citations?: AnswerCitation[] | null;
+		freshnessIssues?: Array<{ sourceTitle: string; reason: string }>;
 		order: number;
 	}
 
 	interface ApiResponse {
+		currentSources: Record<string, CurrentAnswerSource>;
+		freshnessRevision: string;
 		questionnaire: QuestionnaireData;
 		questions: Question[];
 		policyMap: Record<string, string>;
@@ -124,6 +130,8 @@
 
 	let questionnaire = $state<QuestionnaireData | null>(null);
 	let questions = $state<Question[]>([]);
+	let freshnessRevision = $state('');
+	let currentSources = $state<Record<string, CurrentAnswerSource>>({});
 	let policyMap = $state<Record<string, string>>({});
 	let controlMap = $state<Record<string, { code: string; title: string }>>({});
 	let coverage = $state<FrameworkCoverage[]>([]);
@@ -350,6 +358,8 @@
 			const json: ApiResponse = await res.json();
 			questionnaire = json.questionnaire;
 			questions = json.questions ?? [];
+			freshnessRevision = json.freshnessRevision;
+			currentSources = json.currentSources ?? {};
 			policyMap = json.policyMap ?? {};
 			controlMap = json.controlMap ?? {};
 			existingPolicyTypes = json.existingPolicyTypes ?? [];
@@ -592,12 +602,17 @@
 				{
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ scope: 'Company-wide' })
+					body: JSON.stringify({
+						scope: 'Company-wide',
+						sourceRevision: freshnessRevision,
+						questionRevision: selectedQuestion.reviewRevision
+					})
 				}
 			);
 			const body: { message?: string } = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(body.message ?? 'Could not approve this answer for reuse.');
 			toastSuccess('Approved for reuse in the Answer Library.');
+			await fetchData();
 			captureEvent('answer_library_entry_approved', {
 				questionnaire_id: id,
 				question_id: selectedQuestion.id
@@ -691,7 +706,20 @@
 		exporting = true;
 		captureEvent('questionnaire_export_clicked', { questionnaire_id: id });
 		try {
-			const response = await fetch(`/api/questionnaires/${id}/export`);
+			let response = await fetch(`/api/questionnaires/${id}/export`);
+			if (response.status === 409) {
+				const warning = await response
+					.clone()
+					.json()
+					.catch(() => ({}));
+				if (warning.code === 'ANSWER_REVIEW_REQUIRED') {
+					if (!window.confirm(m.freshness_export_confirm({ count: String(warning.warningCount) })))
+						return;
+					response = await fetch(
+						`/api/questionnaires/${id}/export?acknowledgeFreshness=${encodeURIComponent(warning.reviewToken)}`
+					);
+				}
+			}
 			if (!response.ok) {
 				const body = await response.json().catch(() => ({}));
 				throw new Error((body as { message?: string }).message ?? 'Could not export answers.');
@@ -1425,6 +1453,41 @@
 							</div>
 
 							<!-- Confidence explanation (answered) -->
+							{#if selectedQuestion.freshnessIssues?.length}
+								<div
+									class="mb-4 space-y-2 rounded-[var(--radius)] border border-[var(--warning)] bg-[var(--background-alt)] p-3 text-xs text-[var(--warning)]"
+								>
+									<p class="font-semibold">{m.freshness_needs_review()}</p>
+									<p>{m.freshness_question_warning()}</p>
+									<ul>
+										{#each selectedQuestion.freshnessIssues as issue, index (index)}<li>
+												{issue.sourceTitle}
+											</li>{/each}
+									</ul>
+									<a class="font-medium underline" href="/answer-library"
+										>{m.freshness_library_title()} →</a
+									>
+									{#if data.canApproveAnswers}
+										{#key selectedQuestion.id}
+											<QuestionSourceReview
+												questionnaireId={id}
+												questionId={selectedQuestion.id}
+												revision={selectedQuestion.reviewRevision}
+												sourceRevision={freshnessRevision}
+												citations={selectedQuestion.citations ?? []}
+												sources={(selectedQuestion.citations ?? []).map(
+													(citation) =>
+														currentSources[`${citation.sourceType}:${citation.sourceId}`] ?? {
+															available: false,
+															currentText: ''
+														}
+												)}
+												onreviewed={fetchData}
+											/>
+										{/key}
+									{/if}
+								</div>
+							{/if}
 							{#if selectedQuestion.confidence === 'high' || selectedQuestion.confidence === 'medium' || selectedQuestion.confidence === 'low'}
 								<div
 									class="mb-4 flex items-start gap-2 rounded-[var(--radius)] bg-[var(--background-alt)] px-3.5 py-2.5"
@@ -1564,7 +1627,7 @@
 													size="sm"
 													variant="secondary"
 													onclick={approveForReuse}
-													disabled={approvingAnswerId === selectedQuestion.id}
+													disabled={approvingAnswerId === selectedQuestion.id || savingAnswer}
 												>
 													{#if approvingAnswerId === selectedQuestion.id}<Spinner
 															size={13}

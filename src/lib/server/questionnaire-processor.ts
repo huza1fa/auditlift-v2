@@ -2,15 +2,12 @@ import { db } from '$lib/server/db';
 import {
 	questionnaires,
 	questionnaireQuestions,
-	policies,
-	controls,
 	organizationFrameworks,
 	organizations,
 	subscriptions,
-	questionnaireProcessingJobs,
-	answerLibraryEntries
+	questionnaireProcessingJobs
 } from '$lib/server/db/schema';
-import { eq, and, or, lte, isNull, asc, sql, gt } from 'drizzle-orm';
+import { eq, and, or, lte, isNull, asc, sql } from 'drizzle-orm';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
@@ -18,7 +15,7 @@ import { env } from '$env/dynamic/private';
 import { hasActivePaidAccess } from '$lib/server/billing';
 import { computeReadinessScore } from '$lib/server/score';
 import { buildVerifiedFactsQuestionnaireContext } from '$lib/server/questionnaire-prompt-context';
-import { getVerifiedOrganizationFacts } from '$lib/server/organization-facts';
+import { loadKnowledgeFreshness } from '$lib/server/knowledge-freshness';
 import { formatVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts-format';
 import { refreshQuestionnaireStats } from '$lib/server/questionnaire-stats';
 import {
@@ -67,6 +64,7 @@ const VerificationResultSchema = z.object({
 type QuestionClassification = z.infer<typeof QuestionClassificationSchema>;
 
 interface ProcessingContext {
+	freshness: Awaited<ReturnType<typeof loadKnowledgeFreshness>>;
 	orgName: string;
 	isPaid: boolean;
 	systemDescriptionPrompt: string;
@@ -385,21 +383,17 @@ async function loadProcessingContext(
 
 	const orgName = org?.name ?? 'the organization';
 	const isPaid = hasActivePaidAccess(subscription ?? null);
-	const verifiedFacts = await getVerifiedOrganizationFacts(organizationId, { questionnaireId });
+	const freshness = await loadKnowledgeFreshness(organizationId);
+	const verifiedFacts = freshness.facts.filter(
+		(fact) =>
+			fact.status === 'verified' &&
+			(fact.scope === 'company' || (questionnaireId && fact.questionnaireId === questionnaireId))
+	);
 	const verifiedFactsPrompt = buildVerifiedFactsQuestionnaireContext(
 		formatVerifiedOrganizationFactsForPrompt(verifiedFacts)
 	);
 
-	const orgPolicies = await db
-		.select({
-			id: policies.id,
-			title: policies.title,
-			type: policies.type,
-			content: policies.content,
-			archivedAt: policies.archivedAt
-		})
-		.from(policies)
-		.where(eq(policies.organizationId, organizationId));
+	const orgPolicies = freshness.policyRows;
 
 	const policyContext = orgPolicies
 		.filter((p) => p.archivedAt === null)
@@ -409,15 +403,7 @@ async function loadProcessingContext(
 			contentSnippet: p.content.slice(0, MAX_POLICY_CONTEXT_CHARS)
 		}));
 
-	const orgControls = await db
-		.select({
-			id: controls.id,
-			code: controls.code,
-			title: controls.title,
-			category: controls.category,
-			whatAuditorExpects: controls.whatAuditorExpects
-		})
-		.from(controls);
+	const orgControls = freshness.controlRows;
 
 	const controlContext = orgControls.map((c) => ({
 		id: c.id,
@@ -427,27 +413,14 @@ async function loadProcessingContext(
 		whatAuditorExpects: c.whatAuditorExpects
 	}));
 
-	const approvedAnswers = await db
-		.select({
-			id: answerLibraryEntries.id,
-			questionText: answerLibraryEntries.questionText,
-			answer: answerLibraryEntries.answer
-		})
-		.from(answerLibraryEntries)
-		.where(
-			and(
-				eq(answerLibraryEntries.organizationId, organizationId),
-				eq(answerLibraryEntries.status, 'approved'),
-				or(isNull(answerLibraryEntries.expiresAt), gt(answerLibraryEntries.expiresAt, new Date()))
-			)
-		);
+	const approvedAnswers = freshness.approvedEntries();
 	const approvedAnswerContext = approvedAnswers.map((entry) => ({
 		...entry,
 		answer: entry.answer.slice(0, MAX_APPROVED_ANSWER_CONTEXT_CHARS)
 	}));
 
 	// Build system description context string for AI prompts
-	const sd = (org?.systemDescription ?? null) as Record<string, unknown> | null;
+	const sd = (freshness.systemDescription ?? null) as Record<string, unknown> | null;
 	const sdParts: string[] = [];
 	if (sd) {
 		if (sd.productDescription) sdParts.push(`Product: ${sd.productDescription}`);
@@ -471,6 +444,7 @@ async function loadProcessingContext(
 			: '';
 
 	return {
+		freshness,
 		orgName,
 		isPaid,
 		systemDescriptionPrompt,
@@ -637,7 +611,8 @@ export async function processQuestionnaire(
 			approvedAnswerIds,
 			policyContext,
 			controlContext,
-			approvedAnswerContext
+			approvedAnswerContext,
+			freshness
 		} = await loadProcessingContext(organizationId, questionnaireId);
 
 		// 3. Determine how many questions to process
@@ -702,12 +677,15 @@ export async function processQuestionnaire(
 						const safeControlIds = classification.mappedControlIds.filter((id) =>
 							validControlIds.has(id)
 						);
-						const citations = filterValidCitations(
-							classification.citations,
-							validPolicyIds,
-							validControlIds,
-							verifiedFactIds,
-							approvedAnswerIds
+						const citations = freshness.stamp(
+							filterValidCitations(
+								classification.citations,
+								validPolicyIds,
+								validControlIds,
+								verifiedFactIds,
+								approvedAnswerIds
+							),
+							questionnaireId
 						);
 
 						await db
@@ -859,7 +837,8 @@ async function reprocessQuestionnaireNow(
 			approvedAnswerIds,
 			policyContext,
 			controlContext,
-			approvedAnswerContext
+			approvedAnswerContext,
+			freshness
 		} = await loadProcessingContext(organizationId, questionnaireId);
 
 		// 5. Apply trial question limit to the eligible set
@@ -921,12 +900,15 @@ async function reprocessQuestionnaireNow(
 						const safeControlIds = classification.mappedControlIds.filter((id) =>
 							validControlIds.has(id)
 						);
-						const citations = filterValidCitations(
-							classification.citations,
-							validPolicyIds,
-							validControlIds,
-							verifiedFactIds,
-							approvedAnswerIds
+						const citations = freshness.stamp(
+							filterValidCitations(
+								classification.citations,
+								validPolicyIds,
+								validControlIds,
+								verifiedFactIds,
+								approvedAnswerIds
+							),
+							questionnaireId
 						);
 
 						await db

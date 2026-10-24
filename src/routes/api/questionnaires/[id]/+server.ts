@@ -12,6 +12,8 @@ import { eq, and, asc, inArray, isNull } from 'drizzle-orm';
 import { requireActiveOrganizationRole, requireOrganizationRole } from '$lib/server/auth-utils';
 import { logActivity } from '$lib/server/activity';
 import { z } from 'zod';
+import { loadKnowledgeFreshness } from '$lib/server/knowledge-freshness';
+import { fingerprint } from '$lib/server/answer-freshness';
 
 const PatchQuestionnaireSchema = z.object({ dealId: z.string().uuid().nullable() });
 
@@ -179,5 +181,31 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		.where(and(eq(policies.organizationId, orgId), isNull(policies.archivedAt)));
 	const existingPolicyTypes = [...new Set(orgPolicyRows.map((p) => p.type))];
 
-	return json({ questionnaire, questions, policyMap, controlMap, existingPolicyTypes });
+	const freshness = await loadKnowledgeFreshness(orgId);
+	const currentSources = Object.fromEntries(
+		questions.flatMap((question) => {
+			const citations = question.citations ?? [];
+			const sources = freshness.reviewSources(citations, questionnaire.id);
+			return citations.map((citation, index) => [
+				`${citation.sourceType}:${citation.sourceId}`,
+				sources[index]
+			]);
+		})
+	);
+	return json(
+		{
+			questionnaire,
+			questions: questions.map((question) => ({
+				...question,
+				reviewRevision: fingerprint(question),
+				freshnessIssues: freshness.citationIssues(question.citations, questionnaire.id)
+			})),
+			currentSources,
+			freshnessRevision: freshness.revision,
+			policyMap,
+			controlMap,
+			existingPolicyTypes
+		},
+		{ headers: { 'Cache-Control': 'no-store' } }
+	);
 };

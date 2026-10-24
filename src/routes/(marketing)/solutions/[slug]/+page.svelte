@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { planPrices } from '$lib/pricing';
 	import { ArrowRight, Check } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
@@ -47,7 +48,8 @@
 				<a href="/pricing">Compare plans</a>
 			</div>
 			<p class="trial-note">
-				<Check size={15} />10-day trial · No credit card required · From $149 USD/month
+				<Check size={15} />10-day trial · No credit card required · From ${planPrices.starter
+					.monthly} USD/month
 			</p>
 		</header>
 

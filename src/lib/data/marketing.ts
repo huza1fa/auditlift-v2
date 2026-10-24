@@ -1,3 +1,5 @@
+import { planPrices } from '../pricing';
+
 export interface FAQ {
 	question: string;
 	answer: string;
@@ -46,8 +48,7 @@ export const productFAQs: FAQ[] = [
 	},
 	{
 		question: 'How much does AuditLift cost?',
-		answer:
-			'Starter costs $149 USD per month or $1,431 USD per year and includes SOC 2 and up to 5 team members. Growth costs $299 USD per month or $2,870 USD per year and includes all 3 frameworks and unlimited team members. Both offer a 10-day free trial with no credit card required. During the unpaid trial, you can export one completed questionnaire.'
+		answer: `Starter costs $${planPrices.starter.monthly} USD per month or $${planPrices.starter.yearly} USD per year and includes SOC 2 and up to 5 team members. Growth costs $${planPrices.growth.monthly} USD per month or $${planPrices.growth.yearly} USD per year and includes all 3 frameworks and unlimited team members. Annual billing includes two months free. Both offer a 10-day free trial with no credit card required. During the unpaid trial, you can export one completed questionnaire.`
 	}
 ];
 

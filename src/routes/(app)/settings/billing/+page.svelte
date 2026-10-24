@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { planPrices } from '$lib/pricing';
+	import * as m from '$lib/paraglide/messages';
 	import { CreditCard, ArrowLeft, Check, ShieldCheck, Warning } from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -11,10 +13,7 @@
 	let errorMsg = $state('');
 	let selectedPlan = $state<'starter' | 'growth'>('starter');
 
-	const plans = {
-		starter: { monthly: 149, yearly: 1431 },
-		growth: { monthly: 299, yearly: 2870 }
-	};
+	const plans = planPrices;
 
 	const monthlyPrice = $derived(plans[selectedPlan].monthly);
 	const yearlyTotal = $derived(plans[selectedPlan].yearly);
@@ -246,7 +245,7 @@
 				<p class="font-semibold text-[var(--foreground)]">Starter</p>
 				<p class="text-xs text-[var(--foreground-muted)]">1 framework · up to 5 members</p>
 				<p class="mt-2 font-bold text-[var(--foreground)]">
-					$149<span class="text-xs font-normal">/mo</span>
+					${planPrices.starter.monthly}<span class="text-xs font-normal">/mo</span>
 				</p>
 			</button>
 			<button
@@ -259,7 +258,7 @@
 				<p class="font-semibold text-[var(--foreground)]">Growth</p>
 				<p class="text-xs text-[var(--foreground-muted)]">All 3 frameworks · unlimited members</p>
 				<p class="mt-2 font-bold text-[var(--foreground)]">
-					$299<span class="text-xs font-normal">/mo</span>
+					${planPrices.growth.monthly}<span class="text-xs font-normal">/mo</span>
 				</p>
 			</button>
 		</div>
@@ -318,7 +317,7 @@
 				{isActive && !data.subscription?.cancelAtPeriodEnd && periodEnd ? '' : 'border-[var(--border)]'}"
 			>
 				<div class="absolute -top-2.5 right-4">
-					<Badge variant="success">Save 20%</Badge>
+					<Badge variant="success">{m.pricing_annual_bonus()}</Badge>
 				</div>
 				<div class="mb-3 flex items-center justify-between">
 					<p class="font-semibold text-[var(--foreground)]">Yearly</p>

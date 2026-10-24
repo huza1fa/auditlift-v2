@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { planPrices } from '$lib/pricing';
 	import { Check, ArrowRight, Envelope, Handshake } from 'phosphor-svelte';
 	import LogoMark from '$lib/components/ui/LogoMark.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
@@ -22,8 +23,8 @@
 			name: 'Starter',
 			description:
 				'For founders who need a defensible, reusable answer base for their first enterprise security reviews.',
-			monthlyPrice: 149,
-			yearlyPrice: 1431,
+			monthlyPrice: planPrices.starter.monthly,
+			yearlyPrice: planPrices.starter.yearly,
 			highlighted: false,
 			cta: 'Start free trial',
 			ctaHref: '/login',
@@ -44,8 +45,8 @@
 			name: 'Growth',
 			description:
 				'For teams managing a growing pipeline of buyer security reviews and reusable company knowledge.',
-			monthlyPrice: 299,
-			yearlyPrice: 2870,
+			monthlyPrice: planPrices.growth.monthly,
+			yearlyPrice: planPrices.growth.yearly,
 			highlighted: true,
 			cta: 'Start free trial',
 			ctaHref: '/login',
@@ -66,7 +67,7 @@
 
 <SEO
 	title="Security Questionnaire Software Pricing | AuditLift"
-	description="AuditLift Starter is $149 USD/month; Growth is $299 USD/month. Compare security questionnaire and compliance readiness features. Try free for 10 days."
+	description={`AuditLift Starter is $${planPrices.starter.monthly} USD/month; Growth is $${planPrices.growth.monthly} USD/month. Compare security questionnaire and compliance readiness features. Try free for 10 days.`}
 	path="/pricing"
 	schemas={[
 		organizationSchema,
@@ -140,7 +141,7 @@
 				Yearly
 				<span
 					class="rounded-full bg-[var(--success-light)] px-2 py-0.5 text-[11px] font-semibold text-[var(--success)]"
-					>Save 20%</span
+					>{m.pricing_annual_bonus()}</span
 				>
 			</button>
 		</div>
@@ -179,7 +180,7 @@
 					</div>
 
 					<div class="mb-8 flex-1 space-y-3">
-						{#each plan.features as feature}
+						{#each plan.features as feature (feature)}
 							<div class="flex items-start gap-3">
 								<div
 									class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success-light)]"
@@ -221,7 +222,7 @@
 				</div>
 
 				<div class="mb-8 flex-1 space-y-3">
-					{#each ['Everything in Growth', 'SSO / SAML', 'Dedicated onboarding', 'SLA & uptime guarantees', 'Custom contract & billing', 'Priority phone support'] as feature}
+					{#each ['Everything in Growth', 'SSO / SAML', 'Dedicated onboarding', 'SLA & uptime guarantees', 'Custom contract & billing', 'Priority phone support'] as feature (feature)}
 						<div class="flex items-start gap-3">
 							<div
 								class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--success-light)]"
@@ -246,11 +247,13 @@
 		<!-- Anchor line -->
 		<p class="mt-10 text-center text-[13px] text-[var(--foreground-muted)]">
 			Built for the deal cycle before you need heavyweight compliance automation. Auditlift gets you
-			<strong>buyer-response ready from $149/mo</strong> — focused on helping you respond and close.
+			<strong>buyer-response ready from ${planPrices.starter.monthly}/mo</strong> — focused on helping
+			you respond and close.
 		</p>
 		<p class="mt-3 text-center text-[13px] text-[var(--foreground-muted)]">
-			All prices in USD. Annual billing: Starter $1,431/year; Growth $2,870/year. The 10-day free
-			trial requires no credit card and includes one completed questionnaire export.
+			All prices in USD. Annual billing: Starter ${planPrices.starter.yearly}/year; Growth ${planPrices
+				.growth.yearly}/year. The 10-day free trial requires no credit card and includes one
+			completed questionnaire export.
 		</p>
 
 		<section class="mt-14 w-full" aria-labelledby="pricing-faq">

@@ -5,7 +5,6 @@
 	import { theme } from '$lib/stores/theme.svelte';
 	import { captureEvent } from '$lib/posthog';
 	import './layout.css';
-	import favicon from '/favicon.ico';
 
 	let { children } = $props();
 
@@ -19,13 +18,13 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href="/favicon.ico" />
 </svelte:head>
 
 {@render children()}
 
 <div style="display:none">
-	{#each locales as locale}
+	{#each locales as locale (locale)}
 		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
 	{/each}
 </div>

@@ -13,6 +13,7 @@ import { hasActivePaidAccess, hasTrialQuestionnaireExportAvailable } from '$lib/
 import { requireOrganizationRole } from '$lib/server/auth-utils';
 import { logActivity } from '$lib/server/activity';
 import { downloadFile } from '$lib/server/storage';
+import { loadKnowledgeFreshness } from '$lib/server/knowledge-freshness';
 import {
 	writeAnswersToCsv,
 	writeAnswersToXlsx,
@@ -100,7 +101,7 @@ async function releaseTrialQuestionnaireExport(
 		);
 }
 
-export const GET: RequestHandler = async ({ locals, params }) => {
+export const GET: RequestHandler = async ({ locals, params, url }) => {
 	const { organizationId: orgId, userId } = await requireOrganizationRole(locals);
 
 	const hasPaidAccess = hasActivePaidAccess(locals.subscription);
@@ -142,6 +143,26 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 			)
 		)
 		.orderBy(questionnaireQuestions.order);
+
+	const freshness = await loadKnowledgeFreshness(orgId);
+	const warningCount = questions.filter(
+		(question) => freshness.citationIssues(question.citations, id).length > 0
+	).length;
+	const reviewToken = freshness.reviewToken(questions);
+	// Check before claiming the one trial export. An acknowledgement is bound to
+	// these exact answers and source versions, and never changes the answers.
+	if (warningCount > 0 && url.searchParams.get('acknowledgeFreshness') !== reviewToken) {
+		return new Response(
+			JSON.stringify({
+				code: 'ANSWER_REVIEW_REQUIRED',
+				warningCount,
+				reviewToken,
+				message:
+					'Some answers cite changed or unavailable sources. Review them before exporting, or explicitly acknowledge the warning.'
+			}),
+			{ status: 409, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+		);
+	}
 
 	const nativeAnswers: ReturnAnswer[] = [];
 	let canReturnNativeFile =

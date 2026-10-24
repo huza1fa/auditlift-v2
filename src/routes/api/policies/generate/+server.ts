@@ -12,10 +12,9 @@ import {
 	frameworks,
 	controls,
 	questionnaires,
-	questionnaireQuestions,
-	answerLibraryEntries
+	questionnaireQuestions
 } from '$lib/server/db/schema';
-import { eq, and, gt, inArray, isNull, or } from 'drizzle-orm';
+import { eq, and, inArray, isNull } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import {
 	STANDARD_POLICY_TYPES,
@@ -31,6 +30,7 @@ import { buildSystemPrompt, buildRichContext } from '$lib/server/policy-context'
 import { captureServerEvent } from '$lib/server/posthog';
 import { getVerifiedOrganizationFactsForPrompt } from '$lib/server/organization-facts';
 import { queueKnowledgeRefresh } from '$lib/server/knowledge-sync';
+import { loadKnowledgeFreshness } from '$lib/server/knowledge-freshness';
 
 // ─── Template fallback ────────────────────────────────────────────────────────
 
@@ -617,22 +617,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const ctx = buildRichContext(org, frameworkName);
 	const verifiedFacts = await getVerifiedOrganizationFactsForPrompt(orgId, { questionnaireId });
-	const approvedAnswers = await db
-		.select({
-			id: answerLibraryEntries.id,
-			questionText: answerLibraryEntries.questionText,
-			answer: answerLibraryEntries.answer,
-			scope: answerLibraryEntries.scope
-		})
-		.from(answerLibraryEntries)
-		.where(
-			and(
-				eq(answerLibraryEntries.organizationId, orgId),
-				eq(answerLibraryEntries.status, 'approved'),
-				or(isNull(answerLibraryEntries.expiresAt), gt(answerLibraryEntries.expiresAt, new Date()))
-			)
-		)
-		.limit(30);
+	const freshness = await loadKnowledgeFreshness(orgId);
+	const approvedAnswers = freshness.approvedEntries().slice(0, 30);
 	const approvedAnswerContext = formatApprovedAnswersForPolicyPrompt(approvedAnswers);
 
 	// Build prompt

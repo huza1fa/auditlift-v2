@@ -46,7 +46,7 @@ describe('public search discovery', () => {
 	});
 
 	it('describes subscription offers as monthly USD prices', () => {
-		expect(softwareSchema.offers.map((offer) => offer.price)).toEqual(['149.00', '299.00']);
+		expect(softwareSchema.offers.map((offer) => offer.price)).toEqual(['49.00', '99.00']);
 		for (const offer of softwareSchema.offers) {
 			expect(offer.priceCurrency).toBe('USD');
 			expect(offer.priceSpecification.unitText).toBe('month');

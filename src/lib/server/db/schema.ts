@@ -461,10 +461,15 @@ export const questionnaireQuestions = pgTable(
 		domain: text('domain'),
 		mappedControlIds: jsonb('mapped_control_ids').$type<string[]>().default([]),
 		mappedPolicyIds: jsonb('mapped_policy_ids').$type<string[]>().default([]),
-		citations:
-			jsonb('citations').$type<
-				Array<{ sourceType: string; sourceId: string; sourceTitle: string; excerpt: string }>
-			>(),
+		citations: jsonb('citations').$type<
+			Array<{
+				sourceType: string;
+				sourceId: string;
+				sourceTitle: string;
+				excerpt: string;
+				sourceVersion?: string;
+			}>
+		>(),
 		generatedAnswer: text('generated_answer'),
 		confidence: text('confidence'), // 'high' | 'medium' | 'low' | 'gap' | null = unprocessed
 		gapReason: text('gap_reason'),
@@ -482,7 +487,7 @@ export const questionnaireQuestions = pgTable(
 
 // ─── Answer Library ─────────────────────────────────────────────────────────
 
-export type AnswerLibraryStatus = 'approved' | 'stale';
+export type AnswerLibraryStatus = 'approved' | 'stale' | 'retired';
 
 /**
  * Human-approved answers harvested from finished security reviews. These are
@@ -499,10 +504,15 @@ export const answerLibraryEntries = pgTable(
 		answer: text('answer').notNull(),
 		scope: text('scope').notNull().default('Company-wide'),
 		status: text('status').$type<AnswerLibraryStatus>().notNull().default('approved'),
-		citations:
-			jsonb('citations').$type<
-				Array<{ sourceType: string; sourceId: string; sourceTitle: string; excerpt: string }>
-			>(),
+		citations: jsonb('citations').$type<
+			Array<{
+				sourceType: string;
+				sourceId: string;
+				sourceTitle: string;
+				excerpt: string;
+				sourceVersion?: string;
+			}>
+		>(),
 		sourceQuestionnaireId: uuid('source_questionnaire_id').references(() => questionnaires.id, {
 			onDelete: 'set null'
 		}),

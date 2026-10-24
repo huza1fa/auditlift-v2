@@ -14,6 +14,7 @@
 		BookOpenText
 	} from 'phosphor-svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	interface ActivityEntry {
 		id: string;
@@ -150,6 +151,20 @@
 			return {
 				label: 'Approved answer for reuse',
 				icon: BookOpenText,
+				color: 'var(--success)',
+				bg: 'var(--success-light)'
+			};
+		if (action === 'answer_library.retire')
+			return {
+				label: m.freshness_activity_retire(),
+				icon: BookOpenText,
+				color: 'var(--warning)',
+				bg: 'var(--warning-light)'
+			};
+		if (action === 'questionnaire.answer_review')
+			return {
+				label: m.freshness_activity_question_review(),
+				icon: ShieldCheck,
 				color: 'var(--success)',
 				bg: 'var(--success-light)'
 			};

@@ -1,8 +1,11 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { answerLibraryEntries, userOrganizations } from '$lib/server/db/schema';
+import { userOrganizations } from '$lib/server/db/schema';
+import { loadKnowledgeFreshness } from '$lib/server/knowledge-freshness';
+import { answerRevision } from '$lib/server/answer-freshness';
+import { isReadOnly } from '$lib/server/billing';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session || !locals.organizationId) redirect(302, '/login');
@@ -16,10 +19,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 			)
 		)
 		.limit(1);
-	const entries = await db
-		.select()
-		.from(answerLibraryEntries)
-		.where(eq(answerLibraryEntries.organizationId, locals.organizationId))
-		.orderBy(desc(answerLibraryEntries.reviewedAt));
-	return { entries, canApprove: membership?.role === 'owner' || membership?.role === 'admin' };
+	const context = await loadKnowledgeFreshness(locals.organizationId);
+	const entries = context.entries
+		.map((entry) => ({
+			...entry,
+			revision: answerRevision(entry),
+			issues: context.entryIssues(entry.id),
+			sources: context.reviewSources(entry.citations)
+		}))
+		.sort((a, b) => b.reviewedAt.getTime() - a.reviewedAt.getTime());
+	return {
+		entries,
+		sourceRevision: context.revision,
+		canApprove:
+			!isReadOnly(locals.subscription, locals.organization?.trialEndsAt) &&
+			(membership?.role === 'owner' || membership?.role === 'admin')
+	};
 };
