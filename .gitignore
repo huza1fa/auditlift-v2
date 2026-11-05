@@ -167,3 +167,7 @@ auditlift-ec2.pem
 temp_*.json
 *.dump
 cdk.out/
+
+# Agent / editor config (local only)
+CLAUDE.md
+.mcp.json

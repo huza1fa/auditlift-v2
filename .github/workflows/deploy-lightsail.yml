@@ -1,8 +1,7 @@
 name: Deploy Lightsail
 
+# AuditLift has been shut down. Deploys are manual-only and kept for reference.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       image_tag:
@@ -20,7 +19,7 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: 676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift
+  ECR_REPOSITORY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/auditlift
   IMAGE_TAG: ${{ inputs.image_tag || format('sha-{0}', github.sha) }}
   LIGHTSAIL_USER: ubuntu
 
@@ -61,7 +60,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: arn:aws:iam::676799697185:role/auditlift-github-actions
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/auditlift-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: aws-actions/amazon-ecr-login@v2

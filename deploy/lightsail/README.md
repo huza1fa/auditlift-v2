@@ -55,7 +55,7 @@ Add these repository secrets:
 - `LIGHTSAIL_SSH_PRIVATE_KEY`: the private key authorized for the `ubuntu` user on the VM.
 - `LIGHTSAIL_SSH_KNOWN_HOSTS`: the pinned OpenSSH `known_hosts` entry for `LIGHTSAIL_HOST`. Verify the VM host key fingerprint out of band before adding this secret. For example, retrieve `/etc/ssh/ssh_host_ed25519_key.pub` through trusted Lightsail console access and save it as `<LIGHTSAIL_HOST> <public-key>`; do not rely on workflow-time `ssh-keyscan`.
 
-The workflow assumes `arn:aws:iam::676799697185:role/auditlift-github-actions`. Its GitHub OIDC trust and least-privilege ECR policy are in `iam/`; apply those files to the role before the first deployment. In GitHub, configure the `production` environment to allow deployments from the `main` branch only. The OIDC role trusts this protected environment.
+The workflow assumes `arn:aws:iam::<AWS_ACCOUNT_ID>:role/auditlift-github-actions`. Its GitHub OIDC trust and least-privilege ECR policy are in `iam/`; apply those files to the role before the first deployment. In GitHub, configure the `production` environment to allow deployments from the `main` branch only. The OIDC role trusts this protected environment.
 
 Each push to `main` creates immutable `sha-<commit>` and moving `main` image tags. Deployment is serialized so two commits cannot deploy concurrently. Manual rollback tags must be valid ECR tags: 1-128 characters, beginning with a letter, number, or underscore, and otherwise containing only letters, numbers, underscores, periods, or hyphens. SSH uses the pinned host-key secret with `StrictHostKeyChecking=yes`.
 
@@ -64,7 +64,7 @@ Each push to `main` creates immutable `sha-<commit>` and moving `main` image tag
 Run the workflow manually and provide a prior `sha-<commit>` value for `image_tag`, or load a retained image and run:
 
 ```bash
-sudo env APP_IMAGE=676799697185.dkr.ecr.us-east-1.amazonaws.com/auditlift:sha-<commit> \
+sudo env APP_IMAGE=<AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/auditlift:sha-<commit> \
 	docker compose -f /opt/auditlift/deploy/lightsail/docker-compose.yml up -d --no-build --force-recreate --wait
 ```
 
