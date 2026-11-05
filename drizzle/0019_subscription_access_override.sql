@@ -7,7 +7,7 @@ SET "access_override_until" = CURRENT_TIMESTAMP + INTERVAL '90 days'
 FROM "user_organizations" AS membership
 INNER JOIN "user" AS account ON account."id" = membership."user_id"
 WHERE membership."organization_id" = subscription."organization_id"
-  AND lower(account."email") = 'huzaifaa.khalid97@gmail.com'
+  AND lower(account."email") = 'owner@example.com'
   AND subscription."status" = 'active'
   AND subscription."stripe_subscription_id" IS NULL
   AND (

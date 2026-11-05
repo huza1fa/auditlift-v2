@@ -4,13 +4,14 @@
 > Return enterprise security questionnaires with cited, defensible answers.
 > Build an approved answer base and compliance foundation as a byproduct of winning deals.
 
-**Live URL:** [https://auditlift.app](https://auditlift.app)
+> [!NOTE]
+> **AuditLift has been shut down.** The hosted service at auditlift.app is no longer running, and this repository is
+> published as an open-source reference. Read about why in
+> [Closing AuditLift](https://huza1fa.github.io/writing/closing-auditlift/).
 
 **Search discovery:** See [SEO and AI search discovery](docs/search-discovery.md) for marketing content sources, crawler rules, and the post-deployment indexing checklist.
 
 **Answer freshness:** See [Answer freshness and review](docs/answer-freshness.md) for source-change detection, human review safeguards, rollout behavior, and verification.
-
-**Pricing:** Starter is $49/month or $490/year; Growth is $99/month or $990/year (USD). Annual billing includes two months free. Prices are shared with checkout through `src/lib/pricing.ts`.
 
 ---
 
@@ -52,14 +53,14 @@ AuditLift makes that connection visible and automatic.
 
 ## Infrastructure
 
-> **Primary platform: AWS (us-east-1, account 676799697185)**
+> **Primary platform: AWS (us-east-1, account <AWS_ACCOUNT_ID>)**
 
 | Component              | Service                        | Details                                                         |
 | ---------------------- | ------------------------------ | --------------------------------------------------------------- |
 | **App Hosting**        | AWS Lightsail VM               | Docker Compose app stack with a host reverse proxy              |
 | **Container Registry** | Amazon ECR                     | Immutable `sha-<commit>` images plus the moving `main` tag      |
 | **Database**           | PostgreSQL 16                  | Compose `db` service with a persistent Docker volume            |
-| **Object Storage**     | Amazon S3                      | `auditlift-storage-676799697185-us-east-1`                      |
+| **Object Storage**     | Amazon S3                      | `auditlift-storage-<AWS_ACCOUNT_ID>-us-east-1`                  |
 | **Secrets**            | VM environment files           | `/etc/auditlift/app.env` and `/etc/auditlift/db.env`, mode 0600 |
 | **DNS/CDN/SSL**        | Cloudflare (Porkbun registrar) | Points to the Lightsail VM; TLS terminates upstream             |
 | **Logging**            | Docker Compose                 | `docker compose logs` on the Lightsail VM                       |

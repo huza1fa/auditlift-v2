@@ -42,7 +42,11 @@ const config = {
 					'https://region1.google-analytics.com',
 					'https://cloudflareinsights.com',
 					'https://*.cloudflareinsights.com',
-					'https://auditlift-storage-676799697185-us-east-1.s3.us-east-1.amazonaws.com'
+					...(process.env.BUCKET_NAME
+						? [
+								`https://${process.env.BUCKET_NAME}.s3.${process.env.BUCKET_REGION || 'us-east-1'}.amazonaws.com`
+							]
+						: [])
 				],
 				'frame-ancestors': ['none']
 			}
